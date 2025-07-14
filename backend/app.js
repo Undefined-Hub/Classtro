@@ -44,9 +44,13 @@ const io = new Server(server, {
   }
 });
 
+// 🧠 Maintain poll state per room
+const activePolls = {}; // { roomCode: { question, options: [], responses: { A: 2, B: 3 }, voters: { socketId: "A" } } }
+
 io.on('connection', (socket) => {
   console.log("✅ New client connected");
 
+  // Room Join
   socket.on("join-room", ({ roomCode, studentName }) => {
     socket.join(roomCode);
     console.log(`${studentName} joined room ${roomCode}`);
@@ -58,10 +62,47 @@ io.on('connection', (socket) => {
     console.log(`Teacher joined room ${roomCode}`);
   });
 
+  // 🟢 Start a poll
+  socket.on("launch-poll", ({ roomCode, poll }) => {
+    // Initialize vote counts
+    activePolls[roomCode] = {
+      question: poll.question,
+      options: poll.options,
+      responses: poll.options.reduce((acc, opt) => ({ ...acc, [opt]: 0 }), {}),
+      voters: {}
+    };
+    io.to(roomCode).emit("new-poll", activePolls[roomCode]);
+  });
+
+  // 🟡 Student votes
+  socket.on("submit-poll-response", ({ roomCode, selectedOption }) => {
+    const poll = activePolls[roomCode];
+    if (!poll) return;
+
+    const previousVote = poll.voters[socket.id];
+    if (previousVote) {
+      poll.responses[previousVote] -= 1; // Remove previous vote
+    }
+
+    poll.responses[selectedOption] += 1;
+    poll.voters[socket.id] = selectedOption;
+
+    io.to(roomCode).emit("poll-update", poll.responses);
+  });
+
+  // 🔴 End poll
+  socket.on("end-poll", ({ roomCode }) => {
+    delete activePolls[roomCode];
+    io.to(roomCode).emit("poll-ended");
+  });
+
   socket.on("disconnect", () => {
     console.log("❌ Client disconnected");
+    // Optional: remove vote from poll.voters if needed
   });
 });
+
+
 
 // ✅ Export the server instead of app
 module.exports = { server };
