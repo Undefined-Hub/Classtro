@@ -63,4 +63,34 @@ feature/* → PR → CI + Code Review → merge → development
 
 [Milestone reached]
 
-development → PR → CI + Code Review → merge → main → Tag + Release → CD (deploy)
+development → PR → CI + Code Review → merge → main → Tag + Release → CD (deploy
+
+```
+
+```mermaid
+flowchart TD
+subgraph Feature Development
+A[feature/* branch] -->|PR| B[Code Review & CI]
+B -->|Approved| C[Merge into development]
+C -->|Milestone reached| D[development branch]
+end
+
+
+subgraph Release Process
+D -->|PR| E[Code Review & CI]
+E -->|Approved| F[Merge into main]
+F --> G[Tag + Release]
+G --> H[CD / Deployment]
+end
+```
+### Description
+1. **Feature Branch (`feature/*`)**: Developers create feature branches for new functionality.
+2. **Pull Request (PR) to Development**: Features are merged into `development` after CI checks and code review.
+3. **Development Milestone**: Once features accumulate or a milestone is reached, `development` is prepared for main release.
+4. **Pull Request (PR) to Main**: The development branch is reviewed, CI runs again, and then merged into `main`.
+5. **Tag & Release**: A new release tag is created in `main`.
+6. **Continuous Deployment (CD)**: Code from `main` is deployed to production automatically.
+
+
+This workflow ensures structured development, review, testing, and deployment.
+)
