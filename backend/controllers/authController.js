@@ -1,9 +1,11 @@
 const bcrypt = require("bcrypt");
-const User = require('../models/User'); 
+const z = require("zod");
 const dotenv = require('dotenv');
+
+
+const User = require('../models/User'); 
 const { validateInput } = require("../utils/validateInput");
 const { generateToken } = require("../utils/jwtHelper");
-const z = require("zod");
 
 // Load environment variables
 dotenv.config();
