@@ -1,76 +1,181 @@
 const bcrypt = require("bcrypt");
 const z = require("zod");
-const dotenv = require('dotenv');
-
-
-const User = require('../models/User'); 
+const dotenv = require("dotenv");
+const User = require("../models/User");
 const { validateInput } = require("../utils/validateInput");
-const { generateToken } = require("../utils/jwtHelper");
+const { generateToken, verifyToken } = require("../utils/jwtUtils");
 
 // Load environment variables
 dotenv.config();
 
 // Zod schemas
 const userRegisterSchema = z.object({
-    name: z.string().min(3, "Name must contain at least 3 characters"),
-    email: z.string().email("Invalid email format"),
-    phone: z.string().min(10, "Phone number must be at least 10 digits"),
-    password: z.string().min(8, "Password must contain at least 8 characters"),
-    role: z.enum(["Employee", "Manager"], "Role must be either 'Employee' or 'Manager'"),
+  name: z.string().min(3, "Name must contain at least 3 characters"),
+  email: z.string().email("Invalid email format"),
+  phone: z.string().min(10, "Phone number must be at least 10 digits"),
+  password: z.string().min(8, "Password must contain at least 8 characters"),
+  role: z.enum(
+    ["Employee", "Manager"],
+    "Role must be either 'Employee' or 'Manager'"
+  ),
 });
 
 const userLoginSchema = z.object({
-    email: z.string().email("Invalid email format"),
-    password: z.string().min(8, "Password must contain at least 8 characters"),
+  email: z.string().email("Invalid email format"),
+  password: z.string().min(8, "Password must contain at least 8 characters"),
 });
 
-// Register a new user
-const registerUser = async (req, res, next) => {
-    try {
-        // Validate input
-        const { name, email, phone, password, role } = validateInput(userRegisterSchema, req.body);
+const loginUser = async (req, res) => {
+  const user = req.user;
 
-        // Check if user already exists
-        const userExists = await User.findOne({ email });
-        if (userExists) {
-            return res.status(400).json({ error: "User already exists" });
-        }
+  const payload = { user: { id: user.id } };
+  const accessToken = generateToken(payload, process.env.JWT_SECRET, {
+    expiresIn: "1h",
+  });
 
-        // Hash password and save user
-        const hashed_password = await bcrypt.hash(password, 10);
-        const user = new User({ name, email, phone, password: hashed_password, role });
+  const refreshToken = generateToken(payload, process.env.JWT_REFRESH_SECRET, {
+    expiresIn: "7d",
+  });
+
+  user.refreshToken = refreshToken;
+  await user.save();
+  user.password = undefined;
+  user.__v = undefined;
+  user.updatedAt = undefined;
+
+  res.cookie("refreshToken", refreshToken, {
+    httpOnly: true,
+    secure: true,
+    sameSite: "Strict",
+  });
+
+  res.status(200).json({
+    message: "Login successful",
+    accessToken,
+    user,
+  });
+};
+
+const logoutUser = async (req, res, next) => {
+  try {
+    // Clear the refresh token cookie
+    res.clearCookie("refreshToken", {
+      httpOnly: true,
+      secure: true,
+      sameSite: "Strict",
+    });
+
+    // Optionally, remove refresh token from user in DB
+    if (req.user) {
+      const user = await User.findById(req.user.id);
+      if (user) {
+        user.refreshToken = "";
         await user.save();
-
-        res.status(201).json({ message: "User created successfully" });
-    } catch (error) {
-        next(error);
+      }
     }
+
+    res.status(200).json({ message: "Logged out successfully" });
+  } catch (err) {
+    res.status(500).json({ message: "Logout failed", error: err.message });
+  }
 };
 
-// Login a user
-const loginUser = async (req, res, next) => {
-    try {
-        // Validate input
-        const { email, password } = validateInput(userLoginSchema, req.body);
-
-        // Find user by email
-        const user = await User.findOne({ email });
-        if (!user) {
-            return res.status(404).json({ error: "User not found" });
-        }
-
-        // Compare passwords
-        const isMatch = await bcrypt.compare(password, user.password);
-        if (!isMatch) {
-            return res.status(401).json({ error: "Invalid credentials" });
-        }
-
-        // Generate token
-        const token = generateToken({ _id: user._id , role:user.role }, process.env.JWT_SECRET, { expiresIn: '1h' });
-        res.status(200).json({ message: "Logged in successfully", token });
-    } catch (error) {
-        next(error);
+const registerUser = async (req, res) => {
+  try {
+    const { name, username, email, password, role } = req.body;
+    if (!name || !username || !email || !password || !role) {
+      return res.status(400).json({ message: "All fields are required." });
     }
+
+    // Check if user already exists
+    const existingUser = await User.findOne({ $or: [{ username }, { email }] });
+    if (existingUser) {
+      return res
+        .status(409)
+        .json({ message: "Username or email already exists." });
+    }
+
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Create new user
+    const newUser = new User({
+      name,
+      username,
+      email,
+      password: hashedPassword,
+      role,
+      authProvider: "LOCAL",
+      status: "ACTIVE",
+    });
+    await newUser.save();
+    res.status(201).json({ message: "User registered successfully." });
+  } catch (err) {
+    res
+      .status(500)
+      .json({ message: "Registration failed.", error: err.message });
+  }
 };
 
-module.exports = { registerUser, loginUser };
+const googleAuthCallback = async (req, res) => {
+  // Generate access token
+  const payload = { user: { id: req.user.id } };
+  const accessToken = generateToken(payload, process.env.JWT_SECRET, {
+    expiresIn: "1h",
+  });
+
+  // Generate refresh token
+  const refreshToken = generateToken(payload, process.env.JWT_REFRESH_SECRET, {
+    expiresIn: "7d",
+  });
+
+  req.user.refreshToken = refreshToken;
+  await req.user.save();
+
+  res.cookie("refreshToken", refreshToken, {
+    httpOnly: true,
+    secure: true,
+    sameSite: "Strict",
+  });
+
+  // Redirect to frontend with accessToken in query
+  res.redirect(`http://localhost:5173/test/success?accessToken=${accessToken}`);
+};
+
+const refreshToken = async (req, res) => {
+  try {
+    const { refreshToken } = req.cookies; // Get from HTTP-only cookie
+    if (!refreshToken) {
+      return res.status(401).json({ message: "Refresh token not found" });
+    }
+
+    // Verify refresh token
+    const decoded = verifyToken(refreshToken, process.env.JWT_REFRESH_SECRET);
+
+    const user = await User.findById(decoded.user.id);
+    if (!user || user.refreshToken !== refreshToken) {
+      return res.status(403).json({ message: "Invalid refresh token" });
+    }
+
+    // Generate new access token
+    const newAccessToken = generateToken(
+      { user: { id: user.id } },
+      process.env.JWT_SECRET,
+      { expiresIn: "15m" }
+    );
+    res.status(200).json({ accessToken: newAccessToken });
+  } catch (error) {
+    res
+      .status(403)
+      .json({ message: "Invalid or expired refresh token", error });
+    // next(error);
+  }
+};
+
+module.exports = {
+    loginUser,
+    logoutUser,
+    registerUser,
+    googleAuthCallback,
+    refreshToken
+};
