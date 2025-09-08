@@ -4,9 +4,12 @@ const cors = require('cors');
 const http = require('http');
 const { Server } = require('socket.io');
 const { connectDB } = require('./config/db');
-const authRoutes = require('./routes/authRoutes');
-const sessionRoutes = require('./routes/session');
 const { errorHandler } = require('./middlewares/errorHandler');
+const cookieParser = require('cookie-parser');
+const passport = require('passport');
+const router = require('./routes');
+require('./config/Passport'); 
+require('dotenv').config();
 
 const app = express();
 const server = http.createServer(app);
@@ -15,13 +18,19 @@ const server = http.createServer(app);
 connectDB();
 
 // 🔧 Middleware
-app.use(cors());
+app.use(
+  cors({
+    origin: process.env.CLIENT_ORIGIN || "http://localhost:5173",
+    credentials: true,
+  })
+);
 app.use(express.json());
 app.use(morgan('dev'));
-
-// 📦 Routes
-app.use('/api/auth', authRoutes);
-app.use('/api/session', sessionRoutes);
+app.use(errorHandler);
+app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
+app.use(passport.initialize());
+app.use(router);
 
 app.get('/', (req, res) => {
   res.send('Welcome to the Classtro API');
@@ -33,8 +42,6 @@ app.get('/test-error', (req, res, next) => {
   next(error);
 });
 
-// 🛠 Error Handling Middleware
-app.use(errorHandler);
 
 // ✅ Export the server instead of app
 module.exports = { server };
