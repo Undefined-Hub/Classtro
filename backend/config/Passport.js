@@ -90,7 +90,7 @@ passport.use(
   new JwtStrategy(jwtOptions, async (payload, done) => {
     try {
       const user = await User.findById(payload.user.id).select("-password -__v -updatedAt");
-
+      console.log("User authenticated via JWT: ", payload);
       if (!user) return done(null, false);
       return done(null, user);
     } catch (err) {
