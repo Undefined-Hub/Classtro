@@ -1,102 +1,226 @@
+// controllers/roomController.js
 const Room = require("../models/Room");
+const Session = require("../models/Session");
 const Participant = require("../models/Participant");
-const crypto = require("crypto");
+const { validateInput } = require("../utils/validateInput");
+const {
+  createRoomSchema,
+  listRoomsQuerySchema,
+  roomIdParamSchema,
+  updateRoomSchema,
+  listRoomSessionsQuerySchema,
+} = require("../schemas/roomSchemas");
 
-// helper for code
-function generateCode() {
-  return crypto.randomBytes(3).toString("hex").toUpperCase(); // 6-char
-}
+/**
+ * Create a new room
+ * POST /api/rooms
+ * Teacher only
+ */
+const createRoom = async (req, res, next) => {
+   try {
+    const data = validateInput(createRoomSchema, req.body);
 
-const createRoom = async (req, res) => {
-  try {
-    const code = generateCode();
-    console.log(req.body.user);
     const room = await Room.create({
-      name: req.body.name,
-      teacherId: req.user.id || null, // in future, get from auth
-      code
+      name: data.name,
+      description: data.description || "",
+      defaultMaxStudents: data.defaultMaxStudents || 200,
+      teacherId: req.user.id, // comes from JWT middleware
     });
+
     res.status(201).json(room);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    next(err);
   }
 };
 
-const getRoom = async (req, res) => {
+/**
+ * List rooms for the current teacher (paginated)
+ * GET /api/rooms?page=1&limit=10
+ */
+const listRooms = async (req, res, next) => {
   try {
-    const room = await Room.findOne({ code: req.params.code, isActive: true })
-      .select("name code isActive createdAt");
-    if (!room) return res.status(404).json({ message: "Room not found" });
+    const query = validateInput(listRoomsQuerySchema, req.query);
+
+    const skip = (query.page - 1) * query.limit;
+
+    const [rooms, total] = await Promise.all([
+      Room.find({ teacherId: req.user.id })
+        .skip(skip)
+        .limit(query.limit)
+        .sort({ createdAt: -1 }),
+      Room.countDocuments({ teacherId: req.user.id }),
+    ]);
+
+    res.json({
+      total,
+      page: query.page,
+      limit: query.limit,
+      rooms,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+/**
+ * Get room details by ID
+ * GET /api/rooms/:roomId
+ */
+const getRoomById = async (req, res, next) => {
+   try {
+    const params = validateInput(roomIdParamSchema, req.params);
+
+    const room = await Room.findById(params.roomId);
+
+    if (!room) {
+      const error = new Error("Room not found");
+      error.status = 404;
+      throw error;
+    }
+
     res.json(room);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    next(err);
   }
 };
 
-const joinRoom = async (req, res) => {
-  try {
-    const room = await Room.findOne({ code: req.params.code, isActive: true });
-    if (!room) return res.status(404).json({ message: "Room not found" });
+/**
+ * Update room metadata (teacher only)
+ * PATCH /api/rooms/:roomId
+ */
+const updateRoom = async (req, res, next) => {
+ try {
+    const params = validateInput(roomIdParamSchema, req.params);
+    const data = validateInput(updateRoomSchema, req.body);
 
-    const participant = await Participant.create({
-      roomId: room._id,
-      name: req.body.name,
-      userId: req.user ? req.user.id : null
+    const room = await Room.findOneAndUpdate(
+      { _id: params.roomId, teacherId: req.user.id },
+      { $set: data, updatedAt: new Date() },
+      { new: true }
+    );
+
+    if (!room) {
+      const error = new Error("Room not found or not owned by you");
+      error.status = 404;
+      throw error;
+    }
+
+    res.json(room);
+  }catch (err) {
+    next(err);
+  }
+};
+
+/**
+ * Soft-delete / archive a room
+ * DELETE /api/rooms/:roomId
+ */
+const deleteRoom = async (req, res, next) => {
+ try {
+    const params = validateInput(roomIdParamSchema, req.params);
+
+    const room = await Room.findOneAndUpdate(
+      { _id: params.roomId, teacherId: req.user.id },
+      { $set: { archivedAt: new Date() } },
+      { new: true }
+    );
+
+    if (!room) {
+      const error = new Error("Room not found or not owned by you");
+      error.status = 404;
+      throw error;
+    }
+
+    res.json({ message: "Room archived successfully", room });
+  } catch (err) {
+    next(err);
+  }
+};
+
+
+// PATCH /api/rooms/:roomId/unarchive
+const unarchiveRoom = async (req, res, next) => {
+  try {
+    const params = validateInput(roomIdParamSchema, req.params);
+
+    const room = await Room.findOneAndUpdate(
+      { _id: params.roomId, teacherId: req.user.id },
+      { $set: { archivedAt: null } },
+      { new: true }
+    );
+
+    if (!room) {
+      const error = new Error("Room not found or not owned by you");
+      error.status = 404;
+      throw error;
+    }
+
+    res.json({ message: "Room unarchived successfully", room });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// DELETE /api/rooms/:roomId/hard
+const hardDeleteRoom = async (req, res, next) => {
+  try {
+    const params = validateInput(roomIdParamSchema, req.params);
+
+    // Delete sessions + participants linked to this room
+    await Session.deleteMany({ roomId: params.roomId });
+    await Participant.deleteMany({ roomId: params.roomId });
+
+    // Finally delete the room
+    const room = await Room.findOneAndDelete({
+      _id: params.roomId,
+      teacherId: req.user.id,
     });
 
-    // In future: return a socket token
-    res.json({ message: "Joined successfully", participantId: participant._id });
+    if (!room) {
+      const error = new Error("Room not found or not owned by you");
+      error.status = 404;
+      throw error;
+    }
+
+    res.json({ message: "Room permanently deleted" });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    next(err);
   }
 };
 
-const leaveRoom = async (req, res) => {
-  try {
-    await Participant.findByIdAndUpdate(req.body.participantId, { leftAt: new Date() });
-    res.json({ message: "Left room" });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-};
 
-const closeRoom = async (req, res) => {
-  try {
-    await Room.findOneAndUpdate({ code: req.params.code, teacherId: req.user.id }, { isActive: false });
-    res.json({ message: "Room closed" });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-};
 
-const getParticipants = async (req, res) => {
+/**
+ * List sessions of a room (teacher or student)
+ * GET /api/rooms/:roomId/sessions
+ */
+const listRoomSessions = async (req, res, next) => {
   try {
-    const room = await Room.findOne({ code: req.params.code, teacherId: req.user.id });
-    if (!room) return res.status(404).json({ message: "Room not found" });
+    const params = validateInput(roomIdParamSchema, req.params);
+    const query = validateInput(listRoomSessionsQuerySchema, req.query);
 
-    const participants = await Participant.find({ roomId: room._id });
-    res.json(participants);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-};
+    const filter = { roomId: params.roomId };
+    if (query.active !== undefined) {
+      filter.isActive = query.active;
+    }
 
-const kickParticipant = async (req, res) => {
-  try {
-    // just mark them as left
-    await Participant.findByIdAndUpdate(req.body.participantId, { leftAt: new Date() });
-    res.json({ message: "Participant kicked" });
+    const sessions = await Session.find(filter)
+      .sort({ createdAt: -1 })
+      .limit(query.limit);
+
+    res.json(sessions);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    next(err);
   }
 };
 
 module.exports = {
   createRoom,
-  closeRoom,
-  getParticipants,
-  kickParticipant,
-  getRoom,
-  joinRoom,
-  leaveRoom
+  listRooms,
+  getRoomById,
+  updateRoom,
+  deleteRoom,
+  unarchiveRoom,
+  listRoomSessions,
+  hardDeleteRoom
 };
