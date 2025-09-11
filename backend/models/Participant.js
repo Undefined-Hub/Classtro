@@ -13,6 +13,7 @@ const ParticipantSchema = new mongoose.Schema({
 
   kicked: { type: Boolean, default: false },
 
+
   ip: String,
   deviceInfo: String,
 });
