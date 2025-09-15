@@ -1,9 +1,11 @@
 
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/UserContext.jsx";
 
 function Login({ onLogin }) {
     const navigate = useNavigate();
+  const { login } = useAuth();
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
@@ -22,61 +24,79 @@ function Login({ onLogin }) {
           try {
             data = await res.json();
           } catch (jsonErr) {
+            console.error("Error parsing JSON:", jsonErr);
             // If response is not JSON, fallback to text
             data = { message: await res.text() };
           }
           if (res.ok) {
-            localStorage.setItem("accessToken", data.accessToken);
-            localStorage.setItem("user", JSON.stringify(data.user));
-            onLogin(data.user);
+            // Update global auth state
+            login(data.user, data.accessToken);
+            // Navigate by role
+            if (data.user?.role === "TEACHER") {
+              navigate("/test/dashboard", { replace: true });
+            } else if (data.user?.role === "STUDENT") {
+              navigate("/participant/home", { replace: true });
+            } else {
+              navigate("/test/dashboard", { replace: true });
+            }
           } else {
             setError(data.message || "Login failed. Please check your credentials and try again.");
           }
         } catch (err) {
           setError(
             err?.message
-              ? `Network error: ${err.message}`
+              ? ` ${err}`
               : "Network error. Please check your connection and try again."
           );
         }
     };
 
-       const handleGoogleLogin = () => {
-          const popup = window.open(
-            "http://localhost:3000/api/auth/google",
-            "google-oauth",
-            "width=500,height=600,scrollbars=yes,resizable=yes"
-          );
+     
+    const handleGoogleLogin = () => {
+      const popup = window.open(
+        "http://localhost:3000/api/auth/google",
+        "google-oauth",
+        "width=500,height=600,scrollbars=yes,resizable=yes"
+      );
 
-          // Listen for messages from the popup
-          const messageListener = (event) => {
-            if (event.origin !== "http://localhost:3000") return;
+      // Listen for messages from the popup
+      const messageListener = (event) => {
+        // Only accept messages from our backend origin (the popup)
+        if (event.origin !== "http://localhost:3000") return;
 
-            if (event.data.type === "OAUTH_SUCCESS") {
-              const { accessToken, user } = event.data;
-              onLogin(user); // Your login handler
-              localStorage.setItem("accessToken", accessToken); // Store token
-              localStorage.setItem("user", JSON.stringify(user)); // Store user
-              popup.close();
-              window.removeEventListener("message", messageListener);
-            } else if (event.data.type === "OAUTH_ERROR") {
-              setError("OAuth login failed");
-              popup.close();
-              window.removeEventListener("message", messageListener);
-            }
-          };
+        if (event.data.type === "OAUTH_SUCCESS") {
+          const { accessToken, user } = event.data;
+          // Persist auth and update app state via context
+          login(user, accessToken);
+          // Navigate the main window based on role
+          if (user.role === "TEACHER") {
+            navigate("/test/dashboard", { replace: true });
+          } else if (user.role === "STUDENT") {
+            navigate("/participant/home", { replace: true });
+          } else {
+            navigate("/test/dashboard", { replace: true });
+          }
 
-          window.addEventListener("message", messageListener);
+          // Cleanup popup and listener
+          popup.close();
+          window.removeEventListener("message", messageListener);
+        } else if (event.data.type === "OAUTH_ERROR") {
+          setError("OAuth login failed");
+          popup.close();
+          window.removeEventListener("message", messageListener);
+        }
+      };
 
-          // Handle popup being closed manually
-          const checkClosed = setInterval(() => {
-            if (popup.closed) {
-              window.removeEventListener("message", messageListener);
-              clearInterval(checkClosed);
-            }
-          }, 1000);
-        };
+      window.addEventListener("message", messageListener);
 
+      // Handle popup being closed manually
+      const checkClosed = setInterval(() => {
+        if (popup.closed) {
+          window.removeEventListener("message", messageListener);
+          clearInterval(checkClosed);
+        }
+      }, 1000);
+    };
     
     // const handleClick = (e) => {
     //     e.preventDefault();

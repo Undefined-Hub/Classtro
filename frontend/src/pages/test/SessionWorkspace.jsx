@@ -124,6 +124,39 @@ function SessionWorkspace() {
   const [showConfirmClose, setShowConfirmClose] = useState(false);
   const [sessionData, setSessionData] = useState(MOCK_SESSION);
   
+const STATIC_ROOMS = [
+  {
+    "_id": "68c1acaeb8545df5d77a1d3e",
+    "name": "DBMS Lecture",
+    "description": "Database Management Systems for Computer Science students",
+    "teacherId": "68c03b7690aa7d09254bb622",
+    "defaultMaxStudents": 200,
+    "createdAt": "2025-09-10T16:51:58.616Z",
+    "activeSessions": 1,
+    "totalSessions": 12
+  },
+  {
+    "_id": "68c1aca7b8545df5d77a1d3a",
+    "name": "BTECH B",
+    "description": "MERN Stack Development for BTech students",
+    "teacherId": "68c03b7690aa7d09254bb622",
+    "defaultMaxStudents": 200,
+    "createdAt": "2025-09-10T16:51:51.751Z",
+    "activeSessions": 0,
+    "totalSessions": 8
+  },
+  {
+    "_id": "68c1aca7b8545df5d77a1d3b",
+    "name": "Computer Networks",
+    "description": "Advanced networking concepts and protocols",
+    "teacherId": "68c03b7690aa7d09254bb622",
+    "defaultMaxStudents": 150,
+    "createdAt": "2025-09-09T14:30:00.000Z",
+    "activeSessions": 0,
+    "totalSessions": 5
+  }
+];
+
   const location = useLocation();
   const navigate = useNavigate();
 

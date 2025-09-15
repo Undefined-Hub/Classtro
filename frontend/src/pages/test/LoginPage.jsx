@@ -43,12 +43,18 @@ export default function LoginPage({ onLogin }) {
 
     // Listen for messages from the popup
     const messageListener = (event) => {
+      // Only accept messages from our backend origin (the popup)
       if (event.origin !== "http://localhost:3000") return;
 
       if (event.data.type === "OAUTH_SUCCESS") {
         const { accessToken, user } = event.data;
-        onLogin(user); // Your login handler
-        localStorage.setItem("accessToken", accessToken); // Store token
+        // Persist auth and update app state
+        localStorage.setItem("accessToken", accessToken);
+        onLogin(user);
+        // Navigate the main window to the desired page
+        // (previously backend redirected popup to /test/success)
+        navigate("/test/success", { replace: true, state: { accessToken, user } });
+        // Cleanup popup and listener
         popup.close();
         window.removeEventListener("message", messageListener);
       } else if (event.data.type === "OAUTH_ERROR") {
