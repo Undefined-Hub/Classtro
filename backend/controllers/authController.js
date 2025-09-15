@@ -45,7 +45,7 @@ const loginUser = async (req, res) => {
 
   res.cookie("refreshToken", refreshToken, {
     httpOnly: true,
-    secure: true,
+    secure: process.env.NODE_ENV === "production",
     sameSite: "Strict",
   });
 
@@ -61,7 +61,7 @@ const logoutUser = async (req, res, next) => {
     // Clear the refresh token cookie
     res.clearCookie("refreshToken", {
       httpOnly: true,
-      secure: true,
+      secure: process.env.NODE_ENV === "production",
       sameSite: "Strict",
     });
 
@@ -138,8 +138,63 @@ const googleAuthCallback = async (req, res) => {
     sameSite: "Strict",
   });
 
-  // Redirect to frontend with accessToken in query
-  res.redirect(`http://localhost:5173/test/success?accessToken=${accessToken}`);
+  // Instead of redirecting the popup, send a tiny HTML bridge that
+  // postMessages the result to the opener (main window) and then closes itself.
+  // This enables the main window to decide where to navigate next.
+  const safeUser = {
+    id: req.user.id,
+    name: req.user.name,
+    username: req.user.username,
+    email: req.user.email,
+    role: req.user.role,
+  };
+
+  const payloadForOpener = {
+    type: "OAUTH_SUCCESS",
+    accessToken,
+    user: safeUser,
+  };
+
+  const targetOrigin = process.env.FRONTEND_ORIGIN || "http://localhost:5173"; // Frontend origin
+
+  const html = `<!DOCTYPE html>
+  <html lang="en">
+    <head>
+      <meta charset="UTF-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <title>Signing you in...</title>
+      <style>
+        body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; margin: 0; display: grid; place-items: center; height: 100vh; color: #111; }
+        .box { text-align: center; }
+      </style>
+    </head>
+    <body>
+      <div class="box">
+        <p>Successfully authenticated. You can close this window.</p>
+      </div>
+      <script>
+        (function() {
+          try {
+            var data = ${JSON.stringify(payloadForOpener)};
+            if (window.opener && !window.opener.closed) {
+              window.opener.postMessage(data, ${JSON.stringify(targetOrigin)});
+            }
+          } catch (e) {
+            try {
+              if (window.opener && !window.opener.closed) {
+                window.opener.postMessage({ type: 'OAUTH_ERROR', message: 'Failed to deliver token' }, '*');
+              }
+            } catch (_) {}
+          } finally {
+            // Allow a brief moment for the message to be delivered before closing
+            setTimeout(function(){ window.close(); }, 300);
+          }
+        })();
+      </script>
+    </body>
+  </html>`;
+
+  res.status(200).send(html);
 };
 
 const refreshToken = async (req, res) => {
@@ -173,9 +228,9 @@ const refreshToken = async (req, res) => {
 };
 
 module.exports = {
-    loginUser,
-    logoutUser,
-    registerUser,
-    googleAuthCallback,
-    refreshToken
+  loginUser,
+  logoutUser,
+  registerUser,
+  googleAuthCallback,
+  refreshToken,
 };
