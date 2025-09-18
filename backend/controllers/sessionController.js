@@ -60,9 +60,7 @@ const createSessionInRoom = async (req, res, next) => {
       teacherId: req.user.id,
     });
     if (!room) {
-      const error = new Error("Room not found or not owned by you");
-      error.status = 404;
-      throw error;
+      return res.status(404).json({ error: "Room not found or not owned by you" });
     }
 
     const code = generateCode();
@@ -96,9 +94,7 @@ const getSessionByCode = async (req, res, next) => {
     }).select("title code roomId isActive startAt createdAt");
 
     if (!session) {
-      const error = new Error("Session not found or inactive");
-      error.status = 404;
-      throw error;
+      return res.status(404).json({ error: "Session not found or inactive" });
     }
 
     res.json(session);
@@ -122,9 +118,7 @@ const getSessionById = async (req, res, next) => {
     });
 
     if (!session) {
-      const error = new Error("Session not found or not owned by you");
-      error.status = 404;
-      throw error;
+      return res.status(404).json({ error: "Session not found or not owned by you" });
     }
 
     res.json(session);
@@ -171,9 +165,7 @@ const closeSession = async (req, res, next) => {
     );
 
     if (!session) {
-      const error = new Error("Session not found or not owned by you");
-      error.status = 404;
-      throw error;
+      return res.status(404).json({ error: "Session not found or not owned by you" });
     }
 
     res.json({ message: "Session closed successfully", session });
@@ -198,9 +190,7 @@ const updateSession = async (req, res, next) => {
     );
 
     if (!session) {
-      const error = new Error("Session not found or not owned by you");
-      error.status = 404;
-      throw error;
+      return res.status(404).json({ error: "Session not found or not owned by you" });
     }
 
     res.json(session);
@@ -225,9 +215,7 @@ const joinSession = async (req, res, next) => {
     });
 
     if (!session) {
-      const error = new Error("Session not found or inactive");
-      error.status = 404;
-      throw error;
+      return res.status(404).json({ error: "Session not found or inactive" });
     }
 
     // enforce max student count
@@ -237,11 +225,9 @@ const joinSession = async (req, res, next) => {
     });
 
     if (currentCount >= session.maxStudents) {
-      const error = new Error("Session is full");
-      error.status = 403;
-      throw error;
+      return res.status(403).json({ error: "Session is full" });
     }
-
+    console.log("Creating participant record for:", req.user);
     const participant = await Participant.create({
       roomId: session.roomId || null,
       sessionId: session._id,
@@ -273,9 +259,7 @@ const leaveSession = async (req, res, next) => {
 
     const session = await Session.findOne({ code: params.code });
     if (!session) {
-      const error = new Error("Session not found");
-      error.status = 404;
-      throw error;
+      return res.status(404).json({ error: "Session not found" });
     }
 
     await Participant.findOneAndUpdate(
@@ -306,9 +290,7 @@ const getSessionParticipants = async (req, res, next) => {
       teacherId: req.user.id,
     });
     if (!session) {
-      const error = new Error("Session not found or not owned by you");
-      error.status = 404;
-      throw error;
+      return res.status(404).json({ error: "Session not found or not owned by you" });
     }
 
     const participants = await Participant.find({ sessionId: session._id });
@@ -328,9 +310,7 @@ const getParticipantById = async (req, res, next) => {
 
     const participant = await Participant.findById(params.participantId);
     if (!participant) {
-      const error = new Error("Participant not found");
-      error.status = 404;
-      throw error;
+      return res.status(404).json({ error: "Participant not found" });
     }
 
     // only teacher of that session or the participant himself
@@ -343,9 +323,7 @@ const getParticipantById = async (req, res, next) => {
           teacherId: req.user.id,
         })))
     ) {
-      const error = new Error("Not authorized to view this participant");
-      error.status = 403;
-      throw error;
+      return res.status(403).json({ error: "Not authorized to view this participant" });
     }
 
     res.json(participant);
