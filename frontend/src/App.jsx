@@ -8,6 +8,7 @@ const Login = lazy(() => import("./pages/Login"));
 const DashboardPage = lazy(() => import("./pages/Host/DashboardPage.jsx"));
 const SessionWorkspace = lazy(() => import("./pages/Host/SessionWorkspace.jsx"));
 const ParticipantHome = lazy(() => import("./pages/Participant/ParticipantHome"));
+const ParticipantSession = lazy(() => import("./pages/Participant/ParticipantSession"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const Unauthorized = lazy(() => import("./pages/Unauthorized"));
 
@@ -48,6 +49,7 @@ function App() {
         </Route>
         <Route element={<ProtectedRoute roles={["STUDENT"]} />}>
           <Route path="/participant/home" element={<ParticipantHome />} />
+          <Route path="/participant/session" element={<ParticipantSession />} />
         </Route>
         <Route path="/unauthorized" element={<Unauthorized />} />
         <Route path="*" element={<NotFound />} />
