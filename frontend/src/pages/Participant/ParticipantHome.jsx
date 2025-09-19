@@ -1,18 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '../../context/UserContext';
 import Header from '../../components/Participant/Header';
 import TabNavigation from '../../components/Participant/TabNavigation';
 import JoinSessionTab from '../../components/Participant/JoinSessionTab';
 import ClassroomTab from '../../components/Participant/ClassroomTab';
-import ParticipantSession from '../../components/Participant/ParticipantSession';
+import { useNavigate } from 'react-router-dom';
 
 const ParticipantHome = () => {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('join');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedClassroom, setSelectedClassroom] = useState(null);
-  const [currentSession, setCurrentSession] = useState(null);
-  const [isInSession, setIsInSession] = useState(false);
+  const navigate = useNavigate();
 
   // Mock data for classrooms - replace with actual API call
   const [rooms] = useState([
@@ -115,27 +114,9 @@ const ParticipantHome = () => {
     setSearchTerm(term);
   };
 
-  const handleSessionJoined = (sessionData) => {
-    setCurrentSession(sessionData);
-    setIsInSession(true);
-  };
+  // Session navigation now handled inside JoinSessionTab via context
 
-  const handleLeaveSession = () => {
-    setCurrentSession(null);
-    setIsInSession(false);
-    setActiveTab('join');
-  };
-
-  // If user is in a session, show the session component
-  if (isInSession && currentSession) {
-    return (
-      <ParticipantSession 
-        sessionData={currentSession} 
-        socket={currentSession.socket}
-        onLeaveSession={handleLeaveSession}
-      />
-    );
-  }
+  // No longer render ParticipantSession here; handled by /participant/session route
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -151,7 +132,7 @@ const ParticipantHome = () => {
           />
 
           <div className="p-6">
-            {activeTab === 'join' && <JoinSessionTab onSessionJoined={handleSessionJoined} />}
+            {activeTab === 'join' && <JoinSessionTab />}
 
             {activeTab === 'classrooms' && (
               <ClassroomTab

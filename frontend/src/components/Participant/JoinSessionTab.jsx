@@ -1,12 +1,15 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../context/UserContext';
-import { io } from "socket.io-client";
+import { useNavigate } from 'react-router-dom';
+import { useParticipantSession } from '../../context/ParticipantSessionContext.jsx';
+import { STORAGE_KEY } from '../../context/ParticipantSessionContext.jsx';
 
 const BACKEND_BASE_URL = import.meta.env.VITE_BACKEND_BASE_URL || "http://localhost:2000";
-let socket; // keep reference outside component so it persists
-const JoinSessionTab = ({ onSessionJoined }) => {
+const JoinSessionTab = () => {
 
   const { user } = useAuth();
+  const navigate = useNavigate();
+  const { setSessionData } = useParticipantSession();
   const [joinCode, setJoinCode] = useState('');
   const [loading, setLoading] = useState(false);
   const [showQRScanner, setShowQRScanner] = useState(false);
@@ -45,42 +48,13 @@ const JoinSessionTab = ({ onSessionJoined }) => {
       const sessionData = await response.json();
       console.log('✅ Successfully joined session:', sessionData);
 
-      // 🔹 2. Connect to Socket.IO namespace
-      if (!socket) {
-        socket = io(`${BACKEND_BASE_URL}/sessions`, {
-          withCredentials: true,
-        });
-      }
-
-      // Log student socket ID
-      socket.on('connect', () => {
-        console.log('My socket ID (student):', socket.id);
-      });
-
-      // 🔹 3. Emit join event
-      socket.emit("join-session", {
-        code: joinCode,
-        participantId: sessionData.participantId,
-      });
-
-      // Listen for room members
-      socket.on('room:members', (data) => {
-        console.log('Room members (student):', data.sockets);
-      });
-
-      // 🔹 4. Listen for updates (only once)
-      socket.off("participants:update"); // prevent duplicates
-      socket.on("participants:update", (data) => {
-        console.log("👥 Updated participants:", data);
-      });
-
-      // 🔹 5. Pass data up
-      if (onSessionJoined) {
-        // Pass the socket along with sessionData for use in ParticipantSession
-        onSessionJoined({ ...sessionData, socket });
-        // Debug: confirm socket is passed and event handler is set up
-        console.log('Passing socket to ParticipantSession:', socket && socket.id);
-      }
+      // 🔹 2. Save to storage (preempt hydrate) and context, then navigate
+      const fullData = { ...sessionData, joinCode };
+      try {
+        sessionStorage.setItem(STORAGE_KEY, JSON.stringify(fullData));
+      } catch {}
+      setSessionData(fullData);
+      navigate('/participant/session');
 
       setJoinCode('');
     } catch (error) {

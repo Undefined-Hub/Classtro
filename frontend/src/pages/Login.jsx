@@ -9,12 +9,12 @@ function Login({ onLogin }) {
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
-    
+    const BACKEND_BASE_URL = import.meta.env.VITE_BACKEND_BASE_URL || "http://localhost:2000";
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError("");
         try {
-          const res = await fetch("http://localhost:3000/api/auth/login", {
+          const res = await fetch(`${BACKEND_BASE_URL}/api/auth/login`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             credentials: "include",
@@ -54,7 +54,7 @@ function Login({ onLogin }) {
      
     const handleGoogleLogin = () => {
       const popup = window.open(
-        "http://localhost:3000/api/auth/google",
+        `${BACKEND_BASE_URL}/api/auth/google`,
         "google-oauth",
         "width=500,height=600,scrollbars=yes,resizable=yes"
       );
@@ -62,7 +62,7 @@ function Login({ onLogin }) {
       // Listen for messages from the popup
       const messageListener = (event) => {
         // Only accept messages from our backend origin (the popup)
-        if (event.origin !== "http://localhost:3000") return;
+        if (event.origin !== BACKEND_BASE_URL) return;
 
         if (event.data.type === "OAUTH_SUCCESS") {
           const { accessToken, user } = event.data;

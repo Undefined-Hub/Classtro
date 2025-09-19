@@ -4,11 +4,14 @@ import './index.css'
 import { BrowserRouter } from 'react-router-dom';
 import App from './App.jsx'
 import { AuthProvider } from './context/UserContext.jsx'
+import { ParticipantSessionProvider } from './context/ParticipantSessionContext.jsx'
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <BrowserRouter>
       <AuthProvider>
-        <App />
+        <ParticipantSessionProvider>
+          <App />
+        </ParticipantSessionProvider>
       </AuthProvider>
     </BrowserRouter>
   </StrictMode>,
