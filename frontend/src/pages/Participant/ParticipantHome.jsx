@@ -4,6 +4,7 @@ import Header from '../../components/Participant/Header';
 import TabNavigation from '../../components/Participant/TabNavigation';
 import JoinSessionTab from '../../components/Participant/JoinSessionTab';
 import ClassroomTab from '../../components/Participant/ClassroomTab';
+import LogoutModal from '../../components/LogoutModal';
 import { useNavigate } from 'react-router-dom';
 
 const ParticipantHome = () => {
@@ -11,6 +12,7 @@ const ParticipantHome = () => {
   const [activeTab, setActiveTab] = useState('join');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedClassroom, setSelectedClassroom] = useState(null);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
   const navigate = useNavigate();
 
   // Mock data for classrooms - replace with actual API call
@@ -114,13 +116,29 @@ const ParticipantHome = () => {
     setSearchTerm(term);
   };
 
+  const handleLogout = () => {
+    setShowLogoutModal(true);
+  };
+
+  const confirmLogout = () => {
+    // Clear user data and token
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('user');
+    
+    // Close the modal
+    setShowLogoutModal(false);
+    
+    // Redirect to login page
+    navigate('/login');
+  };
+
   // Session navigation now handled inside JoinSessionTab via context
 
   // No longer render ParticipantSession here; handled by /participant/session route
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <Header user={user} />
+      <Header user={user} onLogout={handleLogout} />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Tab Navigation */}
@@ -147,6 +165,13 @@ const ParticipantHome = () => {
           </div>
         </div>
       </div>
+
+      {/* Logout Confirmation Modal */}
+      <LogoutModal 
+        isOpen={showLogoutModal}
+        onClose={() => setShowLogoutModal(false)}
+        onConfirm={confirmLogout}
+      />
     </div>
   );
 };

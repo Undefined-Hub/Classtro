@@ -12,6 +12,7 @@ const ParticipantSession = () => {
   const { sessionData, setSessionData, clearSession } = useParticipantSession();
 
   const [broadcastMsg, setBroadcastMsg] = useState(null);
+  const [participantCount, setParticipantCount] = useState(1);
   const socketRef = useRef(null);
 
 
@@ -59,9 +60,25 @@ const ParticipantSession = () => {
     const onRoomMembers = (members) => {
       console.log('[Participant] room:members', members);
     };
+    
+    const onParticipantsUpdate = (data) => {
+      console.log('[Participant] participants:update', data);
+      if (data.code === sessionData.joinCode) {
+        setParticipantCount(data.count);
+      }
+    };
+    
+    const onSessionEnded = (payload) => {
+      console.log('[Participant] session:ended', payload);
+      alert('Session has ended by the host. You will be redirected.');
+      clearSession();
+      navigate('/participant/home');
+    };
 
     socket.on('broadcast:message', onBroadcast);
     socket.on('room:members', onRoomMembers);
+    socket.on('participants:update', onParticipantsUpdate);
+    socket.on('session:ended', onSessionEnded);
 
     return () => {
       try {
@@ -72,11 +89,13 @@ const ParticipantSession = () => {
       } catch {}
       socket.off('broadcast:message', onBroadcast);
       socket.off('room:members', onRoomMembers);
+      socket.off('participants:update', onParticipantsUpdate);
+      socket.off('session:ended', onSessionEnded);
       socket.disconnect();
       socketRef.current = null;
       clearSession();
     };
-  }, [sessionData]);
+  }, [sessionData, clearSession, navigate]);
 
   // Time formatting handled in SessionClock (hh:mm)
 
@@ -188,7 +207,7 @@ const ParticipantSession = () => {
               <div className="flex justify-between">
                 <span className="text-sm text-gray-500 dark:text-gray-400">Participants:</span>
                 <span className="text-sm font-medium text-gray-900 dark:text-white">
-                  {sessionData?.participantCount || 1}
+                  {participantCount}
                 </span>
               </div>
             </div>

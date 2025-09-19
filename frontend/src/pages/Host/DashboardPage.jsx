@@ -5,6 +5,7 @@ import RoomDetail from '../../components/Host/dashboard/RoomDetail';
 import AllSessionsTable from '../../components/Host/dashboard/AllSessionsTable';
 import CreateRoomModal from '../../components/Host/dashboard/CreateRoomModal';
 import CreateSessionModal from '../../components/Host/dashboard/CreateSessionModal';
+import LogoutModal from '../../components/LogoutModal';
 
 
 const BACKEND_BASE_URL =
@@ -61,8 +62,19 @@ function DashboardPage() {
   const [roomFormData, setRoomFormData] = useState({ name: '', description: '', defaultMaxStudents: 200 });
   const [sessionFormData, setSessionFormData] = useState({ title: '', maxStudents: 200 });
   const [rooms, setRooms] = useState([]);
+  const [sessions, setSessions] = useState([]);
+  const [sessionsLoading, setSessionsLoading] = useState(false);
+  const [sessionsError, setSessionsError] = useState(null);
   const [roomsLoading, setRoomsLoading] = useState(false);
   const [roomsError, setRoomsError] = useState(null);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [createRoomLoading, setCreateRoomLoading] = useState(false);
+  const [createRoomError, setCreateRoomError] = useState(null);
+  const [createSessionLoading, setCreateSessionLoading] = useState(false);
+  const [createSessionError, setCreateSessionError] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [pageSize, setPageSize] = useState(11);
   const navigate = useNavigate();
 
   // Get auth token from useAuth context or localStorage
@@ -82,7 +94,7 @@ function DashboardPage() {
       setRoomsLoading(true);
       setRoomsError(null);
       try {
-        const res = await fetch(`${BACKEND_BASE_URL}/api/rooms/?page=1&limit=20`, {
+        const res = await fetch(`${BACKEND_BASE_URL}/api/rooms/?page=${currentPage}&limit=${pageSize}`, {
           headers: {
             'Content-Type': 'application/json',
             ...(token ? { 'Authorization': `Bearer ${token}` } : {})
@@ -90,7 +102,19 @@ function DashboardPage() {
         });
         if (!res.ok) throw new Error('Failed to fetch rooms');
         const data = await res.json();
+        
+        // Set rooms from API response
         setRooms(data.rooms || []);
+        
+        // Set pagination data if available
+        if (data.pagination) {
+          const totalPages = data.pagination.totalPages || Math.ceil((data.pagination.totalItems || 1) / (data.pagination.pageSize || 20));
+          setTotalPages(totalPages);
+          
+          // Ensure current page is not greater than total pages
+          setCurrentPage(Math.min(data.pagination.currentPage || 1, totalPages));
+          setPageSize(data.pagination.pageSize || 20);
+        }
       } catch (err) {
         setRoomsError(err.message || 'Error fetching rooms');
       } finally {
@@ -98,7 +122,7 @@ function DashboardPage() {
       }
     };
     fetchRooms();
-  }, [token]);
+  }, [token, currentPage, pageSize]);
 
   // Get user data from localStorage
   const user = JSON.parse(localStorage.getItem('user')) || { 
@@ -109,27 +133,164 @@ function DashboardPage() {
 
   // No need to filter sessions here; RoomDetail fetches its own sessions
 
+  const fetchRoomSessions = async (roomId) => {
+    setSessionsLoading(true);
+    setSessionsError(null);
+    
+    try {
+      const authToken = localStorage.getItem('accessToken');
+      const response = await fetch(`${BACKEND_BASE_URL}/api/rooms/${roomId}/sessions`, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authToken}`
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch sessions');
+      }
+
+      const data = await response.json();
+      setSessions(data || []);
+    } catch (error) {
+      console.error('Error fetching sessions:', error);
+      setSessionsError(error.message || 'Failed to fetch sessions');
+      setSessions([]);
+    } finally {
+      setSessionsLoading(false);
+    }
+  };
+
   const handleRoomClick = (room) => {
     setSelectedRoom(room);
     setActiveTab('sessions');
+    
+    // Fetch sessions for the selected room
+    fetchRoomSessions(room._id);
   };
 
-  const handleCreateRoom = (e) => {
+  const handleCreateRoom = async (e) => {
     e.preventDefault();
-    // In a real app, you would send this data to your API
-    console.log('Creating room with data:', roomFormData);
-    setShowCreateRoomModal(false);
-    // Reset form data
-    setRoomFormData({ name: '', description: '', defaultMaxStudents: 200 });
+    
+    // Reset error state
+    setCreateRoomError(null);
+    
+    // Set loading state
+    setCreateRoomLoading(true);
+    
+    try {
+      // Get auth token from localStorage
+      const authToken = localStorage.getItem('accessToken');
+      
+      // Make API call to create room
+      const response = await fetch(`${BACKEND_BASE_URL}/api/rooms/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authToken}`
+        },
+        body: JSON.stringify({
+          name: roomFormData.name,
+          description: roomFormData.description,
+          defaultMaxStudents: roomFormData.defaultMaxStudents
+        })
+      });
+      
+      // Check if response is ok
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to create room');
+      }
+      
+      // Parse response data
+      const data = await response.json();
+      // Add new room to rooms list
+      setRooms(prevRooms => [data, ...prevRooms]);
+      
+      // Close the modal
+      setShowCreateRoomModal(false);
+      
+      // Reset form data
+      setRoomFormData({ name: '', description: '', defaultMaxStudents: 200 });
+      
+      // Show success message (you might want to add a toast notification here)
+      console.log('Room created successfully:', data);
+      
+    } catch (error) {
+      // Handle error
+      setCreateRoomError(error.message || 'Failed to create room');
+      console.error('Error creating room:', error);
+    } finally {
+      // Reset loading state
+      setCreateRoomLoading(false);
+    }
   };
 
-  const handleCreateSession = (e) => {
+  const handleCreateSession = async (e) => {
     e.preventDefault();
-    // In a real app, you would send this data to your API
-    console.log('Creating session with data:', { ...sessionFormData, roomId: selectedRoom._id });
-    setShowCreateSessionModal(false);
-    // Reset form data
-    setSessionFormData({ title: '', maxStudents: 200 });
+    
+    // Reset error state
+    setCreateSessionError(null);
+    
+    // Set loading state
+    setCreateSessionLoading(true);
+    
+    try {
+      // Get auth token from localStorage
+      const authToken = localStorage.getItem('accessToken');
+      
+      // Make API call to create session
+      const response = await fetch(`${BACKEND_BASE_URL}/api/rooms/${selectedRoom._id}/sessions`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authToken}`
+        },
+        body: JSON.stringify({
+          title: sessionFormData.title,
+          maxStudents: sessionFormData.maxStudents
+        })
+      });
+      
+      // Check if response is ok
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to create session');
+      }
+      
+      // Parse response data
+      const sessionData = await response.json();
+      
+      // Update sessions state with the new session
+      // Add to the beginning of the array to show it at the top of the list
+      setSessions(prevSessions => [sessionData, ...prevSessions]);
+      
+      console.log('Session created successfully:', sessionData);
+      
+      // Close the modal
+      setShowCreateSessionModal(false);
+      
+      // Reset form data
+      setSessionFormData({ title: '', maxStudents: 200 });
+      
+      // // Optional: Navigate to the new session workspace
+      // navigate('/test/sessionWorkspace', { 
+      //   state: { 
+      //     sessionId: sessionData._id,
+      //     sessionData,
+      //     roomId: sessionData.roomId,
+      //     roomName: selectedRoom ? selectedRoom.name : ''
+      //   } 
+      // });
+      
+    } catch (error) {
+      // Handle error
+      setCreateSessionError(error.message || 'Failed to create session');
+      console.error('Error creating session:', error);
+    } finally {
+      // Reset loading state
+      setCreateSessionLoading(false);
+    }
   };
 
   const handleBackToRooms = () => {
@@ -149,6 +310,43 @@ function DashboardPage() {
     });
   };
 
+  const handleLogout = () => {
+    // Show logout confirmation modal
+    setShowLogoutModal(true);
+  };
+
+  const confirmLogout = () => {
+    // Clear user data and token
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('user');
+    // Clear any other app state if needed
+    
+    // Close the modal
+    setShowLogoutModal(false);
+    
+    // Redirect to login page
+    navigate('/login');
+  };
+
+  // Pagination handlers
+  const handlePageChange = (newPage) => {
+    // Make sure the new page is within valid range
+    const validPage = Math.max(1, Math.min(newPage, totalPages));
+    setCurrentPage(validPage);
+  };
+
+  const handleNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  const handlePreviousPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
   return (
     <div className="bg-white dark:bg-gray-900 min-h-screen">
       {/* Header Section */}
@@ -159,7 +357,18 @@ function DashboardPage() {
               <h1 className="text-3xl font-bold mb-2">Teacher Dashboard</h1>
               <p className="text-blue-100">Welcome back, {user.name}</p>
             </div>
-            <div className="mt-4 md:mt-0">
+            <div className="mt-4 md:mt-0 flex items-center space-x-4">
+              {/* Logout Button */}
+              <button
+                onClick={handleLogout}
+                className="inline-flex items-center px-4 py-2 border border-transparent rounded-lg text-sm font-medium text-red-600 bg-white hover:bg-red-50 shadow-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors duration-150"
+              >
+                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
+                 Sign Out
+              </button>
+              
               {!selectedRoom ? (
                 <button
                   onClick={() => setShowCreateRoomModal(true)}
@@ -242,6 +451,10 @@ function DashboardPage() {
             onBack={handleBackToRooms}
             onCreateSession={() => setShowCreateSessionModal(true)}
             onSessionClick={handleSessionClick}
+            sessions={sessions}
+            setSessions={setSessions}
+            loading={sessionsLoading}
+            error={sessionsError}
           />
         ) : (
           activeTab === 'rooms' ? (
@@ -251,6 +464,11 @@ function DashboardPage() {
               error={roomsError}
               onRoomClick={handleRoomClick}
               onCreateRoom={() => setShowCreateRoomModal(true)}
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={handlePageChange}
+              onNextPage={handleNextPage}
+              onPreviousPage={handlePreviousPage}
             />
           ) : (
             <>
@@ -273,6 +491,8 @@ function DashboardPage() {
         onSubmit={handleCreateRoom}
         formData={roomFormData}
         setFormData={setRoomFormData}
+        isLoading={createRoomLoading}
+        error={createRoomError}
       />
 
       {/* Create Session Modal */}
@@ -283,6 +503,15 @@ function DashboardPage() {
         formData={sessionFormData}
         setFormData={setSessionFormData}
         roomName={selectedRoom?.name}
+        isLoading={createSessionLoading}
+        error={createSessionError}
+      />
+
+      {/* Logout Confirmation Modal */}
+      <LogoutModal 
+        isOpen={showLogoutModal}
+        onClose={() => setShowLogoutModal(false)}
+        onConfirm={confirmLogout}
       />
     </div>
   );

@@ -1,46 +1,8 @@
 
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import SessionList from './SessionList';
 
-const BACKEND_BASE_URL = import.meta.env.VITE_BACKEND_BASE_URL || "http://localhost:2000";
-
-const RoomDetail = ({ room, onBack, onCreateSession, onSessionClick }) => {
-  const [sessions, setSessions] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-
-  // Get auth token from localStorage (or useAuth if available)
-  let token = null;
-  try {
-    token = localStorage.getItem('accessToken');
-  } catch (e) {
-    token = null;
-  }
-
-  useEffect(() => {
-    if (!room?._id) return;
-    const fetchSessions = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const res = await fetch(`${BACKEND_BASE_URL}/api/rooms/${room._id}/sessions`, {
-          headers: {
-            'Content-Type': 'application/json',
-            ...(token ? { 'Authorization': `Bearer ${token}` } : {})
-          },
-        });
-        if (!res.ok) throw new Error('Failed to fetch sessions');
-        const data = await res.json();
-        setSessions(Array.isArray(data) ? data : (data.sessions || []));
-      } catch (err) {
-        setError(err.message || 'Error fetching sessions');
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchSessions();
-  }, [room?._id, token]);
-
+const RoomDetail = ({ room, onBack, onCreateSession, onSessionClick, sessions, setSessions, loading, error }) => {
   return (
     <div>
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 mb-8">

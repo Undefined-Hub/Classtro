@@ -320,7 +320,7 @@ const getSessionParticipants = async (req, res, next) => {
       return res.status(404).json({ error: "Session not found or not owned by you" });
     }
 
-    const participants = await Participant.find({ sessionId: session._id });
+    const participants = await Participant.find({ sessionId: session._id }).populate('userId', '_id name profilePicture');
     res.json(participants);
   } catch (err) {
     next(err);

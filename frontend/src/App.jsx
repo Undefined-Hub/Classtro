@@ -1,4 +1,5 @@
 import { useState, lazy, Suspense } from "react";
+import { HostSessionProvider } from "./context/HostSessionContext.jsx";
 import { Routes, Route, useNavigate, Navigate } from "react-router-dom";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import { useAuth } from "./context/UserContext.jsx";
@@ -45,7 +46,11 @@ function App() {
         {/* Protected routes group */}
         <Route element={<ProtectedRoute roles={["TEACHER"]} />}>
           <Route path="/test/dashboard" element={<DashboardPage />} />
-          <Route path="/test/sessionWorkspace" element={<SessionWorkspace />} />
+          <Route path="/test/sessionWorkspace" element={
+            <HostSessionProvider>
+              <SessionWorkspace />
+            </HostSessionProvider>
+          } />
         </Route>
         <Route element={<ProtectedRoute roles={["STUDENT"]} />}>
           <Route path="/participant/home" element={<ParticipantHome />} />

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useCallback } from 'react';
 import axios from 'axios';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { io } from 'socket.io-client';
@@ -8,6 +8,7 @@ import PollManager from '../../components/Host/sessionWorkspace/PollManager';
 import QAManager from '../../components/Host/sessionWorkspace/QAManager';
 import ParticipantList from '../../components/Host/sessionWorkspace/ParticipantList';
 import QuickActions from '../../components/Host/sessionWorkspace/QuickActions';
+import { useHostSession } from '../../context/HostSessionContext.jsx';
 
 const BACKEND_BASE_URL = import.meta.env.VITE_BACKEND_BASE_URL || "http://localhost:5000";
 const SOCKET_URL = BACKEND_BASE_URL + '/sessions';
@@ -52,19 +53,22 @@ function SessionWorkspace() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // State management
-  const [sessionData, setSessionData] = useState({});
-  const [activeView, setActiveView] = useState('main');
-  const [participantsList, setParticipantsList] = useState([]); // fetched from backend
-  const [questions, setQuestions] = useState(MOCK_QUESTIONS);
-  const [activePoll, setActivePoll] = useState(null);
-  const [pastPolls, setPastPolls] = useState([]);
-  const [showPollForm, setShowPollForm] = useState(false);
-  const [showConfirmClose, setShowConfirmClose] = useState(false);
-  const [broadcastMessage, setBroadcastMessage] = useState('');
-  const [broadcastStatus, setBroadcastStatus] = useState('');
-  const [showBroadcastForm, setShowBroadcastForm] = useState(false);
-  const socketRef = useRef(null);
+  // Use HostSessionContext for all state
+  const {
+    sessionData, setSessionData,
+    activeView, setActiveView,
+    participantsList, setParticipantsList,
+    questions, setQuestions,
+    activePoll, setActivePoll,
+    pastPolls, setPastPolls,
+    showPollForm, setShowPollForm,
+    showConfirmClose, setShowConfirmClose,
+    broadcastMessage, setBroadcastMessage,
+    broadcastStatus, setBroadcastStatus,
+    showBroadcastForm, setShowBroadcastForm,
+    socketRef,
+    resetHostSession,
+  } = useHostSession();
 
   // Load session data from navigation state
   useEffect(() => {
@@ -78,29 +82,45 @@ function SessionWorkspace() {
         ...passedSessionData,
         roomName: roomName 
       });
+      setQuestions(MOCK_QUESTIONS);
+
     } else {
       // Use mock data as fallback
       console.log("Using mock session data (no data passed in navigation)");
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location]);
 
-  // Fetch participants from backend
-  const fetchParticipants = async (sessionCode) => {
-    try {
-      const token = localStorage.getItem('accessToken');
-      const res = await axios.get(
-        `${BACKEND_BASE_URL}/api/sessions/code/${sessionCode}/participants`,
-        {
-          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-          withCredentials: true,
-        }
-      );
-      setParticipantsList(res.data);
-    } catch (err) {
-      console.error('Failed to fetch participants:', err);
-      setParticipantsList([]);
+  
+  // Fetch participants from backend with debouncing
+  const fetchTimeoutRef = useRef(null);
+  
+  const fetchParticipants = useCallback((sessionCode) => {
+    // Clear any existing timeout
+    if (fetchTimeoutRef.current) {
+      clearTimeout(fetchTimeoutRef.current);
     }
-  };
+    
+    // Set a new timeout (300ms debounce)
+    fetchTimeoutRef.current = setTimeout(async () => {
+      try {
+        const token = localStorage.getItem('accessToken');
+        const res = await axios.get(
+          `${BACKEND_BASE_URL}/api/sessions/code/${sessionCode}/participants`,
+          {
+            headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+            withCredentials: true,
+          }
+        );
+        setParticipantsList(res.data);
+      } catch (err) {
+        console.error('Failed to fetch participants:', err);
+        setParticipantsList([]);
+      }
+    }, 300); // 300ms debounce time
+  }, [BACKEND_BASE_URL, setParticipantsList]);
+
+  
 
   // Connect to socket.io backend on mount
   useEffect(() => {
@@ -160,9 +180,14 @@ function SessionWorkspace() {
       socket.off('disconnect');
       socket.disconnect();
       socketRef.current = null;
+      
+      // Clear any pending fetch timeout
+      if (fetchTimeoutRef.current) {
+        clearTimeout(fetchTimeoutRef.current);
+      }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sessionData?.code]);
+  }, [sessionData?.code, fetchParticipants]);
 
   // Broadcast message to all students
   const handleBroadcast = (e) => {
@@ -189,7 +214,6 @@ function SessionWorkspace() {
     const diffMins = Math.floor(diffMs / 60000);
     const hours = Math.floor(diffMins / 60);
     const mins = diffMins % 60;
-    
     return hours > 0 
       ? `${hours}h ${mins}m` 
       : `${mins}m`;
@@ -210,11 +234,9 @@ function SessionWorkspace() {
       'bg-blue-500', 'bg-green-500', 'bg-yellow-500', 'bg-red-500',
       'bg-purple-500', 'bg-pink-500', 'bg-indigo-500', 'bg-teal-500'
     ];
-    
     const hash = name.split('').reduce((acc, char) => {
       return acc + char.charCodeAt(0);
     }, 0);
-    
     return colors[hash % colors.length];
   };
 
@@ -228,7 +250,6 @@ function SessionWorkspace() {
       createdAt: new Date().toISOString(),
       totalVotes: 0
     };
-    
     setActivePoll(newPoll);
     setActiveView('polls');
   };
@@ -266,6 +287,33 @@ function SessionWorkspace() {
       p._id === participantId ? { ...p, kicked: true } : p
     ));
   };
+
+  const handleEndSession = async () => {
+    if (!sessionData?.code) return;
+    try {
+      const baseURL = import.meta.env.VITE_BACKEND_BASE_URL || 'http://localhost:5000';
+      const token = localStorage.getItem('accessToken');
+      const res = await fetch(`${baseURL}/api/sessions/code/${sessionData.code}/close`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        credentials: 'include',
+      });
+      if (!res.ok) throw new Error('Failed to close session');
+      // After successful close, emit socket event
+      const socket = socketRef.current;
+      if (socket) {
+        socket.emit('session:end', { code: sessionData.code });
+      }
+      resetHostSession();
+      navigate('/test/dashboard');
+    } catch (err) {
+      alert('Failed to close session. Please try again.');
+    }
+  }
+
   const sessionDuration = calculateDuration();
   return (
     <div className="bg-white dark:bg-gray-900 h-screen flex flex-col overflow-hidden">
@@ -377,10 +425,7 @@ function SessionWorkspace() {
                 Cancel
               </button>
               <button
-                onClick={() => {
-                  console.log('Session ended');
-                  navigate('/dashboard');
-                }}
+                onClick={handleEndSession}
                 className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800"
               >
                 End Session

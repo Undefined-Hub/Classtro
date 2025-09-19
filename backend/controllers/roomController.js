@@ -41,20 +41,31 @@ const listRooms = async (req, res, next) => {
   try {
     const query = validateInput(listRoomsQuerySchema, req.query);
 
-    const skip = (query.page - 1) * query.limit;
+    // Count total rooms first
+    const total = await Room.countDocuments({ teacherId: req.user.id });
+    
+    // Calculate totalPages
+    const totalPages = Math.max(1, Math.ceil(total / query.limit));
+    
+    // Adjust page if it exceeds totalPages
+    const page = Math.min(query.page, totalPages);
+    
+    // Calculate skip with adjusted page
+    const skip = (page - 1) * query.limit;
 
-    const [rooms, total] = await Promise.all([
-      Room.find({ teacherId: req.user.id })
-        .skip(skip)
-        .limit(query.limit)
-        .sort({ createdAt: -1 }),
-      Room.countDocuments({ teacherId: req.user.id }),
-    ]);
+    // Fetch rooms with adjusted skip
+    const rooms = await Room.find({ teacherId: req.user.id })
+      .skip(skip)
+      .limit(query.limit)
+      .sort({ createdAt: -1 });
 
     res.json({
-      total,
-      page: query.page,
-      limit: query.limit,
+      pagination: {
+        currentPage: page,
+        totalPages,
+        pageSize: query.limit,
+        totalItems: total
+      },
       rooms,
     });
   } catch (err) {
