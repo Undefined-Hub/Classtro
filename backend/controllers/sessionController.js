@@ -221,18 +221,44 @@ const joinSession = async (req, res, next) => {
     // enforce max student count
     const currentCount = await Participant.countDocuments({
       sessionId: session._id,
-      leaveAt: { $exists: false },
+      leftAt: { $exists: false },
     });
 
     if (currentCount >= session.maxStudents) {
       return res.status(403).json({ error: "Session is full" });
     }
+
+    // Prevent duplicate participant records for same user in a session
+    const userId = data.userId || (req.user ? req.user.id : null);
+    let participant = null;
+    if (userId) {
+      participant = await Participant.findOne({
+        sessionId: session._id,
+        userId: userId,
+      });
+      if (participant) {
+        // If participant had left, rejoin (clear leftAt, update joinAt)
+        if (participant.leftAt) {
+          participant.leftAt = undefined;
+          participant.joinedAt = new Date();
+          participant.isActive = true;
+          await participant.save();
+        }
+        return res.status(200).json({
+          message: "Already joined",
+          participantId: participant._id,
+          participantJoinedAt: participant.joinedAt
+        });
+      }
+    }
+
+    // No existing participant, create new
     console.log("Creating participant record for:", req.user);
-    const participant = await Participant.create({
+    participant = await Participant.create({
       roomId: session.roomId || null,
       sessionId: session._id,
       name: data.name,
-      userId: data.userId || (req.user ? req.user.id : null),
+      userId: userId,
       joinAt: new Date(),
       ip: req.ip,
       deviceInfo: req.headers["user-agent"],
@@ -242,6 +268,7 @@ const joinSession = async (req, res, next) => {
     res.status(201).json({
       message: "Joined successfully",
       participantId: participant._id,
+      participantJoinedAt: participant.joinedAt
     });
   } catch (err) {
     next(err);
@@ -268,7 +295,7 @@ const leaveSession = async (req, res, next) => {
         sessionId: session._id,
         leftAt: { $exists: false },
       },
-      { $set: { leftAt: new Date() } }
+      { $set: { leftAt: new Date(), isActive: false } }
     );
 
     res.json({ message: "Left session" });

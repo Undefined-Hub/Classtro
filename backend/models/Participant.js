@@ -11,8 +11,8 @@ const ParticipantSchema = new mongoose.Schema({
   joinedAt: { type: Date, default: Date.now },
   leftAt: { type: Date },
 
+  isActive: { type: Boolean, default: true }, // true = currently in session
   kicked: { type: Boolean, default: false },
-
 
   ip: String,
   deviceInfo: String,
