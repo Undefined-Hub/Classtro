@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import axios from 'axios';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { io } from 'socket.io-client';
 import SessionHeader from '../../components/Host/sessionWorkspace/SessionHeader';
@@ -11,13 +12,7 @@ import QuickActions from '../../components/Host/sessionWorkspace/QuickActions';
 const BACKEND_BASE_URL = import.meta.env.VITE_BACKEND_BASE_URL || "http://localhost:5000";
 const SOCKET_URL = BACKEND_BASE_URL + '/sessions';
 console.log("Socket URL:", SOCKET_URL);
-// Mock participants data
-const MOCK_PARTICIPANTS = [
-  { id: 'p1', name: 'Alice Johnson', avatar: null, joinedAt: new Date().toISOString(), isActive: true },
-  { id: 'p2', name: 'Bob Smith', avatar: null, joinedAt: new Date().toISOString(), isActive: true },
-  { id: 'p3', name: 'Charlie Davis', avatar: null, joinedAt: new Date().toISOString(), isActive: true },
-  { id: 'p4', name: 'Diana Wilson', avatar: null, joinedAt: new Date().toISOString(), isActive: false },
-];
+// Participants state will be fetched from backend
 
 // Mock questions data
 const MOCK_QUESTIONS = [
@@ -56,11 +51,11 @@ const MOCK_SESSION_DATA = {
 function SessionWorkspace() {
   const navigate = useNavigate();
   const location = useLocation();
-  
+
   // State management
-  const [sessionData, setSessionData] = useState(MOCK_SESSION_DATA);
+  const [sessionData, setSessionData] = useState({});
   const [activeView, setActiveView] = useState('main');
-  const [participants, setParticipants] = useState(MOCK_PARTICIPANTS);
+  const [participantsList, setParticipantsList] = useState([]); // fetched from backend
   const [questions, setQuestions] = useState(MOCK_QUESTIONS);
   const [activePoll, setActivePoll] = useState(null);
   const [pastPolls, setPastPolls] = useState([]);
@@ -89,20 +84,48 @@ function SessionWorkspace() {
     }
   }, [location]);
 
+  // Fetch participants from backend
+  const fetchParticipants = async (sessionCode) => {
+    try {
+      const token = localStorage.getItem('accessToken');
+      const res = await axios.get(
+        `${BACKEND_BASE_URL}/api/sessions/code/${sessionCode}/participants`,
+        {
+          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+          withCredentials: true,
+        }
+      );
+      setParticipantsList(res.data);
+    } catch (err) {
+      console.error('Failed to fetch participants:', err);
+      setParticipantsList([]);
+    }
+  };
+
   // Connect to socket.io backend on mount
   useEffect(() => {
     if (!sessionData?.code) return;
+    // Fetch participants initially
+    fetchParticipants(sessionData.code);
     // Connect only once
     if (!socketRef.current) {
+      const token = localStorage.getItem('accessToken');
       socketRef.current = io(SOCKET_URL, {
-        transports: ['websocket'],
         autoConnect: true,
+        withCredentials: true,
+        extraHeaders: token ? { Authorization: `Bearer ${token}` } : undefined,
       });
     }
     const socket = socketRef.current;
     // Log teacher socket ID
     socket.on('connect', () => {
       console.log('My socket ID (teacher):', socket.id);
+    });
+    socket.on('connect_error', (err) => {
+      console.error('[Teacher] connect_error:', err.message);
+    });
+    socket.on('disconnect', (reason) => {
+      console.log('[Teacher] disconnected:', reason);
     });
     // Teacher joins session for presence
     socket.emit('join-session', {
@@ -113,6 +136,12 @@ function SessionWorkspace() {
     socket.on('room:members', (data) => {
       console.log('Room members (teacher):', data.sockets);
     });
+    // Listen for participant count updates
+    socket.on('participants:update', (data) => {
+      console.log('[Host] participants:update:', data);
+      // Refetch participants list whenever count changes
+      fetchParticipants(sessionData.code);
+    });
     // Optionally listen for broadcasted messages (if needed)
     socket.on('broadcast:message', (payload) => {
       // You can handle incoming broadcast messages here if needed
@@ -120,9 +149,19 @@ function SessionWorkspace() {
       console.log('Broadcast received:', payload);
     });
     return () => {
+      try {
+        socket.emit('leave-session', { code: sessionData.code, participantId: 'teacher1' });
+      } catch {}
+      socket.off('room:members');
+      socket.off('participants:update');
+      socket.off('broadcast:message');
+      socket.off('connect');
+      socket.off('connect_error');
+      socket.off('disconnect');
       socket.disconnect();
       socketRef.current = null;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionData?.code]);
 
   // Broadcast message to all students
@@ -221,10 +260,10 @@ function SessionWorkspace() {
     ));
   };
 
-  // Handle kicking a participant
+  // Handle kicking a participant (UI only, backend action not implemented here)
   const handleKickParticipant = (participantId) => {
-    setParticipants(participants.map(p => 
-      p.id === participantId ? { ...p, isActive: false } : p
+    setParticipantsList(participantsList.map(p => 
+      p._id === participantId ? { ...p, kicked: true } : p
     ));
   };
   const sessionDuration = calculateDuration();
@@ -252,7 +291,7 @@ function SessionWorkspace() {
           {activeView === 'main' && (
             <MainContent 
               sessionData={sessionData}
-              participants={participants}
+              participants={participantsList}
               questions={questions}
               pastPolls={pastPolls}
               activePoll={activePoll}
@@ -286,7 +325,7 @@ function SessionWorkspace() {
 
         {/* Participants Sidebar */}
         <ParticipantList 
-          participants={participants}
+          participants={participantsList}
           sessionData={sessionData}
           questions={questions}
           onKickParticipant={handleKickParticipant}

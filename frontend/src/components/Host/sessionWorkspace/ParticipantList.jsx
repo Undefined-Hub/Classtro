@@ -29,7 +29,7 @@ const ParticipantList = ({
       <div className="flex-1 overflow-y-auto p-2">
         {participants.filter(p => p.isActive).map((participant) => (
           <div 
-            key={participant.id} 
+            key={participant._id} 
             className="flex items-center justify-between p-2 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg group"
           >
             <div className="flex items-center">
@@ -71,7 +71,7 @@ const ParticipantList = ({
             </div>
             {participants.filter(p => !p.isActive).map((participant) => (
               <div 
-                key={participant.id} 
+                key={participant._id} 
                 className="flex items-center p-2 opacity-60"
               >
                 {participant.avatar ? (
