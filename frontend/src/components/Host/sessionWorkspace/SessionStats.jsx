@@ -1,11 +1,11 @@
-import React from 'react';
+import React from "react";
 
-const SessionStats = ({ 
-  activeParticipantsCount, 
-  questions, 
-  pastPolls, 
+const SessionStats = ({
+  activeParticipantsCount,
+  questions,
+  pastPolls,
   calculateDuration,
-  activePoll
+  activePoll,
 }) => {
   return (
     <div className="bg-white dark:bg-gray-700 rounded-lg shadow-md p-4">
@@ -31,11 +31,9 @@ const SessionStats = ({
         </div>
         <div className="bg-gray-50 dark:bg-gray-800 p-2 rounded-lg">
           <div className="text-xl font-bold text-purple-600 dark:text-purple-400 mb-1">
-             {pastPolls.length + (activePoll ? 1 : 0)}
+            {pastPolls.length + (activePoll ? 1 : 0)}
           </div>
-          <div className="text-xs text-gray-500 dark:text-gray-400">
-            Polls
-          </div>
+          <div className="text-xs text-gray-500 dark:text-gray-400">Polls</div>
         </div>
         <div className="bg-gray-50 dark:bg-gray-800 p-2 rounded-lg">
           <div className="text-xl font-bold text-yellow-600 dark:text-yellow-400 mb-1">

@@ -87,7 +87,7 @@ function Details() {
             <img className="w-full hidden dark:block" src="https://flowbite.s3.amazonaws.com/blocks/marketing-ui/cta/cta-dashboard-mockup-dark.svg" alt="dashboard image"/>
             <div className="mt-4 md:mt-0">
                 <h2 className="mb-4 text-4xl tracking-tight font-extrabold text-gray-900 dark:text-white">Building Connected Classrooms</h2>
-                <p className="mb-6 font-light text-gray-500 md:text-lg dark:text-gray-400">lasstro makes it simple to connect students, teachers, and communities with features like group discussions, anonymous polls, real-time Q&A, and session analytics.
+                <p className="mb-6 font-light text-gray-500 md:text-lg dark:text-gray-400">Classtro makes it simple to connect students, teachers, and communities with features like group discussions, anonymous polls, real-time Q&A, and session analytics.
 
               Whether you're running a large lecture or a small study group, Classtro helps make learning interactive and inclusive.
               </p>

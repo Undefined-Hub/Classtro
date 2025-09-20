@@ -145,7 +145,7 @@ const ParticipantSession = () => {
                   {sessionData?.session?.title || 'Session'}
                 </p>
                 <p className="text-xs text-gray-500 dark:text-gray-400">
-                  Code: {sessionData?.joinCode|| 'N/A'}
+                  Code: {sessionData?.joinCode || 'N/A'}
                 </p>
                 <p className="text-xs text-gray-500 dark:text-gray-400">
                   Host: {sessionData?.session?.teacherId?.name || 'Unknown'}
