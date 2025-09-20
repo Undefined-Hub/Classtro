@@ -57,6 +57,7 @@ passport.use(
       try {
         // Check if user already exists
         let user = await User.findOne({ email: profile.emails[0].value });
+        let isNewUser = false;
 
         if (!user) {
           // ? First-time Google login → Create user
@@ -65,10 +66,11 @@ passport.use(
             googleId: profile.id,
             email: profile.emails[0].value,
             profilePicture: profile.photos[0].value,
-            role: "STUDENT", // Or based on your logic
+            role: "UNKNOWN", // ? will be updated after email verification
             authProvider: "GOOGLE",
             status: "ACTIVE",
           });
+          isNewUser = true;
         }
 
         if (user.authProvider !== "GOOGLE") {
@@ -77,6 +79,8 @@ passport.use(
           });
         }
 
+        // Add isNewUser flag to user object for use in callback
+        user.isNewUser = isNewUser;
         done(null, user);
       } catch (err) {
         done(err, null);
