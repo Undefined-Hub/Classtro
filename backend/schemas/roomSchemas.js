@@ -9,16 +9,8 @@ const createRoomSchema = z.object({
 
 // Schema for pagination query (?page=1&limit=10)
 const listRoomsQuerySchema = z.object({
-  page: z
-    .string()
-    .regex(/^\d+$/)
-    .transform(Number)
-    .default("1"),
-  limit: z
-    .string()
-    .regex(/^\d+$/)
-    .transform(Number)
-    .default("10"),
+  page: z.string().regex(/^\d+$/).transform(Number).default("1"),
+  limit: z.string().regex(/^\d+$/).transform(Number).default("10"),
 });
 
 // Schema for validating :roomId param
@@ -38,12 +30,10 @@ const listRoomSessionsQuerySchema = z.object({
   active: z
     .string()
     .optional()
-    .transform((val) => (val === "true" ? true : val === "false" ? false : undefined)),
-  limit: z
-    .string()
-    .regex(/^\d+$/)
-    .transform(Number)
-    .default("10"),
+    .transform((val) =>
+      val === "true" ? true : val === "false" ? false : undefined,
+    ),
+  limit: z.string().regex(/^\d+$/).transform(Number).default("10"),
 });
 
 module.exports = {
@@ -51,5 +41,5 @@ module.exports = {
   listRoomsQuerySchema,
   roomIdParamSchema,
   updateRoomSchema,
-  listRoomSessionsQuerySchema
+  listRoomSessionsQuerySchema,
 };

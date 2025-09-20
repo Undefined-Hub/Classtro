@@ -9,7 +9,7 @@ const router = Router();
 
 router.use("/api/auth", authRoutes);
 router.use("/api/util", authenticateJWT, utilRoutes);
-router.use("/api/rooms", authenticateJWT, roomRoutes); 
-router.use("/api/sessions" , sessionRoutes); 
+router.use("/api/rooms", authenticateJWT, roomRoutes);
+router.use("/api/sessions", sessionRoutes);
 
 module.exports = router;

@@ -12,7 +12,7 @@ const {
   updateSessionSchema,
   joinSessionSchema,
   leaveSessionSchema,
-  participantIdParamSchema
+  participantIdParamSchema,
 } = require("../schemas/sessionSchema");
 
 // Helper: generate random session code
@@ -60,7 +60,9 @@ const createSessionInRoom = async (req, res, next) => {
       teacherId: req.user.id,
     });
     if (!room) {
-      return res.status(404).json({ error: "Room not found or not owned by you" });
+      return res
+        .status(404)
+        .json({ error: "Room not found or not owned by you" });
     }
 
     const code = generateCode();
@@ -118,7 +120,9 @@ const getSessionById = async (req, res, next) => {
     });
 
     if (!session) {
-      return res.status(404).json({ error: "Session not found or not owned by you" });
+      return res
+        .status(404)
+        .json({ error: "Session not found or not owned by you" });
     }
 
     res.json(session);
@@ -161,11 +165,13 @@ const closeSession = async (req, res, next) => {
     const session = await Session.findOneAndUpdate(
       { code: params.code, teacherId: req.user.id },
       { $set: { isActive: false, endAt: new Date() } },
-      { new: true }
+      { new: true },
     );
 
     if (!session) {
-      return res.status(404).json({ error: "Session not found or not owned by you" });
+      return res
+        .status(404)
+        .json({ error: "Session not found or not owned by you" });
     }
 
     res.json({ message: "Session closed successfully", session });
@@ -186,11 +192,13 @@ const updateSession = async (req, res, next) => {
     const session = await Session.findOneAndUpdate(
       { _id: params.sessionId, teacherId: req.user.id },
       { $set: { ...data, updatedAt: new Date() } },
-      { new: true }
+      { new: true },
     );
 
     if (!session) {
-      return res.status(404).json({ error: "Session not found or not owned by you" });
+      return res
+        .status(404)
+        .json({ error: "Session not found or not owned by you" });
     }
 
     res.json(session);
@@ -205,7 +213,6 @@ const updateSession = async (req, res, next) => {
  */
 const joinSession = async (req, res, next) => {
   try {
-
     const params = validateInput(sessionCodeParamSchema, req.params);
     const data = validateInput(joinSessionSchema, req.body);
     console.log("Join request data:", data);
@@ -244,17 +251,17 @@ const joinSession = async (req, res, next) => {
           participant.isActive = true;
           await participant.save();
         }
-        
+
         // Get teacher data for the session
         const populatedSession = await Session.findById(session._id)
-          .select('_id title code')
-          .populate('teacherId', '_id name');
-          
+          .select("_id title code")
+          .populate("teacherId", "_id name");
+
         return res.status(200).json({
           message: "Already joined",
           participantId: participant._id,
           participantJoinedAt: participant.joinedAt,
-          session: populatedSession
+          session: populatedSession,
         });
       }
     }
@@ -273,15 +280,15 @@ const joinSession = async (req, res, next) => {
 
     // Get teacher data for the session
     const populatedSession = await Session.findById(session._id)
-      .select('_id title code')
-      .populate('teacherId', '_id name');
+      .select("_id title code")
+      .populate("teacherId", "_id name");
 
     // Later: issue short-lived join token for sockets
     res.status(201).json({
       message: "Joined successfully",
       participantId: participant._id,
       participantJoinedAt: participant.joinedAt,
-      session: populatedSession
+      session: populatedSession,
     });
   } catch (err) {
     next(err);
@@ -308,7 +315,7 @@ const leaveSession = async (req, res, next) => {
         sessionId: session._id,
         leftAt: { $exists: false },
       },
-      { $set: { leftAt: new Date(), isActive: false } }
+      { $set: { leftAt: new Date(), isActive: false } },
     );
 
     res.json({ message: "Left session" });
@@ -330,10 +337,14 @@ const getSessionParticipants = async (req, res, next) => {
       teacherId: req.user.id,
     });
     if (!session) {
-      return res.status(404).json({ error: "Session not found or not owned by you" });
+      return res
+        .status(404)
+        .json({ error: "Session not found or not owned by you" });
     }
 
-    const participants = await Participant.find({ sessionId: session._id }).populate('userId', '_id name profilePicture');
+    const participants = await Participant.find({
+      sessionId: session._id,
+    }).populate("userId", "_id name profilePicture");
     res.json(participants);
   } catch (err) {
     next(err);
@@ -363,7 +374,9 @@ const getParticipantById = async (req, res, next) => {
           teacherId: req.user.id,
         })))
     ) {
-      return res.status(403).json({ error: "Not authorized to view this participant" });
+      return res
+        .status(403)
+        .json({ error: "Not authorized to view this participant" });
     }
 
     res.json(participant);
@@ -375,8 +388,9 @@ const getParticipantById = async (req, res, next) => {
 // GET /api/sessions/monitor
 const monitorSessions = async (req, res, next) => {
   try {
-    const sessions = await Session.find({ isActive: true })
-      .select("title code createdAt");
+    const sessions = await Session.find({ isActive: true }).select(
+      "title code createdAt",
+    );
 
     // for each session, count participants
     const withCounts = await Promise.all(
@@ -386,7 +400,7 @@ const monitorSessions = async (req, res, next) => {
           leaveAt: { $exists: false },
         });
         return { ...s.toObject(), activeParticipants: count };
-      })
+      }),
     );
 
     res.json(withCounts);
@@ -394,7 +408,6 @@ const monitorSessions = async (req, res, next) => {
     next(err);
   }
 };
-
 
 module.exports = {
   createSessionStandalone,
@@ -408,5 +421,5 @@ module.exports = {
   leaveSession,
   getSessionParticipants,
   getParticipantById,
-  monitorSessions
+  monitorSessions,
 };

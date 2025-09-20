@@ -5,15 +5,19 @@ This document explains how we will handle **versioning, releases, and CI/CD** fo
 ---
 
 ## 🔹 Versioning Standard
+
 We follow **Semantic Versioning (SemVer)**:
+
 ```
 MAJOR.MINOR.PATCH
 ```
+
 - **MAJOR** → breaking changes (e.g., change architecture)
 - **MINOR** → new features (e.g., add analytics dashboard)
 - **PATCH** → bug fixes or small improvements (e.g., fix socket reconnect)
 
 👉 Example:
+
 - `v0.4.0` → Polls + Q&A module
 - `v0.4.1` → Bugfix in Q&A
 - `v0.5.0` → Quizzes added
@@ -22,6 +26,7 @@ MAJOR.MINOR.PATCH
 ---
 
 ## 🔹 When to Release
+
 - Merge **features** into `development` only.
 - After **2–3 stable features**, open a PR from `development` → `main`.
 - Once merged, tag that commit as a release version.
@@ -31,6 +36,7 @@ MAJOR.MINOR.PATCH
 ---
 
 ## 🔹 How to Create a Tag & Release
+
 1. Checkout `main` and pull latest:
    ```bash
    git checkout main
@@ -49,6 +55,7 @@ MAJOR.MINOR.PATCH
 ---
 
 ## 🔹 CI/CD Workflow
+
 - **CI (Continuous Integration):**
   - Runs on all PRs to `development`.
   - Checks lint + tests to ensure code works before merging.
@@ -58,6 +65,7 @@ MAJOR.MINOR.PATCH
   - Automatically deploys stable version (frontend to Netlify/Vercel, backend to Render/AWS).
 
 👉 Flow:
+
 ```
 feature/* → PR → CI + Code Review → merge → development
 
@@ -83,14 +91,15 @@ F --> G[Tag + Release]
 G --> H[CD / Deployment]
 end
 ```
+
 ### Description
+
 1. **Feature Branch (`feature/*`)**: Developers create feature branches for new functionality.
 2. **Pull Request (PR) to Development**: Features are merged into `development` after CI checks and code review.
 3. **Development Milestone**: Once features accumulate or a milestone is reached, `development` is prepared for main release.
 4. **Pull Request (PR) to Main**: The development branch is reviewed, CI runs again, and then merged into `main`.
 5. **Tag & Release**: A new release tag is created in `main`.
 6. **Continuous Deployment (CD)**: Code from `main` is deployed to production automatically.
-
 
 This workflow ensures structured development, review, testing, and deployment.
 )

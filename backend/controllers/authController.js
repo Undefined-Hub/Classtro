@@ -16,7 +16,7 @@ const userRegisterSchema = z.object({
   password: z.string().min(8, "Password must contain at least 8 characters"),
   role: z.enum(
     ["Employee", "Manager"],
-    "Role must be either 'Employee' or 'Manager'"
+    "Role must be either 'Employee' or 'Manager'",
   ),
 });
 
@@ -216,7 +216,7 @@ const refreshToken = async (req, res) => {
     const newAccessToken = generateToken(
       { user: { id: user.id } },
       process.env.JWT_SECRET,
-      { expiresIn: "15m" }
+      { expiresIn: "15m" },
     );
     res.status(200).json({ accessToken: newAccessToken });
   } catch (error) {
@@ -227,10 +227,140 @@ const refreshToken = async (req, res) => {
   }
 };
 
+const setRole = async (req, res) => {
+  try {
+    const { email, role } = req.body;
+    if (!email || !role) {
+      return res.status(400).json({ message: "Email and role are required." });
+    }
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ message: "User not found." });
+    }
+    user.role = role;
+    await user.save();
+    res.status(200).json({ message: "Role updated successfully.", role });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// ! OTP Generation for Email Verification
+const generateOTP = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: "Email is required",
+      });
+    }
+
+    const result = await otpService.generateAndSendOTP(email);
+
+    if (result.success) {
+      res.status(200).json({
+        success: true,
+        message: result.message,
+        expiresIn: result.expiresIn,
+      });
+    } else {
+      res.status(400).json({
+        success: false,
+        message: result.message,
+        error: result.error,
+      });
+    }
+  } catch (error) {
+    console.error("Error in generateOTP:", error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: error.message,
+    });
+  }
+};
+
+// ! OTP Verification
+const verifyEmail = async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+
+    if (!email || !otp) {
+      return res.status(400).json({
+        success: false,
+        message: "Email and OTP are required",
+      });
+    }
+
+    const result = await otpService.verifyOTP(email, otp);
+
+    if (result.success) {
+      res.status(200).json({
+        success: true,
+        message: result.message,
+      });
+    } else {
+      res.status(400).json({
+        success: false,
+        message: result.message,
+      });
+    }
+  } catch (error) {
+    console.error("Error in verifyEmail:", error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: error.message,
+    });
+  }
+};
+
+// ! Resend OTP
+const resendOTP = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: "Email is required",
+      });
+    }
+
+    const result = await otpService.resendOTP(email);
+
+    if (result.success) {
+      res.status(200).json({
+        success: true,
+        message: result.message,
+        expiresIn: result.expiresIn,
+      });
+    } else {
+      res.status(400).json({
+        success: false,
+        message: result.message,
+      });
+    }
+  } catch (error) {
+    console.error("Error in resendOTP:", error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: error.message,
+    });
+  }
+};
+
 module.exports = {
   loginUser,
   logoutUser,
   registerUser,
+  setRole,
   googleAuthCallback,
   refreshToken,
+  generateOTP,
+  verifyEmail,
+  resendOTP,
 };

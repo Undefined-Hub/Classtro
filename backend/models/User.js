@@ -9,7 +9,7 @@ const UserSchema = new mongoose.Schema(
     googleId: { type: String, unique: true, sparse: true }, // ? For Google OAuth users
     role: {
       type: String,
-      enum: ["TEACHER", "STUDENT", "ADMIN"],
+      enum: ["TEACHER", "STUDENT", "ADMIN", "UNKNOWN"],
       required: true,
     },
     profilePicture: { type: String, default: "" },
@@ -26,11 +26,20 @@ const UserSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
-    
+
+    // ! Email verification fields
+    emailVerified: { type: Boolean, default: false },
+    emailVerifiedAt: { type: Date },
+
+    // ! OTP fields
+    otp: { type: Number },
+    otpExpiry: { type: Date },
+    otpAttempts: { type: Number, default: 0 },
+
     createdAt: { type: Date, default: Date.now },
     updatedAt: { type: Date, default: Date.now },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 module.exports = mongoose.model("User", UserSchema);

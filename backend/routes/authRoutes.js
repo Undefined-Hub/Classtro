@@ -4,9 +4,13 @@ const dotenv = require("dotenv");
 const {
   loginUser,
   logoutUser,
+  setRole,
   registerUser,
   googleAuthCallback,
   refreshToken,
+  generateOTP,
+  verifyEmail,
+  resendOTP,
 } = require("../controllers/authController.js");
 
 const router = Router();
@@ -16,11 +20,15 @@ dotenv.config();
 router.post("/login", (req, res, next) => {
   passport.authenticate("local", { session: false }, (err, user, info) => {
     if (err) {
-      return res.status(500).json({ message: err.message || "Authentication error" });
+      return res
+        .status(500)
+        .json({ message: err.message || "Authentication error" });
     }
     if (!user) {
       // info may contain message from LocalStrategy
-      return res.status(401).json({ message: (info && info.message) || "Unauthorized" });
+      return res
+        .status(401)
+        .json({ message: (info && info.message) || "Unauthorized" });
     }
     // Attach user to req and proceed to controller
     req.user = user;
@@ -34,7 +42,7 @@ router.post("/register", registerUser);
 
 router.get(
   "/google",
-  passport.authenticate("google", { scope: ["profile", "email"] })
+  passport.authenticate("google", { scope: ["profile", "email"] }),
 );
 
 router.get(
@@ -43,9 +51,16 @@ router.get(
     session: false,
     failureRedirect: "http://localhost:5173/failure",
   }),
-  googleAuthCallback
+  googleAuthCallback,
 );
 
 router.post("/refresh", refreshToken);
+
+router.post("/set-role", setRole);
+
+// ! OTP Routes
+router.post("/generate-otp", generateOTP);
+router.post("/verify-email", verifyEmail);
+router.post("/resend-otp", resendOTP);
 
 module.exports = router;

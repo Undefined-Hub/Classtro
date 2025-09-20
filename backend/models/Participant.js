@@ -2,7 +2,11 @@
 const mongoose = require("mongoose");
 
 const ParticipantSchema = new mongoose.Schema({
-  sessionId: { type: mongoose.Schema.Types.ObjectId, ref: "Session", required: true },
+  sessionId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Session",
+    required: true,
+  },
   roomId: { type: mongoose.Schema.Types.ObjectId, ref: "Room", required: true },
 
   userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null }, // null = guest

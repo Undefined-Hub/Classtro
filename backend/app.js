@@ -1,15 +1,15 @@
-const express = require('express');
-const morgan = require('morgan');
-const cors = require('cors');
-const http = require('http');
-const { Server } = require('socket.io');
-const { connectDB } = require('./config/db');
-const { errorHandler } = require('./middlewares/errorHandler');
-const cookieParser = require('cookie-parser');
-const passport = require('passport');
-const router = require('./routes');
-require('./config/Passport'); 
-require('dotenv').config();
+const express = require("express");
+const morgan = require("morgan");
+const cors = require("cors");
+const http = require("http");
+const { Server } = require("socket.io");
+const { connectDB } = require("./config/db");
+const { errorHandler } = require("./middlewares/errorHandler");
+const cookieParser = require("cookie-parser");
+const passport = require("passport");
+const router = require("./routes");
+require("./config/Passport");
+require("dotenv").config();
 
 const app = express();
 const server = http.createServer(app);
@@ -22,26 +22,25 @@ app.use(
   cors({
     origin: process.env.CLIENT_ORIGIN || "http://localhost:5173",
     credentials: true,
-  })
+  }),
 );
 app.use(express.json());
-app.use(morgan('dev'));
+app.use(morgan("dev"));
 app.use(errorHandler);
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(passport.initialize());
 app.use(router);
 
-app.get('/', (req, res) => {
-  res.send('Welcome to the Classtro API');
+app.get("/", (req, res) => {
+  res.send("Welcome to the Classtro API");
 });
 
-app.get('/test-error', (req, res, next) => {
-  const error = new Error('This is a test error!');
+app.get("/test-error", (req, res, next) => {
+  const error = new Error("This is a test error!");
   error.status = 400;
   next(error);
 });
-
 
 // ✅ Export the server instead of app
 module.exports = { server };

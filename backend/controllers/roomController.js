@@ -17,7 +17,7 @@ const {
  * Teacher only
  */
 const createRoom = async (req, res, next) => {
-   try {
+  try {
     const data = validateInput(createRoomSchema, req.body);
 
     const room = await Room.create({
@@ -43,13 +43,13 @@ const listRooms = async (req, res, next) => {
 
     // Count total rooms first
     const total = await Room.countDocuments({ teacherId: req.user.id });
-    
+
     // Calculate totalPages
     const totalPages = Math.max(1, Math.ceil(total / query.limit));
-    
+
     // Adjust page if it exceeds totalPages
     const page = Math.min(query.page, totalPages);
-    
+
     // Calculate skip with adjusted page
     const skip = (page - 1) * query.limit;
 
@@ -64,7 +64,7 @@ const listRooms = async (req, res, next) => {
         currentPage: page,
         totalPages,
         pageSize: query.limit,
-        totalItems: total
+        totalItems: total,
       },
       rooms,
     });
@@ -78,7 +78,7 @@ const listRooms = async (req, res, next) => {
  * GET /api/rooms/:roomId
  */
 const getRoomById = async (req, res, next) => {
-   try {
+  try {
     const params = validateInput(roomIdParamSchema, req.params);
 
     const room = await Room.findById(params.roomId);
@@ -100,14 +100,14 @@ const getRoomById = async (req, res, next) => {
  * PATCH /api/rooms/:roomId
  */
 const updateRoom = async (req, res, next) => {
- try {
+  try {
     const params = validateInput(roomIdParamSchema, req.params);
     const data = validateInput(updateRoomSchema, req.body);
 
     const room = await Room.findOneAndUpdate(
       { _id: params.roomId, teacherId: req.user.id },
       { $set: data, updatedAt: new Date() },
-      { new: true }
+      { new: true },
     );
 
     if (!room) {
@@ -117,7 +117,7 @@ const updateRoom = async (req, res, next) => {
     }
 
     res.json(room);
-  }catch (err) {
+  } catch (err) {
     next(err);
   }
 };
@@ -127,13 +127,13 @@ const updateRoom = async (req, res, next) => {
  * DELETE /api/rooms/:roomId
  */
 const deleteRoom = async (req, res, next) => {
- try {
+  try {
     const params = validateInput(roomIdParamSchema, req.params);
 
     const room = await Room.findOneAndUpdate(
       { _id: params.roomId, teacherId: req.user.id },
       { $set: { archivedAt: new Date() } },
-      { new: true }
+      { new: true },
     );
 
     if (!room) {
@@ -148,7 +148,6 @@ const deleteRoom = async (req, res, next) => {
   }
 };
 
-
 // PATCH /api/rooms/:roomId/unarchive
 const unarchiveRoom = async (req, res, next) => {
   try {
@@ -157,7 +156,7 @@ const unarchiveRoom = async (req, res, next) => {
     const room = await Room.findOneAndUpdate(
       { _id: params.roomId, teacherId: req.user.id },
       { $set: { archivedAt: null } },
-      { new: true }
+      { new: true },
     );
 
     if (!room) {
@@ -199,8 +198,6 @@ const hardDeleteRoom = async (req, res, next) => {
   }
 };
 
-
-
 /**
  * List sessions of a room (teacher or student)
  * GET /api/rooms/:roomId/sessions
@@ -233,5 +230,5 @@ module.exports = {
   deleteRoom,
   unarchiveRoom,
   listRoomSessions,
-  hardDeleteRoom
+  hardDeleteRoom,
 };

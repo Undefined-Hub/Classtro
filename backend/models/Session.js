@@ -30,7 +30,7 @@ const SessionSchema = new mongoose.Schema(
     updatedAt: { type: Date, default: Date.now },
     archivedAt: { type: Date },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 SessionSchema.index({ roomId: 1, isActive: 1 });

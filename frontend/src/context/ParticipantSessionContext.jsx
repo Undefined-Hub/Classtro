@@ -1,6 +1,12 @@
-import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 
-export const STORAGE_KEY = 'participantSession';
+export const STORAGE_KEY = "participantSession";
 
 const ParticipantSessionContext = createContext(null);
 
@@ -28,7 +34,10 @@ export const ParticipantSessionProvider = ({ children }) => {
 
   const clearSession = () => setSessionData(null);
 
-  const value = useMemo(() => ({ sessionData, setSessionData, clearSession }), [sessionData]);
+  const value = useMemo(
+    () => ({ sessionData, setSessionData, clearSession }),
+    [sessionData],
+  );
 
   return (
     <ParticipantSessionContext.Provider value={value}>
@@ -39,6 +48,9 @@ export const ParticipantSessionProvider = ({ children }) => {
 
 export const useParticipantSession = () => {
   const ctx = useContext(ParticipantSessionContext);
-  if (!ctx) throw new Error('useParticipantSession must be used within ParticipantSessionProvider');
+  if (!ctx)
+    throw new Error(
+      "useParticipantSession must be used within ParticipantSessionProvider",
+    );
   return ctx;
 };
