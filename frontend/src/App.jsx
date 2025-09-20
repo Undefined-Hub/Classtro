@@ -12,6 +12,8 @@ const ParticipantHome = lazy(() => import("./pages/Participant/ParticipantHome")
 const ParticipantSession = lazy(() => import("./pages/Participant/ParticipantSession"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const Unauthorized = lazy(() => import("./pages/Unauthorized"));
+const Register = lazy(() => import("./pages/Register"));
+const VerifyAndRole = lazy(() => import("./pages/VerifyAndRole"));
 
 const BACKEND_BASE_URL = import.meta.env.VITE_BACKEND_BASE_URL || "http://localhost:2000";
 // console.log("Backend Base URL:", BACKEND_BASE_URL);
@@ -43,6 +45,8 @@ function App() {
       <Routes>
         <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Login onLogin={handleLogin} />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/verify" element={<VerifyAndRole />} />
         {/* Protected routes group */}
         <Route element={<ProtectedRoute roles={["TEACHER"]} />}>
           <Route path="/test/dashboard" element={<DashboardPage />} />

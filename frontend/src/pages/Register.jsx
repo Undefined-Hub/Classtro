@@ -1,66 +1,61 @@
-
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/UserContext.jsx";
 import safeToast from '../utils/toastUtils';
 
-function Login({ onLogin }) {
-  const navigate = useNavigate();
+export default function Register() {
   const { login } = useAuth();
   const BACKEND_URL = import.meta.env.VITE_BACKEND_BASE_URL || "http://localhost:3000";
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
+  const [form, setForm] = useState({ name: "", username: "", email: "", password: "" });
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const navigate = useNavigate();
+
+  // Scroll to top on mount
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, []);
+
+  const handleChange = (e) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
-    const pending = safeToast.loading('Signing in...');
+    setSuccess("");
+    const pendingToastId = safeToast.loading('Registering...');
     try {
-      const res = await fetch(`${BACKEND_URL}/api/auth/login`, {
+      const res = await fetch(`${BACKEND_URL}/api/auth/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ email: username, password }),
+        body: JSON.stringify(form),
       });
-      let data = {};
-      try {
-        data = await res.json();
-      } catch (jsonErr) {
-        console.error("Error parsing JSON:", jsonErr);
-        // If response is not JSON, fallback to text
-        data = { message: await res.text() };
-      }
+      const data = await res.json();
       if (res.ok) {
-        // Update global auth state
-        login(data.user, data.accessToken);
-        safeToast.dismiss(pending);
-        safeToast.success('Logged in successfully');
-        // Navigate by role
-        if (data.user?.role === "TEACHER") {
-          navigate("/test/dashboard", { replace: true });
-        } else if (data.user?.role === "STUDENT") {
-          navigate("/participant/home", { replace: true });
-        } else {
-          navigate("/test/dashboard", { replace: true });
+        // Show success toast
+        safeToast.success(data.emailSent
+          ? `Registration successful — verification sent (expires in ${data.expiresIn} mins)`
+          : 'Registration successful — please verify your email');
+        if (data.emailError) {
+          safeToast.error(`Warning: ${data.emailError}`);
         }
+        safeToast.dismiss(pendingToastId);
+        // Redirect to verification page, pass email for verification
+        navigate("/verify", { state: { email: form.email, step: 1 } });
       } else {
-        safeToast.dismiss(pending);
-        safeToast.error(data.message || "Login failed. Please check your credentials and try again.");
-        setError(data.message || "Login failed. Please check your credentials and try again.");
+        safeToast.dismiss(pendingToastId);
+        safeToast.error(data.message || "Registration failed");
+        setError(data.message || "Registration failed");
       }
     } catch (err) {
-      safeToast.dismiss(pending);
-      safeToast.error("Network error. Please check your connection and try again.");
-      setError(
-        err?.message
-          ? ` ${err}`
-          : "Network error. Please check your connection and try again."
-      );
+      safeToast.dismiss(pendingToastId);
+      safeToast.error("Network error");
+      setError("Network error");
     }
   };
 
-  const handleGoogleLogin = () => {
+  const handleGoogleRegister = () => {
     const popup = window.open(
   `${BACKEND_URL}/api/auth/google`,
       "google-oauth",
@@ -80,11 +75,9 @@ function Login({ onLogin }) {
       if (event.data.type === "OAUTH_SUCCESS") {
         const { accessToken, user, isNewUser } = event.data;
         
-        // For existing users with roles, log them in directly
+        // For existing users with roles, log them in directly  
         if (!isNewUser && user.role && user.role !== "UNKNOWN") {
-          // Persist auth and update app state via context
           login(user, accessToken);
-          // Navigate to dashboard based on role
           if (user.role === "TEACHER") {
             navigate("/test/dashboard", { replace: true });
           } else if (user.role === "STUDENT") {
@@ -107,7 +100,7 @@ function Login({ onLogin }) {
         popup.close();
         window.removeEventListener("message", messageListener);
       } else if (event.data.type === "OAUTH_ERROR") {
-        setError("OAuth login failed");
+        setError("OAuth registration failed");
         popup.close();
         window.removeEventListener("message", messageListener);
       }
@@ -124,24 +117,19 @@ function Login({ onLogin }) {
     }, 1000);
   };
 
-  // const handleClick = (e) => {
-  //     e.preventDefault();
-  //     navigate('/dashboard');
-  // }
-
   return (
     <div className="bg-white dark:bg-gray-900 min-h-screen">
       {/* Header Section */}
       <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white">
         <div className="max-w-screen-xl mx-auto px-4 py-16">
           <div className="text-center">
-            <h1 className="text-4xl font-bold mb-4">Welcome Back</h1>
-            <p className="text-blue-100 text-lg">Sign in to your Classtro account to continue</p>
+            <h1 className="text-4xl font-bold mb-4">Create Your Account</h1>
+            <p className="text-blue-100 text-lg">Join Classtro to start your interactive classroom experience</p>
           </div>
         </div>
       </div>
 
-      {/* Login Form Section */}
+      {/* Registration Form Section */}
       <div className="max-w-screen-xl mx-auto px-4 py-16">
         <div className="max-w-md mx-auto">
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8">
@@ -151,8 +139,8 @@ function Login({ onLogin }) {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                 </svg>
               </div>
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Login to Classtro</h2>
-              <p className="text-gray-600 dark:text-gray-400">Enter your credentials to access your account</p>
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Register for Classtro</h2>
+              <p className="text-gray-600 dark:text-gray-400">Fill in your details to get started</p>
               {error && (
                 <div className="mt-4 flex items-center justify-center rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800 dark:bg-red-900/30 dark:border-red-700 dark:text-red-200 shadow-sm">
                   <svg className="w-5 h-5 mr-2 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -161,51 +149,68 @@ function Login({ onLogin }) {
                   <span>{error}</span>
                 </div>
               )}
+              {success && (
+                <div className="mt-4 flex items-center justify-center rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-green-800 dark:bg-green-900/30 dark:border-green-700 dark:text-green-200 shadow-sm">
+                  <svg className="w-5 h-5 mr-2 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  <span>{success}</span>
+                </div>
+              )}
             </div>
 
             <form className="space-y-6" onSubmit={handleSubmit}>
               <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Email Address
-                </label>
+                <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Name</label>
                 <input
-                  type="email"
-                  id="email"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                  placeholder="Enter your email address"
-                  onChange={(e) => setUsername(e.target.value)}
+                  type="text"
+                  name="name"
+                  id="name"
+                  placeholder="Enter your name"
+                  value={form.name}
+                  onChange={handleChange}
                   required
                 />
               </div>
-
               <div>
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Password
-                </label>
+                <label htmlFor="username" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Username</label>
                 <input
-                  type="password"
-                  id="password"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                  placeholder="Enter your password"
-                  onChange={(e) => setPassword(e.target.value)}
+                  type="text"
+                  name="username"
+                  id="username"
+                  placeholder="Enter a username"
+                  value={form.username}
+                  onChange={handleChange}
                   required
                 />
               </div>
-
-              <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <input
-                    id="remember"
-                    type="checkbox"
-                    className="w-4 h-4 border border-gray-300 rounded bg-gray-50 focus:ring-3 focus:ring-blue-300 dark:bg-gray-700 dark:border-gray-600 dark:focus:ring-blue-600 dark:ring-offset-gray-800"
-                  />
-                  <label htmlFor="remember" className="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300">
-                    Remember me
-                  </label>
-                </div>
-                <a href="#" className="text-sm text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300">
-                  Forgot password?
-                </a>
+              <div>
+                <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Email Address</label>
+                <input
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                  type="email"
+                  name="email"
+                  id="email"
+                  placeholder="Enter your email address"
+                  value={form.email}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+              <div>
+                <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Password</label>
+                <input
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                  type="password"
+                  name="password"
+                  id="password"
+                  placeholder="Enter a password"
+                  value={form.password}
+                  onChange={handleChange}
+                  required
+                />
               </div>
 
               <button
@@ -215,13 +220,13 @@ function Login({ onLogin }) {
                 <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
                 </svg>
-                Sign In
+                Register
               </button>
               <div className="text-center">
                 <p className="text-sm flex items-center justify-center gap-2 text-gray-600 dark:text-gray-400">
-                  Don't have an account?{' '}
-                  <a className="text-blue-600 hover:cursor-pointer hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300 font-medium" onClick={() => navigate("/register")}>
-                    Create one here
+                  Already have an account?{' '}
+                  <a className="text-blue-600 hover:cursor-pointer hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300 font-medium" onClick={() => navigate("/login")}>
+                    Sign in here
                   </a>
                 </p>
               </div>
@@ -233,7 +238,7 @@ function Login({ onLogin }) {
               <button
                 type="button"
                 className="w-full flex items-center justify-center gap-2 py-2.5 px-4 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition focus:outline-none focus:ring-2 focus:ring-blue-500"
-                onClick={handleGoogleLogin}
+                onClick={handleGoogleRegister}
               >
                 <svg className="w-5 h-5" viewBox="0 0 48 48">
                   <g>
@@ -243,7 +248,7 @@ function Login({ onLogin }) {
                     <path fill="#EA4335" d="M24 48c6.48 0 11.92-2.14 15.89-5.82l-7.18-5.6c-2.01 1.35-4.6 2.14-8.71 2.14-6.38 0-11.87-3.63-14.33-8.94l-7.98 6.2C6.71 42.52 14.82 48 24 48z" />
                   </g>
                 </svg>
-                <span className="font-medium text-gray-700 dark:text-gray-200">Sign in with Google</span>
+                <span className="font-medium text-gray-700 dark:text-gray-200">Sign up with Google</span>
               </button>
             </form>
 
@@ -252,9 +257,9 @@ function Login({ onLogin }) {
           {/* Additional Info Section */}
           <div className="mt-8 bg-gray-50 dark:bg-gray-800 rounded-lg p-6">
             <div className="text-center">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">New to Classtro?</h3>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Join Classtro Today</h3>
               <p className="text-gray-600 dark:text-gray-400 mb-4">
-                Join thousands of educators creating interactive and engaging classroom experiences.
+                Create interactive classroom experiences and engage with students in real-time.
               </p>
               <div className="flex items-center justify-center space-x-8 text-sm text-gray-500 dark:text-gray-400">
                 <div className="flex items-center">
@@ -281,7 +286,5 @@ function Login({ onLogin }) {
         </div>
       </div>
     </div>
-  )
+  );
 }
-
-export default Login
