@@ -70,7 +70,7 @@ function Login({ onLogin }) {
 
   const handleGoogleLogin = () => {
     const popup = window.open(
-      `${BACKEND_URL}/api/auth/google`,
+      `${BACKEND_URL}/api/auth/google?prompt=select_account`,
       "google-oauth",
       "width=500,height=600,scrollbars=yes,resizable=yes",
     );
