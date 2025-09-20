@@ -1,6 +1,6 @@
-const crypto = require('crypto');
-const User = require('../models/User');
-const emailService = require('./emailService');
+const crypto = require("crypto");
+const User = require("../models/User");
+const emailService = require("./emailService");
 
 class OTPService {
   constructor() {
@@ -26,7 +26,7 @@ class OTPService {
       if (!user) {
         return {
           success: false,
-          message: 'User not found'
+          message: "User not found",
         };
       }
 
@@ -42,29 +42,32 @@ class OTPService {
       await user.save();
 
       // Send OTP email
-      const emailResult = await emailService.sendOTP(email, otp, userName || user.name);
+      const emailResult = await emailService.sendOTP(
+        email,
+        otp,
+        userName || user.name,
+      );
 
       if (emailResult.success) {
         console.log(`OTP sent to ${email}: ${otp}`); // Remove in production
         return {
           success: true,
-          message: 'OTP sent successfully',
-          expiresIn: this.otpExpiryMinutes
+          message: "OTP sent successfully",
+          expiresIn: this.otpExpiryMinutes,
         };
       } else {
         return {
           success: false,
-          message: 'Failed to send OTP email',
-          error: emailResult.error
+          message: "Failed to send OTP email",
+          error: emailResult.error,
         };
       }
-
     } catch (error) {
-      console.error('Error generating and sending OTP:', error);
+      console.error("Error generating and sending OTP:", error);
       return {
         success: false,
-        message: 'Internal server error',
-        error: error.message
+        message: "Internal server error",
+        error: error.message,
       };
     }
   }
@@ -75,7 +78,7 @@ class OTPService {
       if (!user) {
         return {
           success: false,
-          message: 'User not found'
+          message: "User not found",
         };
       }
 
@@ -83,7 +86,7 @@ class OTPService {
       if (!user.otp || !user.otpExpiry) {
         return {
           success: false,
-          message: 'No OTP found. Please request a new one.'
+          message: "No OTP found. Please request a new one.",
         };
       }
 
@@ -98,7 +101,7 @@ class OTPService {
 
         return {
           success: false,
-          message: 'OTP has expired. Please request a new one.'
+          message: "OTP has expired. Please request a new one.",
         };
       }
 
@@ -114,7 +117,7 @@ class OTPService {
 
         return {
           success: false,
-          message: 'Too many invalid attempts. Please request a new OTP.'
+          message: "Too many invalid attempts. Please request a new OTP.",
         };
       }
 
@@ -131,7 +134,7 @@ class OTPService {
 
         return {
           success: true,
-          message: 'OTP verified successfully'
+          message: "OTP verified successfully",
         };
       } else {
         // Increment attempt counter
@@ -141,16 +144,15 @@ class OTPService {
         const remainingAttempts = maxAttempts - user.otpAttempts;
         return {
           success: false,
-          message: `Invalid OTP. ${remainingAttempts} attempts remaining.`
+          message: `Invalid OTP. ${remainingAttempts} attempts remaining.`,
         };
       }
-
     } catch (error) {
-      console.error('Error verifying OTP:', error);
+      console.error("Error verifying OTP:", error);
       return {
         success: false,
-        message: 'Internal server error',
-        error: error.message
+        message: "Internal server error",
+        error: error.message,
       };
     }
   }
@@ -161,36 +163,39 @@ class OTPService {
       if (!user) {
         return {
           success: false,
-          message: 'User not found'
+          message: "User not found",
         };
       }
 
       // Check if enough time has passed since last OTP (prevent spam)
       const minResendIntervalSeconds = 60; // 60 seconds = 1 minute
-      
+
       if (user.otpCreatedAt) {
         const timeSinceLastOtpSeconds = (new Date() - user.otpCreatedAt) / 1000; // in seconds
-        
-        console.log(`Time since last OTP: ${timeSinceLastOtpSeconds} seconds, minimum required: ${minResendIntervalSeconds} seconds`);
-        
+
+        console.log(
+          `Time since last OTP: ${timeSinceLastOtpSeconds} seconds, minimum required: ${minResendIntervalSeconds} seconds`,
+        );
+
         if (timeSinceLastOtpSeconds < minResendIntervalSeconds) {
-          const waitTime = Math.ceil(minResendIntervalSeconds - timeSinceLastOtpSeconds);
+          const waitTime = Math.ceil(
+            minResendIntervalSeconds - timeSinceLastOtpSeconds,
+          );
           return {
             success: false,
-            message: `Please wait ${waitTime} more seconds before requesting a new OTP.`
+            message: `Please wait ${waitTime} more seconds before requesting a new OTP.`,
           };
         }
       }
 
       // Generate and send new OTP
       return await this.generateAndSendOTP(email, user.name);
-
     } catch (error) {
-      console.error('Error resending OTP:', error);
+      console.error("Error resending OTP:", error);
       return {
         success: false,
-        message: 'Internal server error',
-        error: error.message
+        message: "Internal server error",
+        error: error.message,
       };
     }
   }
@@ -207,7 +212,7 @@ class OTPService {
       }
       return { success: true };
     } catch (error) {
-      console.error('Error clearing OTP:', error);
+      console.error("Error clearing OTP:", error);
       return { success: false, error: error.message };
     }
   }
@@ -216,24 +221,24 @@ class OTPService {
   async cleanupExpiredOTPs() {
     try {
       const result = await User.updateMany(
-        { 
+        {
           otpExpiry: { $lt: new Date() },
-          otp: { $exists: true }
+          otp: { $exists: true },
         },
-        { 
-          $unset: { 
-            otp: 1, 
-            otpExpiry: 1, 
+        {
+          $unset: {
+            otp: 1,
+            otpExpiry: 1,
             otpCreatedAt: 1,
-            otpAttempts: 1 
-          } 
-        }
+            otpAttempts: 1,
+          },
+        },
       );
 
       console.log(`Cleaned up ${result.modifiedCount} expired OTPs`);
       return result.modifiedCount;
     } catch (error) {
-      console.error('Error cleaning up expired OTPs:', error);
+      console.error("Error cleaning up expired OTPs:", error);
       return 0;
     }
   }

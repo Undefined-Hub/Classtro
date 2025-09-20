@@ -1,12 +1,18 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/UserContext.jsx";
-import safeToast from '../utils/toastUtils';
+import safeToast from "../utils/toastUtils";
 
 export default function Register() {
   const { login } = useAuth();
-  const BACKEND_URL = import.meta.env.VITE_BACKEND_BASE_URL || "http://localhost:3000";
-  const [form, setForm] = useState({ name: "", username: "", email: "", password: "" });
+  const BACKEND_URL =
+    import.meta.env.VITE_BACKEND_BASE_URL || "http://localhost:3000";
+  const [form, setForm] = useState({
+    name: "",
+    username: "",
+    email: "",
+    password: "",
+  });
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const navigate = useNavigate();
@@ -24,7 +30,7 @@ export default function Register() {
     e.preventDefault();
     setError("");
     setSuccess("");
-    const pendingToastId = safeToast.loading('Registering...');
+    const pendingToastId = safeToast.loading("Registering...");
     try {
       const res = await fetch(`${BACKEND_URL}/api/auth/register`, {
         method: "POST",
@@ -34,9 +40,11 @@ export default function Register() {
       const data = await res.json();
       if (res.ok) {
         // Show success toast
-        safeToast.success(data.emailSent
-          ? `Registration successful — verification sent (expires in ${data.expiresIn} mins)`
-          : 'Registration successful — please verify your email');
+        safeToast.success(
+          data.emailSent
+            ? `Registration successful — verification sent (expires in ${data.expiresIn} mins)`
+            : "Registration successful — please verify your email",
+        );
         if (data.emailError) {
           safeToast.error(`Warning: ${data.emailError}`);
         }
@@ -57,9 +65,9 @@ export default function Register() {
 
   const handleGoogleRegister = () => {
     const popup = window.open(
-  `${BACKEND_URL}/api/auth/google`,
+      `${BACKEND_URL}/api/auth/google`,
       "google-oauth",
-      "width=500,height=600,scrollbars=yes,resizable=yes"
+      "width=500,height=600,scrollbars=yes,resizable=yes",
     );
 
     // Listen for messages from the popup
@@ -74,8 +82,8 @@ export default function Register() {
 
       if (event.data.type === "OAUTH_SUCCESS") {
         const { accessToken, user, isNewUser } = event.data;
-        
-        // For existing users with roles, log them in directly  
+
+        // For existing users with roles, log them in directly
         if (!isNewUser && user.role && user.role !== "UNKNOWN") {
           login(user, accessToken);
           if (user.role === "TEACHER") {
@@ -86,14 +94,17 @@ export default function Register() {
         } else {
           // For new users or existing users without roles, go to role selection
           // Note: We don't log them in yet - this happens after role selection
-          navigate("/verify", { replace: true, state: { 
-            step: 2, 
-            google: true, 
-            email: user.email, 
-            oauth: true,
-            accessToken, // Pass token to be used after role selection
-            user // Pass user data
-          }});
+          navigate("/verify", {
+            replace: true,
+            state: {
+              step: 2,
+              google: true,
+              email: user.email,
+              oauth: true,
+              accessToken, // Pass token to be used after role selection
+              user, // Pass user data
+            },
+          });
         }
 
         // Cleanup popup and listener
@@ -124,7 +135,9 @@ export default function Register() {
         <div className="max-w-screen-xl mx-auto px-4 py-16">
           <div className="text-center">
             <h1 className="text-4xl font-bold mb-4">Create Your Account</h1>
-            <p className="text-blue-100 text-lg">Join Classtro to start your interactive classroom experience</p>
+            <p className="text-blue-100 text-lg">
+              Join Classtro to start your interactive classroom experience
+            </p>
           </div>
         </div>
       </div>
@@ -135,24 +148,58 @@ export default function Register() {
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8">
             <div className="text-center mb-8">
               <div className="mx-auto flex items-center justify-center w-16 h-16 bg-blue-100 dark:bg-blue-900 rounded-full mb-4">
-                <svg className="w-8 h-8 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                <svg
+                  className="w-8 h-8 text-blue-600 dark:text-blue-400"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                  />
                 </svg>
               </div>
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Register for Classtro</h2>
-              <p className="text-gray-600 dark:text-gray-400">Fill in your details to get started</p>
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+                Register for Classtro
+              </h2>
+              <p className="text-gray-600 dark:text-gray-400">
+                Fill in your details to get started
+              </p>
               {error && (
                 <div className="mt-4 flex items-center justify-center rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800 dark:bg-red-900/30 dark:border-red-700 dark:text-red-200 shadow-sm">
-                  <svg className="w-5 h-5 mr-2 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M21 12A9 9 0 113 12a9 9 0 0118 0z" />
+                  <svg
+                    className="w-5 h-5 mr-2 text-red-500"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 9v2m0 4h.01M21 12A9 9 0 113 12a9 9 0 0118 0z"
+                    />
                   </svg>
                   <span>{error}</span>
                 </div>
               )}
               {success && (
                 <div className="mt-4 flex items-center justify-center rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-green-800 dark:bg-green-900/30 dark:border-green-700 dark:text-green-200 shadow-sm">
-                  <svg className="w-5 h-5 mr-2 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  <svg
+                    className="w-5 h-5 mr-2 text-green-500"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M5 13l4 4L19 7"
+                    />
                   </svg>
                   <span>{success}</span>
                 </div>
@@ -161,7 +208,12 @@ export default function Register() {
 
             <form className="space-y-6" onSubmit={handleSubmit}>
               <div>
-                <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Name</label>
+                <label
+                  htmlFor="name"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                >
+                  Name
+                </label>
                 <input
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                   type="text"
@@ -174,7 +226,12 @@ export default function Register() {
                 />
               </div>
               <div>
-                <label htmlFor="username" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Username</label>
+                <label
+                  htmlFor="username"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                >
+                  Username
+                </label>
                 <input
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                   type="text"
@@ -187,7 +244,12 @@ export default function Register() {
                 />
               </div>
               <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Email Address</label>
+                <label
+                  htmlFor="email"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                >
+                  Email Address
+                </label>
                 <input
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                   type="email"
@@ -200,7 +262,12 @@ export default function Register() {
                 />
               </div>
               <div>
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Password</label>
+                <label
+                  htmlFor="password"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                >
+                  Password
+                </label>
                 <input
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                   type="password"
@@ -217,22 +284,37 @@ export default function Register() {
                 type="submit"
                 className="w-full inline-flex items-center justify-center px-5 py-2.5 text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
               >
-                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+                <svg
+                  className="w-5 h-5 mr-2"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"
+                  />
                 </svg>
                 Register
               </button>
               <div className="text-center">
                 <p className="text-sm flex items-center justify-center gap-2 text-gray-600 dark:text-gray-400">
-                  Already have an account?{' '}
-                  <a className="text-blue-600 hover:cursor-pointer hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300 font-medium" onClick={() => navigate("/login")}>
+                  Already have an account?{" "}
+                  <a
+                    className="text-blue-600 hover:cursor-pointer hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300 font-medium"
+                    onClick={() => navigate("/login")}
+                  >
                     Sign in here
                   </a>
                 </p>
               </div>
               <div className="my-6 flex items-center">
                 <div className="flex-grow border-t border-gray-200 dark:border-gray-700"></div>
-                <span className="mx-4 text-gray-400 dark:text-gray-500 text-sm">or</span>
+                <span className="mx-4 text-gray-400 dark:text-gray-500 text-sm">
+                  or
+                </span>
                 <div className="flex-grow border-t border-gray-200 dark:border-gray-700"></div>
               </div>
               <button
@@ -242,41 +324,81 @@ export default function Register() {
               >
                 <svg className="w-5 h-5" viewBox="0 0 48 48">
                   <g>
-                    <path fill="#4285F4" d="M24 9.5c3.54 0 6.7 1.22 9.19 3.22l6.85-6.85C36.64 2.54 30.74 0 24 0 14.82 0 6.71 5.48 2.69 13.44l7.98 6.2C12.13 13.13 17.62 9.5 24 9.5z" />
-                    <path fill="#34A853" d="M46.1 24.5c0-1.64-.15-3.22-.42-4.74H24v9.04h12.4c-.54 2.9-2.18 5.36-4.64 7.04l7.18 5.6C43.98 37.1 46.1 31.23 46.1 24.5z" />
-                    <path fill="#FBBC05" d="M10.67 28.64c-1.13-3.36-1.13-6.96 0-10.32l-7.98-6.2C.86 16.09 0 19.94 0 24c0 4.06.86 7.91 2.69 11.88l7.98-6.2z" />
-                    <path fill="#EA4335" d="M24 48c6.48 0 11.92-2.14 15.89-5.82l-7.18-5.6c-2.01 1.35-4.6 2.14-8.71 2.14-6.38 0-11.87-3.63-14.33-8.94l-7.98 6.2C6.71 42.52 14.82 48 24 48z" />
+                    <path
+                      fill="#4285F4"
+                      d="M24 9.5c3.54 0 6.7 1.22 9.19 3.22l6.85-6.85C36.64 2.54 30.74 0 24 0 14.82 0 6.71 5.48 2.69 13.44l7.98 6.2C12.13 13.13 17.62 9.5 24 9.5z"
+                    />
+                    <path
+                      fill="#34A853"
+                      d="M46.1 24.5c0-1.64-.15-3.22-.42-4.74H24v9.04h12.4c-.54 2.9-2.18 5.36-4.64 7.04l7.18 5.6C43.98 37.1 46.1 31.23 46.1 24.5z"
+                    />
+                    <path
+                      fill="#FBBC05"
+                      d="M10.67 28.64c-1.13-3.36-1.13-6.96 0-10.32l-7.98-6.2C.86 16.09 0 19.94 0 24c0 4.06.86 7.91 2.69 11.88l7.98-6.2z"
+                    />
+                    <path
+                      fill="#EA4335"
+                      d="M24 48c6.48 0 11.92-2.14 15.89-5.82l-7.18-5.6c-2.01 1.35-4.6 2.14-8.71 2.14-6.38 0-11.87-3.63-14.33-8.94l-7.98 6.2C6.71 42.52 14.82 48 24 48z"
+                    />
                   </g>
                 </svg>
-                <span className="font-medium text-gray-700 dark:text-gray-200">Sign up with Google</span>
+                <span className="font-medium text-gray-700 dark:text-gray-200">
+                  Sign up with Google
+                </span>
               </button>
             </form>
-
           </div>
 
           {/* Additional Info Section */}
           <div className="mt-8 bg-gray-50 dark:bg-gray-800 rounded-lg p-6">
             <div className="text-center">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Join Classtro Today</h3>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                Join Classtro Today
+              </h3>
               <p className="text-gray-600 dark:text-gray-400 mb-4">
-                Create interactive classroom experiences and engage with students in real-time.
+                Create interactive classroom experiences and engage with
+                students in real-time.
               </p>
               <div className="flex items-center justify-center space-x-8 text-sm text-gray-500 dark:text-gray-400">
                 <div className="flex items-center">
-                  <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  <svg
+                    className="w-4 h-4 mr-1"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                      clipRule="evenodd"
+                    />
                   </svg>
                   Real-time Polls
                 </div>
                 <div className="flex items-center">
-                  <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  <svg
+                    className="w-4 h-4 mr-1"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                      clipRule="evenodd"
+                    />
                   </svg>
                   Interactive Sessions
                 </div>
                 <div className="flex items-center">
-                  <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  <svg
+                    className="w-4 h-4 mr-1"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                      clipRule="evenodd"
+                    />
                   </svg>
                   Easy Setup
                 </div>

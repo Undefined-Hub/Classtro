@@ -41,8 +41,8 @@ passport.use(
       } catch (err) {
         return done(err);
       }
-    }
-  )
+    },
+  ),
 );
 
 // ? Google Strategy - OAuth, code given by ChatGPT
@@ -85,20 +85,22 @@ passport.use(
       } catch (err) {
         done(err, null);
       }
-    }
-  )
+    },
+  ),
 );
 
 // ? JWT Strategy - Token based authentication
 passport.use(
   new JwtStrategy(jwtOptions, async (payload, done) => {
     try {
-      const user = await User.findById(payload.user.id).select("-password -__v -updatedAt");
+      const user = await User.findById(payload.user.id).select(
+        "-password -__v -updatedAt",
+      );
       // console.log("User authenticated via JWT: ", payload);
       if (!user) return done(null, false);
       return done(null, user);
     } catch (err) {
       return done(err, false);
     }
-  })
+  }),
 );

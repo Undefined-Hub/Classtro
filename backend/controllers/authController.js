@@ -16,7 +16,7 @@ const userRegisterSchema = z.object({
   password: z.string().min(8, "Password must contain at least 8 characters"),
   role: z.enum(
     ["Employee", "Manager"],
-    "Role must be either 'Employee' or 'Manager'"
+    "Role must be either 'Employee' or 'Manager'",
   ),
 });
 
@@ -216,7 +216,7 @@ const refreshToken = async (req, res) => {
     const newAccessToken = generateToken(
       { user: { id: user.id } },
       process.env.JWT_SECRET,
-      { expiresIn: "15m" }
+      { expiresIn: "15m" },
     );
     res.status(200).json({ accessToken: newAccessToken });
   } catch (error) {

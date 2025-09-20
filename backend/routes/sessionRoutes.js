@@ -12,10 +12,9 @@ const {
   leaveSession,
   getSessionParticipants,
   getParticipantById,
-  monitorSessions
+  monitorSessions,
 } = require("../controllers/sessionController");
 const authenticateJWT = require("../middlewares/authenticateJWT");
-
 
 // ---------------- PUBLIC / SHARED ROUTES ----------------
 router.get("/code/:code", getSessionByCode); // Get session metadata by join code (public, for join UI) ✅

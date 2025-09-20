@@ -1,5 +1,5 @@
-const nodemailer = require('nodemailer');
-const dotenv = require('dotenv');
+const nodemailer = require("nodemailer");
+const dotenv = require("dotenv");
 
 dotenv.config();
 
@@ -18,8 +18,8 @@ class EmailService {
         pass: process.env.EMAIL_PASS,
       },
       tls: {
-        rejectUnauthorized: false // Allow self-signed certificates in development
-      }
+        rejectUnauthorized: false, // Allow self-signed certificates in development
+      },
     });
   }
 
@@ -34,37 +34,37 @@ class EmailService {
       };
 
       const info = await this.transporter.sendMail(mailOptions);
-      console.log('Email sent successfully:', info.messageId);
+      console.log("Email sent successfully:", info.messageId);
       return {
         success: true,
         messageId: info.messageId,
-        message: 'Email sent successfully'
+        message: "Email sent successfully",
       };
     } catch (error) {
-      console.error('Error sending email:', error);
+      console.error("Error sending email:", error);
       return {
         success: false,
         error: error.message,
-        message: 'Failed to send email'
+        message: "Failed to send email",
       };
     }
   }
 
-  async sendOTP(email, otp, userName = 'User') {
-    const subject = 'Verify Your Email - Classtro';
+  async sendOTP(email, otp, userName = "User") {
+    const subject = "Verify Your Email - Classtro";
     const html = this.getOTPTemplate(otp, userName);
     return await this.sendEmail(email, subject, html);
   }
 
   async sendWelcomeEmail(email, userName) {
-    const subject = 'Welcome to Classtro!';
+    const subject = "Welcome to Classtro!";
     const html = this.getWelcomeTemplate(userName);
     return await this.sendEmail(email, subject, html);
   }
 
-  async sendPasswordResetEmail(email, resetToken, userName = 'User') {
-    const subject = 'Reset Your Password - Classtro';
-    const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/reset-password?token=${resetToken}`;
+  async sendPasswordResetEmail(email, resetToken, userName = "User") {
+    const subject = "Reset Your Password - Classtro";
+    const resetUrl = `${process.env.FRONTEND_URL || "http://localhost:5173"}/reset-password?token=${resetToken}`;
     const html = this.getPasswordResetTemplate(resetUrl, userName);
     return await this.sendEmail(email, subject, html);
   }
@@ -158,7 +158,7 @@ class EmailService {
           <p>Ready to get started? Access your dashboard and begin creating engaging classroom experiences!</p>
           
           <div style="text-align: center;">
-            <a href="${process.env.FRONTEND_URL || 'http://localhost:5173'}/login" class="button">Go to Dashboard</a>
+            <a href="${process.env.FRONTEND_URL || "http://localhost:5173"}/login" class="button">Go to Dashboard</a>
           </div>
           
           <p>Best regards,<br>The Classtro Team</p>
@@ -211,16 +211,16 @@ class EmailService {
   }
 
   stripHtml(html) {
-    return html.replace(/<[^>]*>/g, '');
+    return html.replace(/<[^>]*>/g, "");
   }
 
   async verifyConnection() {
     try {
       await this.transporter.verify();
-      console.log('Email service is ready to send emails');
+      console.log("Email service is ready to send emails");
       return true;
     } catch (error) {
-      console.error('Email service verification failed:', error);
+      console.error("Email service verification failed:", error);
       return false;
     }
   }

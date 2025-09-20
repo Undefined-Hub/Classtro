@@ -1,5 +1,5 @@
-const { server } = require('./app');
-const dotenv = require('dotenv');
+const { server } = require("./app");
+const dotenv = require("dotenv");
 const { setupSockets } = require("./socket");
 
 // Load environment variables

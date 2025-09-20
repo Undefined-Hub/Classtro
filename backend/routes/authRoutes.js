@@ -42,7 +42,7 @@ router.post("/register", registerUser);
 
 router.get(
   "/google",
-  passport.authenticate("google", { scope: ["profile", "email"] })
+  passport.authenticate("google", { scope: ["profile", "email"] }),
 );
 
 router.get(
@@ -51,7 +51,7 @@ router.get(
     session: false,
     failureRedirect: "http://localhost:5173/failure",
   }),
-  googleAuthCallback
+  googleAuthCallback,
 );
 
 router.post("/refresh", refreshToken);

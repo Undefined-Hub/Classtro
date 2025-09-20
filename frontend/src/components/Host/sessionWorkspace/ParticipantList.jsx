@@ -69,7 +69,7 @@ const ParticipantList = ({
                   ) : (
                     <div
                       className={`w-8 h-8 rounded-full mr-3 flex items-center justify-center text-white ${getAvatarColor(
-                        participant.name
+                        participant.name,
                       )}`}
                     >
                       {getInitials(participant.userId.name)}

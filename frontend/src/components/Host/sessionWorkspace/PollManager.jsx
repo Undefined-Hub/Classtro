@@ -21,7 +21,7 @@ const PollManager = ({
 
     // Filter out any empty options
     const validOptions = pollFormData.options.filter(
-      (option) => option.trim() !== ""
+      (option) => option.trim() !== "",
     );
 
     if (pollFormData.question.trim() === "" || validOptions.length < 2) {
@@ -149,7 +149,7 @@ const PollManager = ({
                 {activePoll.options.map((option, index) => {
                   const totalVotes = activePoll.options.reduce(
                     (sum, opt) => sum + opt.votes,
-                    0
+                    0,
                   );
                   const percentage =
                     totalVotes > 0
@@ -200,10 +200,10 @@ const PollManager = ({
               {pastPolls.map((poll) => {
                 const totalVotes = poll.options.reduce(
                   (sum, opt) => sum + opt.votes,
-                  0
+                  0,
                 );
                 const winningOption = [...poll.options].sort(
-                  (a, b) => b.votes - a.votes
+                  (a, b) => b.votes - a.votes,
                 )[0];
                 const winningPercentage =
                   totalVotes > 0
