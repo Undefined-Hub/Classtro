@@ -244,10 +244,17 @@ const joinSession = async (req, res, next) => {
           participant.isActive = true;
           await participant.save();
         }
+        
+        // Get teacher data for the session
+        const populatedSession = await Session.findById(session._id)
+          .select('_id title code')
+          .populate('teacherId', '_id name');
+          
         return res.status(200).json({
           message: "Already joined",
           participantId: participant._id,
-          participantJoinedAt: participant.joinedAt
+          participantJoinedAt: participant.joinedAt,
+          session: populatedSession
         });
       }
     }
@@ -264,11 +271,17 @@ const joinSession = async (req, res, next) => {
       deviceInfo: req.headers["user-agent"],
     });
 
+    // Get teacher data for the session
+    const populatedSession = await Session.findById(session._id)
+      .select('_id title code')
+      .populate('teacherId', '_id name');
+
     // Later: issue short-lived join token for sockets
     res.status(201).json({
       message: "Joined successfully",
       participantId: participant._id,
-      participantJoinedAt: participant.joinedAt
+      participantJoinedAt: participant.joinedAt,
+      session: populatedSession
     });
   } catch (err) {
     next(err);

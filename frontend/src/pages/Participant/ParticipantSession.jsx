@@ -142,10 +142,13 @@ const ParticipantSession = () => {
             <div className="flex items-center space-x-4">
               <div className="text-right hidden sm:block">
                 <p className="text-sm font-medium text-gray-900 dark:text-white">
-                  {sessionData?.sessionName || 'Session'}
+                  {sessionData?.session?.title || 'Session'}
                 </p>
                 <p className="text-xs text-gray-500 dark:text-gray-400">
                   Code: {sessionData?.joinCode|| 'N/A'}
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  Host: {sessionData?.session?.teacherId?.name || 'Unknown'}
                 </p>
               </div>
               
@@ -175,21 +178,36 @@ const ParticipantSession = () => {
 
           {/* Main Message */}
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
-            🎉 You're All Set!
+            You're All Set!
           </h1>
           
-          <p className="text-xl text-gray-600 dark:text-gray-400 mb-8">
+          <p className="text-xl text-gray-600 dark:text-gray-400 mb-2">
             Successfully joined the session
           </p>
+          
+          {/* Participant count badge */}
+          <div className="mt-6 inline-flex items-center justify-center px-2.5 py-1 bg-gray-100 dark:bg-gray-800 rounded-full">
+            <svg className="w-3.5 h-3.5 text-gray-500 dark:text-gray-400 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+            </svg>
+            <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
+              {participantCount} participant{participantCount !== 1 ? 's' : ''}
+            </span>
+          </div>
+          
+          {/* Host name for mobile */}
+          <div className="sm:hidden mt-2 text-sm text-gray-500 dark:text-gray-400">
+            Host: {sessionData?.session?.teacherId?.name || 'Unknown'}
+          </div>
 
-          {/* Session Info Card */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 max-w-md mx-auto mb-8">
+          {/* Session Info Card - Kept as commented per request */}
+          {/* <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 max-w-md mx-auto mb-8">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Session Details</h3>
             <div className="space-y-3 text-left">
               <div className="flex justify-between">
                 <span className="text-sm text-gray-500 dark:text-gray-400">Session Name:</span>
                 <span className="text-sm font-medium text-gray-900 dark:text-white">
-                  {sessionData?.sessionName || 'Unnamed Session'}
+                  {sessionData?.session?.title|| 'Unnamed Session'}
                 </span>
               </div>
               <div className="flex justify-between">
@@ -201,7 +219,7 @@ const ParticipantSession = () => {
               <div className="flex justify-between">
                 <span className="text-sm text-gray-500 dark:text-gray-400">Host:</span>
                 <span className="text-sm font-medium text-gray-900 dark:text-white">
-                  {sessionData?.hostName || 'Unknown'}
+                  {sessionData?.session?.teacherId?.name || 'Unknown'}
                 </span>
               </div>
               <div className="flex justify-between">
@@ -211,11 +229,11 @@ const ParticipantSession = () => {
                 </span>
               </div>
             </div>
-          </div>
+          </div> */}
 
           {/* Waiting or Broadcast Message */}
           {!broadcastMsg ? (
-            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-6 max-w-lg mx-auto">
+            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-6 max-w-lg mx-auto mt-8">
               <div className="flex items-center justify-center mb-4">
                 <div className="flex space-x-1">
                   <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce"></div>
@@ -227,14 +245,11 @@ const ParticipantSession = () => {
                 Waiting for Host
               </h3>
               <p className="text-blue-800 dark:text-blue-300">
-                Waiting for host to start an activity.....
-              </p>
-              <p className="text-sm text-blue-600 dark:text-blue-400 mt-2">
-                Please keep this window open and wait for instructions from your instructor.
+                Please keep this window open
               </p>
             </div>
           ) : (
-            <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-6 max-w-lg mx-auto animate-fade-in">
+            <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-6 max-w-lg mx-auto mt-8 animate-fade-in">
               <div className="flex items-center justify-center mb-2">
                 <svg className="w-8 h-8 text-yellow-500 dark:text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -244,7 +259,7 @@ const ParticipantSession = () => {
                 Announcement from Host
               </h3>
               <p className="text-yellow-800 dark:text-yellow-200 text-lg">
-                {!broadcastMsg ? 'No new announcements' : broadcastMsg}
+                {broadcastMsg}
               </p>
             </div>
           )}

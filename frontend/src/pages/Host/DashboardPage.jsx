@@ -369,7 +369,7 @@ function DashboardPage() {
                  Sign Out
               </button>
               
-              {!selectedRoom ? (
+              {/* {!selectedRoom ? (
                 <button
                   onClick={() => setShowCreateRoomModal(true)}
                   className="inline-flex items-center px-4 py-2 bg-white text-blue-700 rounded-lg font-medium text-sm hover:bg-blue-50 focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-blue-700"
@@ -389,7 +389,7 @@ function DashboardPage() {
                   </svg>
                   Create New Session
                 </button>
-              )}
+              )} */}
             </div>
           </div>
         </div>
