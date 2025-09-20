@@ -1,12 +1,108 @@
-import React from 'react'
-import { useNavigate } from 'react-router-dom'
 
-function Login() {
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/UserContext.jsx";
+
+function Login({ onLogin }) {
     const navigate = useNavigate();
-    const handleClick = (e) => {
+  const { login } = useAuth();
+    const [username, setUsername] = useState("");
+    const [password, setPassword] = useState("");
+    const [error, setError] = useState("");
+    const BACKEND_BASE_URL = import.meta.env.VITE_BACKEND_BASE_URL || "http://localhost:2000";
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        navigate('/dashboard');
-    }
+        setError("");
+        try {
+          const res = await fetch(`${BACKEND_BASE_URL}/api/auth/login`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify({ email: username, password }),
+          });
+          let data = {};
+          try {
+            data = await res.json();
+          } catch (jsonErr) {
+            console.error("Error parsing JSON:", jsonErr);
+            // If response is not JSON, fallback to text
+            data = { message: await res.text() };
+          }
+          if (res.ok) {
+            // Update global auth state
+            login(data.user, data.accessToken);
+            // Navigate by role
+            if (data.user?.role === "TEACHER") {
+              navigate("/test/dashboard", { replace: true });
+            } else if (data.user?.role === "STUDENT") {
+              navigate("/participant/home", { replace: true });
+            } else {
+              navigate("/test/dashboard", { replace: true });
+            }
+          } else {
+            setError(data.message || "Login failed. Please check your credentials and try again.");
+          }
+        } catch (err) {
+          setError(
+            err?.message
+              ? ` ${err}`
+              : "Network error. Please check your connection and try again."
+          );
+        }
+    };
+
+     
+    const handleGoogleLogin = () => {
+      const popup = window.open(
+        `${BACKEND_BASE_URL}/api/auth/google`,
+        "google-oauth",
+        "width=500,height=600,scrollbars=yes,resizable=yes"
+      );
+
+      // Listen for messages from the popup
+      const messageListener = (event) => {
+        // Only accept messages from our backend origin (the popup)
+        if (event.origin !== BACKEND_BASE_URL) return;
+
+        if (event.data.type === "OAUTH_SUCCESS") {
+          const { accessToken, user } = event.data;
+          // Persist auth and update app state via context
+          login(user, accessToken);
+          // Navigate the main window based on role
+          if (user.role === "TEACHER") {
+            navigate("/test/dashboard", { replace: true });
+          } else if (user.role === "STUDENT") {
+            navigate("/participant/home", { replace: true });
+          } else {
+            navigate("/test/dashboard", { replace: true });
+          }
+
+          // Cleanup popup and listener
+          popup.close();
+          window.removeEventListener("message", messageListener);
+        } else if (event.data.type === "OAUTH_ERROR") {
+          setError("OAuth login failed");
+          popup.close();
+          window.removeEventListener("message", messageListener);
+        }
+      };
+
+      window.addEventListener("message", messageListener);
+
+      // Handle popup being closed manually
+      const checkClosed = setInterval(() => {
+        if (popup.closed) {
+          window.removeEventListener("message", messageListener);
+          clearInterval(checkClosed);
+        }
+      }, 1000);
+    };
+    
+    // const handleClick = (e) => {
+    //     e.preventDefault();
+    //     navigate('/dashboard');
+    // }
+
   return (
     <div className="bg-white dark:bg-gray-900 min-h-screen">
       {/* Header Section */}
@@ -31,9 +127,17 @@ function Login() {
               </div>
               <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Login to Classtro</h2>
               <p className="text-gray-600 dark:text-gray-400">Enter your credentials to access your account</p>
+              {error && (
+                <div className="mt-4 flex items-center justify-center rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800 dark:bg-red-900/30 dark:border-red-700 dark:text-red-200 shadow-sm">
+                  <svg className="w-5 h-5 mr-2 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M21 12A9 9 0 113 12a9 9 0 0118 0z" />
+                  </svg>
+                  <span>{error}</span>
+                </div>
+              )}
             </div>
 
-            <form className="space-y-6">
+            <form className="space-y-6" onSubmit={handleSubmit}>
               <div>
                 <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Email Address
@@ -43,6 +147,7 @@ function Login() {
                   id="email"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                   placeholder="Enter your email address"
+                  onChange={(e) => setUsername(e.target.value)}
                   required
                 />
               </div>
@@ -56,6 +161,7 @@ function Login() {
                   id="password"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                   placeholder="Enter your password"
+                  onChange={(e) => setPassword(e.target.value)}
                   required
                 />
               </div>
@@ -77,7 +183,6 @@ function Login() {
               </div>
 
               <button
-                onClick={handleClick}
                 type="submit"
                 className="w-full inline-flex items-center justify-center px-5 py-2.5 text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
               >
@@ -86,9 +191,7 @@ function Login() {
                 </svg>
                 Sign In
               </button>
-            </form>
-
-            <div className="mt-8 text-center">
+            <div className="text-center">
               <p className="text-sm text-gray-600 dark:text-gray-400">
                 Don't have an account?{' '}
                 <a href="#" className="text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300 font-medium">
@@ -96,6 +199,28 @@ function Login() {
                 </a>
               </p>
             </div>
+              <div className="my-6 flex items-center">
+                <div className="flex-grow border-t border-gray-200 dark:border-gray-700"></div>
+                <span className="mx-4 text-gray-400 dark:text-gray-500 text-sm">or</span>
+                <div className="flex-grow border-t border-gray-200 dark:border-gray-700"></div>
+              </div>
+              <button
+                type="button"
+                className="w-full flex items-center justify-center gap-2 py-2.5 px-4 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition focus:outline-none focus:ring-2 focus:ring-blue-500"
+                onClick={handleGoogleLogin}
+              >
+                <svg className="w-5 h-5" viewBox="0 0 48 48">
+                  <g>
+                    <path fill="#4285F4" d="M24 9.5c3.54 0 6.7 1.22 9.19 3.22l6.85-6.85C36.64 2.54 30.74 0 24 0 14.82 0 6.71 5.48 2.69 13.44l7.98 6.2C12.13 13.13 17.62 9.5 24 9.5z" />
+                    <path fill="#34A853" d="M46.1 24.5c0-1.64-.15-3.22-.42-4.74H24v9.04h12.4c-.54 2.9-2.18 5.36-4.64 7.04l7.18 5.6C43.98 37.1 46.1 31.23 46.1 24.5z" />
+                    <path fill="#FBBC05" d="M10.67 28.64c-1.13-3.36-1.13-6.96 0-10.32l-7.98-6.2C.86 16.09 0 19.94 0 24c0 4.06.86 7.91 2.69 11.88l7.98-6.2z" />
+                    <path fill="#EA4335" d="M24 48c6.48 0 11.92-2.14 15.89-5.82l-7.18-5.6c-2.01 1.35-4.6 2.14-8.71 2.14-6.38 0-11.87-3.63-14.33-8.94l-7.98 6.2C6.71 42.52 14.82 48 24 48z" />
+                  </g>
+                </svg>
+                <span className="font-medium text-gray-700 dark:text-gray-200">Sign in with Google</span>
+              </button>
+            </form>
+
           </div>
 
           {/* Additional Info Section */}

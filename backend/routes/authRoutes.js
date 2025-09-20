@@ -12,11 +12,21 @@ const {
 const router = Router();
 dotenv.config();
 
-router.post(
-  "/login",
-  passport.authenticate("local", { session: false }),
-  loginUser
-);
+// Custom callback to surface proper error messages to the client
+router.post("/login", (req, res, next) => {
+  passport.authenticate("local", { session: false }, (err, user, info) => {
+    if (err) {
+      return res.status(500).json({ message: err.message || "Authentication error" });
+    }
+    if (!user) {
+      // info may contain message from LocalStrategy
+      return res.status(401).json({ message: (info && info.message) || "Unauthorized" });
+    }
+    // Attach user to req and proceed to controller
+    req.user = user;
+    return loginUser(req, res, next);
+  })(req, res, next);
+});
 
 router.post("/logout", logoutUser);
 

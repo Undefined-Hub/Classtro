@@ -1,60 +1,66 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
-import Landing from './pages/Landing'
-import Login from './pages/Login'
+import { useState, lazy, Suspense } from "react";
+import { HostSessionProvider } from "./context/HostSessionContext.jsx";
 import { Routes, Route, useNavigate, Navigate } from "react-router-dom";
-import Dashboard from './pages/Dashboard'
-import JoinSession from './pages/JoinSession'
-import LoginPage from './pages/test/LoginPage'
-import RegisterPage from "./pages/test/RegisterPage";
-import SuccessPage from "./pages/test/SucessPage";
-import FailurePage from "./pages/test/FailurePage";
+import ProtectedRoute from "./components/ProtectedRoute.jsx";
+import { useAuth } from "./context/UserContext.jsx";
 
-function ProfilePage({ user, onLogout }) {
-  return (
-    <div className="flex flex-col items-center justify-center min-h-screen">
-      <h2 className="text-2xl font-bold mb-4">Welcome, {user?.name || user?.username}!</h2>
-      <button
-        className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
-        onClick={onLogout}
-      >
-        Logout
-      </button>
-    </div>
-  );
-}
+const Landing = lazy(() => import("./pages/Landing"));
+const Login = lazy(() => import("./pages/Login"));
+const DashboardPage = lazy(() => import("./pages/Host/DashboardPage.jsx"));
+const SessionWorkspace = lazy(() => import("./pages/Host/SessionWorkspace.jsx"));
+const ParticipantHome = lazy(() => import("./pages/Participant/ParticipantHome"));
+const ParticipantSession = lazy(() => import("./pages/Participant/ParticipantSession"));
+const NotFound = lazy(() => import("./pages/NotFound"));
+const Unauthorized = lazy(() => import("./pages/Unauthorized"));
+
+const BACKEND_BASE_URL = import.meta.env.VITE_BACKEND_BASE_URL || "http://localhost:2000";
+// console.log("Backend Base URL:", BACKEND_BASE_URL);
+
 
 function App() {
-  const [user, setUser] = useState(null);
   const navigate = useNavigate();
+  const { user, logout, login } = useAuth();
 
   const handleLogin = (userObj) => {
-    setUser(userObj);
-    navigate("/test/profile");
+    // For components still passing onLogin prop; delegate to context
+    login(userObj, localStorage.getItem("accessToken"));
+    if (userObj.role === "TEACHER") {
+      navigate("/test/dashboard");
+    } else if (userObj.role === "STUDENT") {
+      navigate("/participant/home");
+    } else {
+      navigate("/test/dashboard");
+    }
   };
 
   const handleLogout = () => {
-    setUser(null);
+    logout();
     navigate("/test/login");
   };
+
   return (
     <>
       <Routes>
         <Route path="/" element={<Landing />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/join" element={<JoinSession />} />
-        <Route path="/test/login" element={<LoginPage onLogin={handleLogin} />} />
-        <Route path="/test/register" element={<RegisterPage onRegister={() => navigate("/test/login")} />} />
-        <Route path="/test/profile" element={user ? <ProfilePage user={user} onLogout={handleLogout} /> : <Navigate to="/test/login" />} />
-        <Route path="/test/success" element={<SuccessPage />} />
-        <Route path="/test/failure" element={<FailurePage />} />
-        {/* Add more routes here as needed */}
+        <Route path="/login" element={<Login onLogin={handleLogin} />} />
+        {/* Protected routes group */}
+        <Route element={<ProtectedRoute roles={["TEACHER"]} />}>
+          <Route path="/test/dashboard" element={<DashboardPage />} />
+          <Route path="/test/sessionWorkspace" element={
+            <HostSessionProvider>
+              <SessionWorkspace />
+            </HostSessionProvider>
+          } />
+        </Route>
+        <Route element={<ProtectedRoute roles={["STUDENT"]} />}>
+          <Route path="/participant/home" element={<ParticipantHome />} />
+          <Route path="/participant/session" element={<ParticipantSession />} />
+        </Route>
+        <Route path="/unauthorized" element={<Unauthorized />} />
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </>
-  )
+  );
 }
 
-export default App
+export default App;
