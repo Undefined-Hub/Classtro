@@ -135,3 +135,18 @@
 ## 7. Overall Assessment
 
 The backend demonstrates excellent architectural principles with proper separation of concerns, secure authentication flows, and modular design. The JWT implementation is robust with refresh token security. Minor improvements needed for route protection and production hardening, but overall structure is production-ready.
+
+## 8. Recent project-specific notes (current workspace state)
+
+- Added stricter login validation to prevent users from logging in before completing registration. The `loginUser` controller now checks `emailVerified` and `role !== 'UNKNOWN'` and returns a 403 with a structured payload when verification or role selection is required. The server will attempt to re-send OTP when email verification is missing.
+- Registration flow now sets `emailVerified: false` when creating a new user and triggers OTP send. OTP verification (`/api/auth/verify-email`) marks the user as verified in the DB.
+- The Google OAuth popup flow was adapted to postMessage a small HTML bridge back to the frontend; the payload includes an `isNewUser` flag to help frontend decide whether to route to role selection.
+- Several small fixes to controller error handling and response shapes have been applied to make the frontend flow smoother (403 responses include `requiresVerification`, `step`, and useful metadata).
+
+## 9. Remaining backend TODOs (recommended)
+
+- Add the `emailVerified` field to existing user documents in production (one-time migration) for users created before this change.
+- Consider storing OTP metadata (createdAt/expiresAt/attempts) with the user or a dedicated collection for better rate-limiting, auditing and security.
+- Move sensitive defaults (like JWT secrets) to a secrets manager and ensure `.env` is never committed.
+- Add automated tests around auth flows: registration -> verify -> login, and Google OAuth flows.
+- Review and improve logging for security-sensitive operations (OTP generation, login failures, token refreshes).

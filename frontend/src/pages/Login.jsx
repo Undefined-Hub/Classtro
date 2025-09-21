@@ -44,6 +44,37 @@ function Login({ onLogin }) {
         } else {
           navigate("/test/dashboard", { replace: true });
         }
+      } else if (res.status === 403 && data.requiresVerification) {
+        // ! Handle incomplete registration
+        safeToast.dismiss(pending);
+        
+        if (data.step === 1) {
+          // Email verification needed
+          safeToast.success("Please verify your email to continue");
+          navigate("/verify", {
+            replace: true,
+            state: {
+              step: 1,
+              email: username,
+              google: false,
+              oauth: false,
+              emailSent: data.emailSent,
+              expiresIn: data.expiresIn
+            },
+          });
+        } else if (data.step === 2) {
+          // Role selection needed
+          safeToast.success("Please complete your profile");
+          navigate("/verify", {
+            replace: true,
+            state: {
+              step: 2,
+              email: data.email,
+              google: false,
+              oauth: false
+            },
+          });
+        }
       } else {
         safeToast.dismiss(pending);
         safeToast.error(
@@ -118,7 +149,9 @@ function Login({ onLogin }) {
         popup.close();
         window.removeEventListener("message", messageListener);
       } else if (event.data.type === "OAUTH_ERROR") {
-        setError("OAuth login failed");
+        const errorMessage = event.data.message || "OAuth login failed";
+        setError(errorMessage);
+        safeToast.error(errorMessage);
         popup.close();
         window.removeEventListener("message", messageListener);
       }

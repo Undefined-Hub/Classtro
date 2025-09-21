@@ -50,7 +50,14 @@ export default function Register() {
         }
         safeToast.dismiss(pendingToastId);
         // Redirect to verification page, pass email for verification
-        navigate("/verify", { state: { email: form.email, step: 1 } });
+        navigate("/verify", { 
+          state: { 
+            email: form.email, 
+            step: 1,
+            google: false,
+            oauth: false 
+          } 
+        });
       } else {
         safeToast.dismiss(pendingToastId);
         safeToast.error(data.message || "Registration failed");
@@ -111,7 +118,9 @@ export default function Register() {
         popup.close();
         window.removeEventListener("message", messageListener);
       } else if (event.data.type === "OAUTH_ERROR") {
-        setError("OAuth registration failed");
+        const errorMessage = event.data.message || "OAuth registration failed";
+        setError(errorMessage);
+        safeToast.error(errorMessage);
         popup.close();
         window.removeEventListener("message", messageListener);
       }
