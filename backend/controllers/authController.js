@@ -10,52 +10,68 @@ const emailService = require("../services/emailService");
 // Load environment variables
 dotenv.config();
 
-// Zod schemas
-const userRegisterSchema = z.object({
-  name: z.string().min(3, "Name must contain at least 3 characters"),
-  email: z.string().email("Invalid email format"),
-  phone: z.string().min(10, "Phone number must be at least 10 digits"),
-  password: z.string().min(8, "Password must contain at least 8 characters"),
-  role: z.enum(
-    ["Employee", "Manager"],
-    "Role must be either 'Employee' or 'Manager'",
-  ),
-});
-
-const userLoginSchema = z.object({
-  email: z.string().email("Invalid email format"),
-  password: z.string().min(8, "Password must contain at least 8 characters"),
-});
-
 const loginUser = async (req, res) => {
-  const user = req.user;
+  try {
+    const { email, password } = req.body;
+    
+    // ! Find user and check password
+    const user = await User.findOne({ email });
+    if (!user || !(await bcrypt.compare(password, user.password))) {
+      return res.status(401).json({ message: "Invalid email or password." });
+    }
 
-  const payload = { user: { id: user.id } };
-  const accessToken = generateToken(payload, process.env.JWT_SECRET, {
-    expiresIn: "1h",
-  });
+    // ! Check if user completed registration process
+    if (!user.emailVerified) {
+      // ! Regenerate and send new OTP
+      const otpResult = await otpService.generateAndSendOTP(email, user.name);
+      return res.status(403).json({ 
+        message: "Email not verified. Please check your email for verification code.",
+        requiresVerification: true,
+        step: 1, // ! Email verification step
+        emailSent: otpResult.success,
+        expiresIn: otpResult.expiresIn
+      });
+    }
 
-  const refreshToken = generateToken(payload, process.env.JWT_REFRESH_SECRET, {
-    expiresIn: "7d",
-  });
+    if (user.role === "UNKNOWN") {
+      return res.status(403).json({ 
+        message: "Please complete your profile by selecting a role.",
+        requiresVerification: true,
+        step: 2, // ! Role selection step
+        email: user.email
+      });
+    }
 
-  user.refreshToken = refreshToken;
-  await user.save();
-  user.password = undefined;
-  user.__v = undefined;
-  user.updatedAt = undefined;
+    // ! Existing login logic
+    const payload = { user: { id: user.id } };
+    const accessToken = generateToken(payload, process.env.JWT_SECRET, {
+      expiresIn: "1h",
+    });
 
-  res.cookie("refreshToken", refreshToken, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "Strict",
-  });
+    const refreshToken = generateToken(payload, process.env.JWT_REFRESH_SECRET, {
+      expiresIn: "7d",
+    });
 
-  res.status(200).json({
-    message: "Login successful",
-    accessToken,
-    user,
-  });
+    user.refreshToken = refreshToken;
+    await user.save();
+    user.password = undefined;
+    user.__v = undefined;
+    user.updatedAt = undefined;
+
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "Strict",
+    });
+
+    res.status(200).json({
+      message: "Login successful",
+      accessToken,
+      user,
+    });
+  } catch (err) {
+    res.status(500).json({ message: "Login failed.", error: err.message });
+  }
 };
 
 const logoutUser = async (req, res, next) => {
@@ -109,6 +125,7 @@ const registerUser = async (req, res) => {
       role: "UNKNOWN", // ? will be updated after email verification
       authProvider: "LOCAL",
       status: "ACTIVE",
+      emailVerified: false, // Add this field
     });
     await newUser.save();
 
@@ -317,6 +334,12 @@ const verifyEmail = async (req, res) => {
     const result = await otpService.verifyOTP(email, otp);
 
     if (result.success) {
+      // Mark email as verified in database
+      await User.findOneAndUpdate(
+        { email },
+        { emailVerified: true }
+      );
+
       res.status(200).json({
         success: true,
         message: result.message,

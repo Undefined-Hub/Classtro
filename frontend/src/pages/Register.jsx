@@ -50,7 +50,14 @@ export default function Register() {
         }
         safeToast.dismiss(pendingToastId);
         // Redirect to verification page, pass email for verification
-        navigate("/verify", { state: { email: form.email, step: 1 } });
+        navigate("/verify", { 
+          state: { 
+            email: form.email, 
+            step: 1,
+            google: false,
+            oauth: false 
+          } 
+        });
       } else {
         safeToast.dismiss(pendingToastId);
         safeToast.error(data.message || "Registration failed");
