@@ -4,6 +4,8 @@ const dotenv = require("dotenv");
 const User = require("../models/User");
 const { validateInput } = require("../utils/validateInput");
 const { generateToken, verifyToken } = require("../utils/jwtUtils");
+const otpService = require("../services/otpService");
+const emailService = require("../services/emailService");
 
 // Load environment variables
 dotenv.config();
@@ -82,8 +84,8 @@ const logoutUser = async (req, res, next) => {
 
 const registerUser = async (req, res) => {
   try {
-    const { name, username, email, password, role } = req.body;
-    if (!name || !username || !email || !password || !role) {
+    const { name, username, email, password } = req.body;
+    if (!name || !username || !email || !password) {
       return res.status(400).json({ message: "All fields are required." });
     }
 
@@ -104,12 +106,29 @@ const registerUser = async (req, res) => {
       username,
       email,
       password: hashedPassword,
-      role,
+      role: "UNKNOWN", // ? will be updated after email verification
       authProvider: "LOCAL",
       status: "ACTIVE",
     });
     await newUser.save();
-    res.status(201).json({ message: "User registered successfully." });
+
+    // Generate and send OTP for email verification
+    const otpResult = await otpService.generateAndSendOTP(email, name);
+    
+    if (otpResult.success) {
+      res.status(201).json({ 
+        message: "User registered successfully. Please check your email for verification code.",
+        emailSent: true,
+        expiresIn: otpResult.expiresIn
+      });
+    } else {
+      // User was created but email failed - still return success but warn about email
+      res.status(201).json({ 
+        message: "User registered successfully, but email verification could not be sent. Please try again.",
+        emailSent: false,
+        emailError: otpResult.message
+      });
+    }
   } catch (err) {
     res
       .status(500)
@@ -153,6 +172,7 @@ const googleAuthCallback = async (req, res) => {
     type: "OAUTH_SUCCESS",
     accessToken,
     user: safeUser,
+    isNewUser: req.user.isNewUser || false, // Include isNewUser flag
   };
 
   const targetOrigin = process.env.FRONTEND_ORIGIN || "http://localhost:5173"; // Frontend origin
