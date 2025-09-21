@@ -49,10 +49,53 @@ router.get(
   "/google/callback",
   passport.authenticate("google", {
     session: false,
-    failureRedirect: "http://localhost:5173/failure",
+    failureRedirect: "/api/auth/google/failure",
   }),
   googleAuthCallback,
 );
+
+// Handle OAuth failures
+router.get("/google/failure", (req, res) => {
+  const targetOrigin = process.env.FRONTEND_ORIGIN || "http://localhost:5173";
+  
+  const html = `<!DOCTYPE html>
+  <html lang="en">
+    <head>
+      <meta charset="UTF-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <title>Authentication Failed</title>
+      <style>
+        body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; margin: 0; display: grid; place-items: center; height: 100vh; color: #111; }
+        .box { text-align: center; }
+        .error { color: #dc2626; }
+      </style>
+    </head>
+    <body>
+      <div class="box">
+        <p class="error">Authentication failed. You can close this window.</p>
+      </div>
+      <script>
+        (function() {
+          try {
+            var data = {
+              type: 'OAUTH_ERROR',
+              message: 'This account was registered via a different method. Please use the original login method.'
+            };
+            if (window.opener && !window.opener.closed) {
+              window.opener.postMessage(data, ${JSON.stringify(targetOrigin)});
+            }
+          } catch (e) {
+            console.error('Failed to deliver error message:', e);
+          } finally {
+            setTimeout(function(){ window.close(); }, 2000);
+          }
+        })();
+      </script>
+    </body>
+  </html>`;
+
+  res.status(200).send(html);
+});
 
 router.post("/refresh", refreshToken);
 

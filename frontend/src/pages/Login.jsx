@@ -149,7 +149,9 @@ function Login({ onLogin }) {
         popup.close();
         window.removeEventListener("message", messageListener);
       } else if (event.data.type === "OAUTH_ERROR") {
-        setError("OAuth login failed");
+        const errorMessage = event.data.message || "OAuth login failed";
+        setError(errorMessage);
+        safeToast.error(errorMessage);
         popup.close();
         window.removeEventListener("message", messageListener);
       }

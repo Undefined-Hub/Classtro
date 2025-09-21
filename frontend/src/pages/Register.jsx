@@ -118,7 +118,9 @@ export default function Register() {
         popup.close();
         window.removeEventListener("message", messageListener);
       } else if (event.data.type === "OAUTH_ERROR") {
-        setError("OAuth registration failed");
+        const errorMessage = event.data.message || "OAuth registration failed";
+        setError(errorMessage);
+        safeToast.error(errorMessage);
         popup.close();
         window.removeEventListener("message", messageListener);
       }
