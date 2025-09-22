@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import api from "../../../utils/api";
 import LivePoll from "./LivePoll";
+import PastPolls from "./PastPolls";
 import { useHostSession } from "../../../context/HostSessionContext";
 const PollManager = () => {
   // * Context
@@ -82,6 +83,35 @@ const PollManager = () => {
     // * Close Poll Form Modal
     setShowPollForm(false);
   };
+
+  // * Handle End Poll
+  const handleEndPoll = async () => {
+      if (activePoll) {
+        console.log("Active Poll is Ending", activePoll);
+  
+        // * Poll Object with End Parameters
+        const endedPoll = {
+          ...activePoll,
+          isActive: false,
+          endedAt: new Date().toISOString(),
+        };
+  
+        // * Api call to patch and make the poll isActive false
+        await api.patch(`/api/polls/${activePoll._id}`);
+  
+        // * Poll Close Socket Emit
+        console.log("Ending poll:", activePoll.id);
+        socketRef.current.emit("poll:close", {
+          code: sessionData.code,
+          pollId: activePoll._id,
+        });
+  
+        // * Add to Past Polls and Clear Active Poll
+        setPastPolls([endedPoll, ...pastPolls]);
+        setActivePoll(null);
+      }
+    };
+
 
   // * Handle poll option change
   const handlePollOptionChange = (index, value) => {
@@ -253,7 +283,10 @@ const PollManager = () => {
         </div>
 
         {/* Active Poll Display */}
-        {activePoll ? (<LivePoll />) : (<div className="flex flex-col items-center justify-center py-12">
+        {activePoll ? (
+          <LivePoll onPollSubmit={handleEndPoll} />
+        ) : pastPolls.length > 0 ? (
+          <div className="flex flex-col items-center justify-center py-12">
             <svg
               className="w-12 h-12 text-gray-300 dark:text-gray-600 mb-4"
               fill="none"
@@ -270,106 +303,11 @@ const PollManager = () => {
             <span className="text-gray-400 dark:text-gray-500 text-lg font-medium text-center">
               No live polls yet
             </span>
-          </div>)}
+          </div>
+        ) : null}
 
         {/* Past Polls */}
-        {pastPolls.length > 0 && (
-          <div>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-              Past Polls
-            </h3>
-            <div className="space-y-4">
-              {pastPolls.map((poll) => {
-                const totalVotes = poll.options.reduce(
-                  (sum, opt) => sum + opt.votes,
-                  0
-                );
-                const winningOption = [...poll.options].sort(
-                  (a, b) => b.votes - a.votes
-                )[0];
-                const winningPercentage =
-                  totalVotes > 0
-                    ? Math.round((winningOption.votes / totalVotes) * 100)
-                    : 0;
-
-                return (
-                  <div
-                    key={poll.id}
-                    className="bg-white dark:bg-gray-700 rounded-lg shadow-md overflow-hidden"
-                  >
-                    <div className="p-4 border-b border-gray-200 dark:border-gray-600">
-                      <h4 className="font-medium text-gray-900 dark:text-white">
-                        {poll.question}
-                      </h4>
-                      <div className="flex items-center mt-1 text-sm text-gray-500 dark:text-gray-400">
-                        <svg
-                          className="w-4 h-4 mr-1"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                          />
-                        </svg>
-                        Ended{" "}
-                        {new Date(poll.endedAt).toLocaleTimeString([], {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                      </div>
-                    </div>
-
-                    <div className="p-4">
-                      <div className="text-sm mb-3">
-                        <span className="font-medium text-gray-700 dark:text-gray-300">
-                          Most Popular Answer:
-                        </span>{" "}
-                        <span className="text-gray-900 dark:text-white">
-                          "{winningOption.text}" ({winningPercentage}%)
-                        </span>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-3 text-sm">
-                        {poll.options.map((option) => {
-                          const optionPercentage =
-                            totalVotes > 0
-                              ? Math.round((option.votes / totalVotes) * 100)
-                              : 0;
-
-                          return (
-                            <div key={option.id} className="flex items-center">
-                              <div
-                                className={`w-3 h-3 rounded-full mr-2 ${
-                                  option.id === winningOption.id
-                                    ? "bg-green-500"
-                                    : "bg-gray-300 dark:bg-gray-500"
-                                }`}
-                              ></div>
-                              <span className="text-gray-700 dark:text-gray-300 truncate">
-                                {option.text}
-                              </span>
-                              <span className="ml-auto text-gray-500 dark:text-gray-400">
-                                {optionPercentage}%
-                              </span>
-                            </div>
-                          );
-                        })}
-                      </div>
-
-                      <div className="mt-3 text-sm text-gray-500 dark:text-gray-400">
-                        Total responses: {totalVotes}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
+        {pastPolls.length > 0 && <PastPolls />}
 
         {/* Empty State */}
         {!activePoll && pastPolls.length === 0 && !showPollForm && (

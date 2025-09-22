@@ -37,32 +37,7 @@ export const HostSessionProvider = ({ children }) => {
     return hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
   };
 
-  const handleEndPoll = async () => {
-    if (activePoll) {
-      console.log("Active Poll is Ending", activePoll);
-
-      // * Poll Object with End Parameters
-      const endedPoll = {
-        ...activePoll,
-        isActive: false,
-        endedAt: new Date().toISOString(),
-      };
-
-      // * Api call to patch and make the poll isActive false
-      await api.patch(`/api/polls/${activePoll._id}`);
-
-      // * Poll Close Socket Emit
-      console.log("Ending poll:", activePoll.id);
-      socketRef.current.emit("poll:close", {
-        code: sessionData.code,
-        pollId: activePoll._id,
-      });
-
-      // * Add to Past Polls and Clear Active Poll
-      setPastPolls([endedPoll, ...pastPolls]);
-      setActivePoll(null);
-    }
-  };
+  
 
   const resetHostSession = () => {
     setSessionData({});
@@ -124,7 +99,6 @@ export const HostSessionProvider = ({ children }) => {
       socketRef,
       resetHostSession,
       calculateDuration,
-      handleEndPoll
     }),
     [
       sessionData,

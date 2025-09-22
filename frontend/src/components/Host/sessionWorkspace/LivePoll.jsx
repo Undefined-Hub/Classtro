@@ -1,8 +1,8 @@
 // LivePoll.jsx
 import React, { use } from "react";
 import { useHostSession } from "../../../context/HostSessionContext";
-const LivePoll = () => {
-  const { activePoll, handleEndPoll } = useHostSession();
+const LivePoll = ({onPollSubmit}) => {
+  const { activePoll } = useHostSession();
   if (!activePoll) return null;
   const totalVotes = activePoll.options.reduce(
     (sum, opt) => sum + opt.votes,
@@ -21,7 +21,7 @@ const LivePoll = () => {
           </h3>
         </div>
         <button
-          onClick={handleEndPoll}
+          onClick={onPollSubmit}
           className="inline-flex items-center px-3 py-1.5 bg-red-100 text-red-700 rounded-lg text-sm hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50"
         >
           <svg
