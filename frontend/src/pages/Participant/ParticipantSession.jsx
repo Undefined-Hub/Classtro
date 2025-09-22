@@ -35,13 +35,12 @@ const ParticipantSession = () => {
   });
   const [pollId, setPollId] = useState(null);
   const socketRef = useRef(null);
-  // Submit poll answer
-  const handlePollSubmit = (e) => {
-    e.preventDefault();
-    if (!activePoll || !selectedOption || !socketRef.current) return;
+  // Submit poll answer for a specific option
+  const handlePollSubmit = (optionId) => {
+    if (!activePoll || !optionId || !socketRef.current) return;
     setPollSubmitting(true);
     // Find the index of the selected option
-    const optionIndex = activePoll.options.findIndex(opt => opt._id === selectedOption);
+    const optionIndex = activePoll.options.findIndex(opt => opt._id === optionId);
     if (optionIndex === -1) return;
     console.log("Submitting vote for option index:", {
         code: sessionData?.joinCode,
@@ -58,6 +57,7 @@ const ParticipantSession = () => {
         optionIndex,
       },
       () => {
+        setSelectedOption(optionId);
         setPollSubmitting(false);
         setPollSubmitted(true);
       }
