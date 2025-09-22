@@ -154,8 +154,11 @@ const SessionWorkspace = () => {
       // Set a new timeout (300ms debounce)
       fetchTimeoutRef.current = setTimeout(async () => {
         try {
+          console.log(api);
           const res = await api.get(
-            `/api/sessions/code/${sessionCode}/participants`
+            `/api/sessions/code/${sessionCode}/participants`,{headers: {
+              'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
+            }}
           );
           setParticipantsList(res.data);
         } catch (err) {

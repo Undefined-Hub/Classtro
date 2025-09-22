@@ -4,6 +4,7 @@ import { Routes, Route, useNavigate, Navigate } from "react-router-dom";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import { useAuth } from "./context/UserContext.jsx";
 
+
 const Landing = lazy(() => import("./pages/Landing"));
 const Login = lazy(() => import("./pages/Login"));
 const DashboardPage = lazy(() => import("./pages/Host/DashboardPage.jsx"));
