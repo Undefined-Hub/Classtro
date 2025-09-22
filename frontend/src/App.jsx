@@ -7,19 +7,14 @@ import { useAuth } from "./context/UserContext.jsx";
 const Landing = lazy(() => import("./pages/Landing"));
 const Login = lazy(() => import("./pages/Login"));
 const DashboardPage = lazy(() => import("./pages/Host/DashboardPage.jsx"));
-const SessionWorkspace = lazy(
-  () => import("./pages/Host/SessionWorkspace.jsx"),
-);
-const ParticipantHome = lazy(
-  () => import("./pages/Participant/ParticipantHome"),
-);
-const ParticipantSession = lazy(
-  () => import("./pages/Participant/ParticipantSession"),
-);
+const SessionWorkspace = lazy(() => import("./pages/Host/SessionWorkspace.jsx"));
+const ParticipantHome = lazy(() => import("./pages/Participant/ParticipantHome"));
+const ParticipantSession = lazy(() => import("./pages/Participant/ParticipantSession"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const Unauthorized = lazy(() => import("./pages/Unauthorized"));
 const Register = lazy(() => import("./pages/Register"));
 const VerifyAndRole = lazy(() => import("./pages/VerifyAndRole"));
+const AnalyticsPage = lazy(() => import("./pages/Host/AnalyticsPage.jsx"));
 
 const BACKEND_BASE_URL =
   import.meta.env.VITE_BACKEND_BASE_URL || "http://localhost:3000";
@@ -64,6 +59,7 @@ function App() {
               </HostSessionProvider>
             }
           />
+          <Route path="/analytics" element={<AnalyticsPage />} />
         </Route>
         <Route element={<ProtectedRoute roles={["STUDENT"]} />}>
           <Route path="/participant/home" element={<ParticipantHome />} />
