@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import api from "../../../utils/api";
+import LivePoll from "./LivePoll";
 import { useHostSession } from "../../../context/HostSessionContext";
 const PollManager = () => {
   // * Context
@@ -80,34 +81,6 @@ const PollManager = () => {
 
     // * Close Poll Form Modal
     setShowPollForm(false);
-  };
-
-  // * Handle Close Poll
-  const handleEndPoll = async () => {
-    if (activePoll) {
-      console.log("Active Poll is Ending", activePoll);
-
-      // * Poll Object with End Parameters
-      const endedPoll = {
-        ...activePoll,
-        isActive: false,
-        endedAt: new Date().toISOString(),
-      };
-
-      // * Api call to patch and make the poll isActive false
-      await api.patch(`/api/polls/${activePoll._id}`);
-
-      // * Poll Close Socket Emit
-      console.log("Ending poll:", activePoll.id);
-      socketRef.current.emit("poll:close", {
-        code: sessionData.code,
-        pollId: activePoll._id,
-      });
-
-      // * Add to Past Polls and Clear Active Poll
-      setPastPolls([endedPoll, ...pastPolls]);
-      setActivePoll(null);
-    }
   };
 
   // * Handle poll option change
@@ -280,83 +253,24 @@ const PollManager = () => {
         </div>
 
         {/* Active Poll Display */}
-        {activePoll && (
-          <div className="bg-white dark:bg-gray-700 rounded-lg shadow-lg mb-8 overflow-hidden">
-            <div className="p-5 border-b border-gray-200 dark:border-gray-600 flex justify-between items-center">
-              <div>
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
-                  Live Poll
-                </span>
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mt-2">
-                  {activePoll.question}
-                </h3>
-              </div>
-              <button
-                onClick={handleEndPoll}
-                className="inline-flex items-center px-3 py-1.5 bg-red-100 text-red-700 rounded-lg text-sm hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50"
-              >
-                <svg
-                  className="w-4 h-4 mr-1"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-                End Poll
-              </button>
-            </div>
-
-            <div className="p-5">
-              <div className="space-y-4">
-                {activePoll.options.map((option, index) => {
-                  const totalVotes = activePoll.options.reduce(
-                    (sum, opt) => sum + opt.votes,
-                    0
-                  );
-                  const percentage =
-                    totalVotes > 0
-                      ? Math.round((option.votes / totalVotes) * 100)
-                      : 0;
-
-                  return (
-                    <div key={option._id} className="space-y-2">
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                          {option.text}
-                        </span>
-                        <span className="text-sm text-gray-500 dark:text-gray-400">
-                          {option.votes} votes ({percentage}%)
-                        </span>
-                      </div>
-                      <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2">
-                        <div
-                          className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                          style={{ width: `${percentage}%` }}
-                        ></div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-
-              <div className="mt-6 text-center">
-                <div className="text-lg font-bold text-gray-900 dark:text-white">
-                  Total Responses:{" "}
-                  {activePoll.options.reduce((sum, opt) => sum + opt.votes, 0)}
-                </div>
-                <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                  Students can vote in real-time
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
+        {activePoll ? (<LivePoll />) : (<div className="flex flex-col items-center justify-center py-12">
+            <svg
+              className="w-12 h-12 text-gray-300 dark:text-gray-600 mb-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+              />
+            </svg>
+            <span className="text-gray-400 dark:text-gray-500 text-lg font-medium text-center">
+              No live polls yet
+            </span>
+          </div>)}
 
         {/* Past Polls */}
         {pastPolls.length > 0 && (
