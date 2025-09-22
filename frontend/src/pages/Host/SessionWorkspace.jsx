@@ -138,6 +138,31 @@ function SessionWorkspace() {
     if (!sessionData?.code) return;
     // Fetch participants initially
     fetchParticipants(sessionData.code);
+    // Fetch questions for this session
+    const fetchQuestions = async () => {
+      try {
+        const token = localStorage.getItem('accessToken');
+        const res = await axios.get(`${BACKEND_BASE_URL}/api/questions/session/${sessionData._id}`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+          withCredentials: true,
+        });
+        // Normalize backend question shape to frontend expected fields
+        const normalized = (res.data.questions || []).map((q) => ({
+          id: q._id,
+          text: q.text,
+          upvotes: q.upvotes || 0,
+          answered: !!q.isAnswered,
+          isAnonymous: !!q.isAnonymous,
+          studentName: q.studentName || (q.authorName || ''),
+          timestamp: q.createdAt,
+        }));
+        setQuestions(normalized);
+      } catch (err) {
+        console.error('Failed to fetch questions:', err);
+        setQuestions([]);
+      }
+    };
+    fetchQuestions();
     // Connect only once
     if (!socketRef.current) {
       const token = localStorage.getItem("accessToken");
@@ -163,6 +188,56 @@ function SessionWorkspace() {
       code: sessionData.code,
       participantId: "teacher1",
     });
+    // Q&A socket listeners
+    const onCreated = (payload) => {
+      const q = payload.question;
+      const normalized = {
+        id: q._id,
+        text: q.text,
+        upvotes: q.upvotes || 0,
+        answered: !!q.isAnswered,
+        isAnonymous: !!q.isAnonymous,
+        studentName: q.studentName || (q.authorName || ''),
+        timestamp: q.createdAt,
+      };
+      setQuestions((prev) => [normalized, ...prev]);
+    };
+    const onUpdated = (payload) => {
+      const q = payload.question;
+      setQuestions((prev) =>
+        prev.map((item) =>
+          item.id === q._id
+            ? {
+              ...item,
+              text: q.text || item.text,
+              answered: !!q.isAnswered,
+            }
+            : item,
+        ),
+      );
+    };
+    const onDeleted = (payload) => {
+      const { questionId } = payload;
+      setQuestions((prev) => prev.filter((item) => item.id !== questionId));
+    };
+    const onUpvoted = (payload) => {
+      const { questionId, delta } = payload;
+      setQuestions((prev) =>
+        prev.map((item) =>
+          item.id === questionId ? { ...item, upvotes: (item.upvotes || 0) + delta } : item,
+        ),
+      );
+    };
+    const onAnswered = (payload) => {
+      const { questionId } = payload;
+      setQuestions((prev) => prev.map((item) => (item.id === questionId ? { ...item, answered: true } : item)));
+    };
+
+    socket.on('qna:question:created', onCreated);
+    socket.on('qna:question:updated', onUpdated);
+    socket.on('qna:question:deleted', onDeleted);
+    socket.on('qna:question:upvoted', onUpvoted);
+    socket.on('qna:question:answered', onAnswered);
     // Listen for room members
     socket.on("room:members", (data) => {
       console.log("Room members (teacher):", data.sockets);
@@ -185,10 +260,15 @@ function SessionWorkspace() {
           code: sessionData.code,
           participantId: "teacher1",
         });
-      } catch {}
+      } catch { }
       socket.off("room:members");
       socket.off("participants:update");
       socket.off("broadcast:message");
+      socket.off('qna:question:created', onCreated);
+      socket.off('qna:question:updated', onUpdated);
+      socket.off('qna:question:deleted', onDeleted);
+      socket.off('qna:question:upvoted', onUpvoted);
+      socket.off('qna:question:answered', onAnswered);
       socket.off("connect");
       socket.off("connect_error");
       socket.off("disconnect");
@@ -299,12 +379,18 @@ function SessionWorkspace() {
   };
 
   // Handle marking a question as answered
-  const handleMarkAnswered = (questionId) => {
-    setQuestions(
-      questions.map((q) =>
-        q.id === questionId ? { ...q, answered: true } : q,
-      ),
-    );
+  const handleMarkAnswered = async (questionId) => {
+    try {
+      const token = localStorage.getItem("accessToken");
+      await axios.patch(`${BACKEND_BASE_URL}/api/questions/${questionId}/answer`, null, {
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        withCredentials: true,
+      });
+      // Socket event will update all clients' state
+    } catch (err) {
+      console.error('Failed to mark question as answered:', err);
+      alert('Failed to mark question as answered');
+    }
   };
 
   // Handle kicking a participant (UI only, backend action not implemented here)
