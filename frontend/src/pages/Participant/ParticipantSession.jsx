@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { io } from "socket.io-client";
+import ParticipantLivePoll from "../../components/Participant/ParticipantLivePoll.jsx";
 import { useParticipantSession } from "../../context/ParticipantSessionContext.jsx";
 import { STORAGE_KEY } from "../../context/ParticipantSessionContext.jsx";
 import SessionHeader from '../../components/Participant/SessionHeader.jsx';
@@ -8,7 +9,7 @@ import WelcomeContent from '../../components/Participant/WelcomeContent.jsx';
 import ParticipantQnA from '../../components/Participant/ParticipantQnA.jsx';
 import AskQuestionModal from '../../components/Participant/AskQuestionModal.jsx';
 import axios from 'axios';
-
+import api from "../../utils/api.js";
 const SOCKET_URL =
   (import.meta.env?.VITE_BACKEND_BASE_URL || "http://localhost:5000") +
   "/sessions";
@@ -95,102 +96,112 @@ const ParticipantSession = () => {
   }, [sessionData, setSessionData, navigate]);
 
   // Initialize socket on mount and join session room
-useEffect(() => {
-  if (!sessionData || socketRef.current) return;
+  useEffect(() => {
+    if (!sessionData || socketRef.current) return;
 
-  // * Initialize socket
-  const token = localStorage.getItem("accessToken");
-  const socket = io(SOCKET_URL, {
-    withCredentials: true,
-    extraHeaders: token ? { Authorization: `Bearer ${token}` } : undefined,
-  });
-
-  // * Assign socket instance to ref
-  socketRef.current = socket;
-
-  // ------------------- Handlers -------------------
-
-  const onVoteUpdateReceived = ({ pollId, counts }) => {
-    setPollSubmitting(false);
-    setPollSubmitted(false);
-
-    setActivePoll((prev) => {
-      if (!prev || prev._id !== pollId) return prev;
-      const newOptions = prev.options.map((opt, idx) => ({
-        ...opt,
-        votes: counts[idx] || 0,
-      }));
-      const updated = { ...prev, options: newOptions };
-      sessionStorage.setItem("activePoll", JSON.stringify(updated));
-      return updated;
+    // * Initialize socket
+    const token = localStorage.getItem("accessToken");
+    const socket = io(SOCKET_URL, {
+      withCredentials: true,
+      extraHeaders: token ? { Authorization: `Bearer ${token}` } : undefined,
     });
-  };
 
-  const onNewPollReceived = (poll) => {
-    console.log("[Participant] New poll received:", poll);
-    setActivePoll(poll);
-    setPollId(poll._id);
-    sessionStorage.setItem("activePoll", JSON.stringify(poll));
-  };
+    // * Assign socket instance to ref
+    socketRef.current = socket;
 
-  const onBroadcast = (data) => {
-    setBroadcastMsg(
-      `${data.message}${data.from ? ` (from ${data.from})` : ""}`
-    );
-    console.log("[Participant] broadcast:message", data);
-  };
+    // ------------------- Handlers -------------------
 
-  const onRoomMembers = (members) => {
-    console.log("[Participant] room:members", members);
-  };
+    // * Handle incoming vote updates
+    const onVoteUpdateReceived = ({ pollId, counts }) => {
+      setPollSubmitting(false);
+      setPollSubmitted(false);
 
-  const onParticipantsUpdate = (data) => {
-    console.log("[Participant] participants:update", data);
-    if (data.code === sessionData.joinCode) {
-      setParticipantCount(data.count);
-    }
-  };
+      setActivePoll((prev) => {
+        if (!prev || prev._id !== pollId) return prev;
+        const newOptions = prev.options.map((opt, idx) => ({
+          ...opt,
+          votes: counts[idx] || 0,
+        }));
+        const updated = { ...prev, options: newOptions };
+        sessionStorage.setItem("activePoll", JSON.stringify(updated));
+        return updated;
+      });
+    };
 
-  const onSessionEnded = (payload) => {
-    console.log("[Participant] session:ended", payload);
-    alert("Session has ended by the host. You will be redirected.");
-    clearSession();
-    navigate("/participant/home");
-  };
+    // * Handle new poll received
+    const onNewPollReceived = (poll) => {
+      console.log("[Participant] New poll received:", poll);
+      setActivePoll(poll);
+      setPollId(poll._id);
+      sessionStorage.setItem("activePoll", JSON.stringify(poll));
+    };
 
-  const onPollClosed = ({ pollId }) => {
-    console.log("Poll closed:", pollId);
-    setActivePoll((prev) => {
-      if (prev && prev._id === pollId) {
-        sessionStorage.removeItem("activePoll");
-        return null;
+    // * Handle broadcast messages
+    const onBroadcast = (data) => {
+      setBroadcastMsg(
+        `${data.message}${data.from ? ` (from ${data.from})` : ""}`
+      );
+      console.log("[Participant] broadcast:message", data);
+    };
+
+    // * Handle room members update (for debugging)
+    const onRoomMembers = (members) => {
+      console.log("[Participant] room:members", members);
+    };
+
+    // * Handle participants count update
+    const onParticipantsUpdate = (data) => {
+      console.log("[Participant] participants:update", data);
+      if (data.code === sessionData.joinCode) {
+        setParticipantCount(data.count);
       }
-      return prev;
+    };
+
+    // * Handle session ended by host
+    const onSessionEnded = (payload) => {
+      console.log("[Participant] session:ended", payload);
+      alert("Session has ended by the host. You will be redirected.");
+      clearSession();
+      navigate("/participant/home");
+    };
+
+    // * Handle poll closed
+    const onPollClosed = ({ pollId }) => {
+      console.log("Poll closed:", pollId);
+      setActivePoll((prev) => {
+        if (prev && prev._id === pollId) {
+          sessionStorage.removeItem("activePoll");
+          return null;
+        }
+        return prev;
+      });
+    };
+
+    // ------------------- Socket Listeners -------------------
+
+    // * Connect and join session room
+    socket.on("connect", () => {
+      console.log("[Participant] connected:", socket.id);
+
+      // * Join session room
+      socket.emit("join-session", {
+        code: sessionData.joinCode,
+        participantId: sessionData.participantId,
+        role: "student",
+      });
     });
-  };
 
-  // ------------------- Socket Listeners -------------------
-
-  socket.on("connect", () => {
-    console.log("[Participant] connected:", socket.id);
-
-    // * Join session room
-    socket.emit("join-session", {
-      code: sessionData.joinCode,
-      participantId: sessionData.participantId,
-      role: "student",
-    });
-  });
-
-  socket.on("polls:new-poll", onNewPollReceived);
-  socket.on("poll:update", onVoteUpdateReceived);
-  socket.on("poll:closed", onPollClosed);
+    // * Register event listeners
+    socket.on("polls:new-poll", onNewPollReceived);
+    socket.on("poll:update", onVoteUpdateReceived);
+    socket.on("poll:closed", onPollClosed);
 
   
+      // * Register other event listeners
     socket.on("broadcast:message", onBroadcast);
-  socket.on("room:members", onRoomMembers);
-  socket.on("participants:update", onParticipantsUpdate);
-  socket.on("session:ended", onSessionEnded);
+    socket.on("room:members", onRoomMembers);
+    socket.on("participants:update", onParticipantsUpdate);
+    socket.on("session:ended", onSessionEnded);
 
     // Q&A events
     const onCreated = (payload) => {
@@ -233,34 +244,33 @@ useEffect(() => {
     socket.on('qna:question:upvoted', onUpvoted);
     socket.on('qna:question:answered', onAnswered);
 
-  // ------------------- Cleanup -------------------
-  return () => {
-    if (socketRef.current) {
-      try {
-        socket.emit("leave-session", {
-          code: sessionData.joinCode,
-          participantId: sessionData.participantId,
-        });
-      } catch {}
+    // * ------------------- Cleanup -------------------
+    return () => {
+      if (socketRef.current) {
+        try {
+          socket.emit("leave-session", {
+            code: sessionData.joinCode,
+            participantId: sessionData.participantId,
+          });
+        } catch {}
 
-      socket.off("polls:new-poll", onNewPollReceived);
-      socket.off("poll:update", onVoteUpdateReceived);
-      socket.off("poll:closed", onPollClosed);
-      socket.off("broadcast:message", onBroadcast);
-      socket.off("participants:update", onParticipantsUpdate);
-      socket.off("session:ended", onSessionEnded);
+        socket.off("polls:new-poll", onNewPollReceived);
+        socket.off("poll:update", onVoteUpdateReceived);
+        socket.off("poll:closed", onPollClosed);
+        socket.off("broadcast:message", onBroadcast);
+          socket.off("participants:update", onParticipantsUpdate);
+        socket.off("session:ended", onSessionEnded);
       socket.off('qna:question:created', onCreated);
       socket.off('qna:question:updated', onUpdated);
       socket.off('qna:question:deleted', onDeleted);
       socket.off('qna:question:upvoted', onUpvoted);
       socket.off('qna:question:answered', onAnswered);
-      socket.disconnect();
-      socketRef.current = null;
+        socket.disconnect();
+        socketRef.current = null;
       clearSession();
-    }
-  };
-}, [sessionData, clearSession, navigate]);
-
+      }
+    };
+  }, [sessionData, clearSession, navigate]);
   // Fetch initial questions for participant
   useEffect(() => {
     if (!sessionData?.session?._id) return;
@@ -325,21 +335,29 @@ useEffect(() => {
   const handleLeaveSession = async () => {
     if (!sessionData) return;
     try {
+      console.log("Attempting to leave session:", sessionData.joinCode);
       // * Update DB to remove participant from session
-      await api.post(`/api/sessions/code/${sessionData.joinCode}/leave`, {
-        body: JSON.stringify({ participantId: sessionData.participantId }),
-      });
-
+      await api.post(`/api/sessions/code/${sessionData.joinCode}/leave`, 
+        { participantId: sessionData.participantId }
+      );
+      console.log("Left session in DB");
       // * After DB update, emit socket event
       const socket = socketRef.current;
-      if (socket) socket.emit("leave-session", { code: sessionData.joinCode, participantId: sessionData.participantId });
+      if (socket) {
+        console.log("Emitting leave-session via socket");
+        // * Emit leave-session event
+        socket.emit("leave-session", {
+          code: sessionData.joinCode,
+          participantId: sessionData.participantId,
+        });
+      }
+      // * Clear context and redirect
       clearSession();
       navigate("/participant/home");
     } catch (err) {
       alert("Failed to leave session. Please try again.");
     }
   };
-
 
   // * Persist activePoll in sessionStorage to survive page reloads
   useEffect(() => {
