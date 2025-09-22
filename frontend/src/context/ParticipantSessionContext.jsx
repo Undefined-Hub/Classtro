@@ -19,6 +19,7 @@ export const ParticipantSessionProvider = ({ children }) => {
       return null;
     }
   });
+  const [activePoll, setActivePoll] = useState(null);
 
   useEffect(() => {
     try {
@@ -32,11 +33,14 @@ export const ParticipantSessionProvider = ({ children }) => {
     }
   }, [sessionData]);
 
-  const clearSession = () => setSessionData(null);
+  const clearSession = () => {
+    setSessionData(null);
+    setActivePoll(null);
+  };
 
   const value = useMemo(
-    () => ({ sessionData, setSessionData, clearSession }),
-    [sessionData],
+    () => ({ sessionData, setSessionData, clearSession, activePoll, setActivePoll }),
+    [sessionData, activePoll],
   );
 
   return (

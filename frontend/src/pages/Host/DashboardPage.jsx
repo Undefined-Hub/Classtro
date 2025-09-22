@@ -318,6 +318,7 @@ function DashboardPage() {
 
   const handleSessionClick = (session) => {
     // Navigate to the session workspace with session data as state
+    console.log("Navigating to session:", session);
     navigate("/test/sessionWorkspace", {
       state: {
         sessionId: session._id,

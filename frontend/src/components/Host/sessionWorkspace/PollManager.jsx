@@ -1,5 +1,6 @@
-import React, { useState } from "react";
-
+import React, { useEffect, useState } from "react";
+import api from "../../../utils/api";
+import { useHostSession } from "../../../context/HostSessionContext";
 const PollManager = ({
   activePoll,
   pastPolls,
@@ -10,18 +11,96 @@ const PollManager = ({
   activeView,
   setActiveView,
 }) => {
+  const { sessionData, socketRef, setActivePoll, setPastPolls } = useHostSession();
+  // useEffect(() => {
+  //   socketRef.current.on("polls:update", ({pollId,counts}) => {
+  //     console.log("Received poll ID : ",pollId, " with counts: ", counts);
+  //     // setActivePoll(updatedPoll);
+  //   });
+  // }, [socketRef]);
+  // // Listen for poll updates from the server
+
+  // Hydrate activePoll and pastPolls on mount
+
+  const fetchPolls = async () => {
+    console.log("Fetching past polls for session:", sessionData);
+      if (!sessionData?._id) return;
+      try {
+        const token = localStorage.getItem("accessToken");
+        const res = await api.get(`/api/sessions/${sessionData._id}/polls`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+          withCredentials: true,
+        });
+        console.log("Fetched past polls:", res.data);
+        if (Array.isArray(res.data)) {
+          setPastPolls(res.data.filter(p => !p.isActive));
+          setActivePoll(res.data.find(p => p.isActive) || null);
+        }
+      } catch (err) {
+        // Optionally handle error
+        console.error("Failed to fetch past polls:", err);
+      }
+    };
+
+
+  useEffect(() => {
+    fetchPolls();
+
+    try {
+      const raw = sessionStorage.getItem("hostActivePoll");
+      if (raw) {
+        setActivePoll(JSON.parse(raw));
+      }
+    } catch {}
+    // Fetch past polls from backend
+    
+    // eslint-disable-next-line
+  }, [sessionData?._id]);
+
+  useEffect(() => {
+    if (!socketRef.current) return;
+
+    const handlePollUpdate = ({ pollId, counts }) => {
+      // Only update if this is the active poll
+      if (activePoll && activePoll._id === pollId) {
+        const newOptions = activePoll.options.map((opt, idx) => ({ ...opt, votes: counts[idx] || 0 }));
+        const updated = { ...activePoll, options: newOptions };
+        setActivePoll(updated);
+        sessionStorage.setItem("hostActivePoll", JSON.stringify(updated));
+      }
+    };
+
+    socketRef.current.on("poll:update", handlePollUpdate);
+
+    // Cleanup listener on unmount
+    return () => {
+      // socketRef.current.off("poll:update", handlePollUpdate);
+    };
+  }, [socketRef, activePoll, setActivePoll]);
+
+  // Persist activePoll to sessionStorage
+  useEffect(() => {
+    if (activePoll) {
+      sessionStorage.setItem("hostActivePoll", JSON.stringify(activePoll));
+    } else {
+      sessionStorage.removeItem("hostActivePoll");
+    }
+  }, [activePoll]);
+  
+
   const [pollFormData, setPollFormData] = useState({
     question: "",
     options: ["", "", "", ""],
   });
 
+  const token = localStorage.getItem("accessToken");
   // Handle creating a new poll
-  const handleCreatePoll = (e) => {
+  const handleCreatePoll = async (e) => {
     e.preventDefault();
 
     // Filter out any empty options
     const validOptions = pollFormData.options.filter(
-      (option) => option.trim() !== "",
+      (option) => option.trim() !== ""
     );
 
     if (pollFormData.question.trim() === "" || validOptions.length < 2) {
@@ -31,6 +110,46 @@ const PollManager = ({
 
     onCreatePoll(pollFormData.question, validOptions);
     setPollFormData({ question: "", options: ["", "", "", ""] });
+
+    const pollOptions = validOptions.map((option) => ({
+      text: option,
+      votes: 0,
+    }));
+
+    const pollData = {
+      sessionId: sessionData._id,
+      question: pollFormData.question,
+      options: pollOptions,
+      isActive: true,
+      createdAt: new Date().toISOString(),
+    };
+
+    console.log("Poll Created:", pollData, "Session Data :", sessionData);
+    console.log(token);
+
+    // socketRef.current.emit("poll:create", {
+    //   code: sessionData.code,
+    //   sessionId: sessionData._id,
+    //   question: pollFormData.question,
+    //   options: pollOptions,
+    // });
+
+    const res = await api.post(
+      `/api/sessions/${sessionData._id}/polls`,
+      pollData,
+      {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        withCredentials: true,
+      }
+    );
+    console.log("API Response:", res.data);
+    setActivePoll(res.data);
+
+    socketRef.current.emit("poll:create", {
+      code: sessionData.code,
+      poll: res.data,
+    });
+
     setShowPollForm(false);
   };
 
@@ -62,6 +181,7 @@ const PollManager = ({
 
   if (activeView !== "polls") return null;
 
+
   return (
     <>
       <div className="p-3 h-full overflow-y-auto">
@@ -90,7 +210,13 @@ const PollManager = ({
               Back
             </button>
             <button
-              onClick={() => setShowPollForm(true)}
+              onClick={() => {
+                if (activePoll) {
+                  alert("A poll is already active. Please end the current poll before creating a new one.");
+                  return;
+                }
+                setShowPollForm(true);
+              }}
               className="inline-flex items-center px-2 py-1 bg-blue-600 text-white rounded-lg text-xs hover:bg-blue-700 focus:ring-2 focus:ring-blue-500"
             >
               <svg
@@ -149,7 +275,7 @@ const PollManager = ({
                 {activePoll.options.map((option, index) => {
                   const totalVotes = activePoll.options.reduce(
                     (sum, opt) => sum + opt.votes,
-                    0,
+                    0
                   );
                   const percentage =
                     totalVotes > 0
@@ -200,10 +326,10 @@ const PollManager = ({
               {pastPolls.map((poll) => {
                 const totalVotes = poll.options.reduce(
                   (sum, opt) => sum + opt.votes,
-                  0,
+                  0
                 );
                 const winningOption = [...poll.options].sort(
-                  (a, b) => b.votes - a.votes,
+                  (a, b) => b.votes - a.votes
                 )[0];
                 const winningPercentage =
                   totalVotes > 0

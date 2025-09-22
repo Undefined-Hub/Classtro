@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useCallback } from "react";
+import React, { useEffect, useRef, useCallback ,useState} from "react";
 import axios from "axios";
 import { useNavigate, useLocation } from "react-router-dom";
 import { io } from "socket.io-client";
@@ -9,7 +9,7 @@ import QAManager from "../../components/Host/sessionWorkspace/QAManager";
 import ParticipantList from "../../components/Host/sessionWorkspace/ParticipantList";
 import QuickActions from "../../components/Host/sessionWorkspace/QuickActions";
 import { useHostSession } from "../../context/HostSessionContext.jsx";
-
+import api from "../../utils/api.js";
 const BACKEND_BASE_URL =
   import.meta.env.VITE_BACKEND_BASE_URL || "http://localhost:5000";
 const SOCKET_URL = BACKEND_BASE_URL + "/sessions";
@@ -87,13 +87,16 @@ function SessionWorkspace() {
     if (location.state?.sessionData) {
       const passedSessionData = location.state.sessionData;
       const passedroomName = location.state.roomName;
+      console.log("Received session data via navigation:", passedSessionData);
       // Find the room name based on roomId
       const roomId = passedSessionData.roomId;
       const roomName = passedroomName ? passedroomName : "Unknown Room";
-      setSessionData({
+      const newSessionData = {
         ...passedSessionData,
         roomName: roomName,
-      });
+      };
+      setSessionData(newSessionData);
+      // Log the latest state of sessionData after setting it     
       setQuestions(MOCK_QUESTIONS);
     } else {
       // Use mock data as fallback
@@ -101,6 +104,10 @@ function SessionWorkspace() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location]);
+
+    useEffect(() => {
+      console.log("Session Data set in context:", sessionData);
+    }, [sessionData]);
 
   // Fetch participants from backend with debouncing
   const fetchTimeoutRef = useRef(null);
@@ -121,7 +128,7 @@ function SessionWorkspace() {
             {
               headers: token ? { Authorization: `Bearer ${token}` } : undefined,
               withCredentials: true,
-            },
+            }
           );
           setParticipantsList(res.data);
         } catch (err) {
@@ -130,7 +137,7 @@ function SessionWorkspace() {
         }
       }, 300); // 300ms debounce time
     },
-    [BACKEND_BASE_URL, setParticipantsList],
+    [BACKEND_BASE_URL, setParticipantsList]
   );
 
   // Connect to socket.io backend on mount
@@ -357,13 +364,20 @@ function SessionWorkspace() {
   };
 
   // Handle ending an active poll
-  const handleEndPoll = () => {
+  const handleEndPoll = async () => {
     if (activePoll) {
+      console.log("Active poll to end:", activePoll);
       const endedPoll = {
         ...activePoll,
         isActive: false,
         endedAt: new Date().toISOString(),
       };
+      await api.patch(`/api/polls/${activePoll._id}`);
+      console.log("Ending poll:", activePoll.id);
+      socketRef.current.emit("poll:close", {
+        code: sessionData.code,
+        pollId: activePoll._id,
+      });
       setPastPolls([endedPoll, ...pastPolls]);
       setActivePoll(null);
     }
@@ -373,8 +387,8 @@ function SessionWorkspace() {
   const handleUpvoteQuestion = (questionId) => {
     setQuestions(
       questions.map((q) =>
-        q.id === questionId ? { ...q, upvotes: q.upvotes + 1 } : q,
-      ),
+        q.id === questionId ? { ...q, upvotes: q.upvotes + 1 } : q
+      )
     );
   };
 
@@ -397,8 +411,8 @@ function SessionWorkspace() {
   const handleKickParticipant = (participantId) => {
     setParticipantsList(
       participantsList.map((p) =>
-        p._id === participantId ? { ...p, kicked: true } : p,
-      ),
+        p._id === participantId ? { ...p, kicked: true } : p
+      )
     );
   };
 
@@ -417,7 +431,7 @@ function SessionWorkspace() {
             ...(token ? { Authorization: `Bearer ${token}` } : {}),
           },
           credentials: "include",
-        },
+        }
       );
       if (!res.ok) throw new Error("Failed to close session");
       // After successful close, emit socket event

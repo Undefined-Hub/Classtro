@@ -9,7 +9,9 @@ import ParticipantQnA from '../../components/Participant/ParticipantQnA.jsx';
 import AskQuestionModal from '../../components/Participant/AskQuestionModal.jsx';
 import axios from 'axios';
 
-const SOCKET_URL = (import.meta.env?.VITE_BACKEND_BASE_URL || "http://localhost:5000") + "/sessions";
+const SOCKET_URL =
+  (import.meta.env?.VITE_BACKEND_BASE_URL || "http://localhost:5000") +
+  "/sessions";
 
 const ParticipantSession = () => {
   const navigate = useNavigate();
@@ -20,7 +22,48 @@ const ParticipantSession = () => {
   const [questions, setQuestions] = useState([]);
   const [askOpen, setAskOpen] = useState(false);
   const [qnaOpen, setQnaOpen] = useState(false);
+  const [selectedOption, setSelectedOption] = useState(null);
+  const [pollSubmitting, setPollSubmitting] = useState(false);
+  const [pollSubmitted, setPollSubmitted] = useState(false);
+  const [activePoll, setActivePoll] = useState(() => {
+    try {
+      const raw = sessionStorage.getItem("activePoll");
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      return null;
+    }
+  });
+  const [pollId, setPollId] = useState(null);
   const socketRef = useRef(null);
+  // Submit poll answer
+  const handlePollSubmit = (e) => {
+    e.preventDefault();
+    if (!activePoll || !selectedOption || !socketRef.current) return;
+    setPollSubmitting(true);
+    // Find the index of the selected option
+    const optionIndex = activePoll.options.findIndex(opt => opt._id === selectedOption);
+    if (optionIndex === -1) return;
+    console.log("Submitting vote for option index:", {
+        code: sessionData?.joinCode,
+        pollId: activePoll._id,
+        participantId: sessionData?.participantId,
+        optionIndex,
+      });
+    socketRef.current.emit(
+      "poll:vote",
+      {
+        code: sessionData?.joinCode,
+        pollId: activePoll._id,
+        participantId: sessionData?.participantId,
+        optionIndex,
+      },
+      () => {
+        setPollSubmitting(false);
+        setPollSubmitted(true);
+      }
+    );
+  };
+
 
   // If no session in context (e.g., on fast route change), attempt hydrate from storage before redirect
   useEffect(() => {
@@ -54,6 +97,39 @@ const ParticipantSession = () => {
         code: sessionData.joinCode,
         participantId: sessionData.participantId,
         role: "student",
+      });
+
+      const onNewPollReceived = (poll)=>{
+        console.log("[Participant] New poll received:", poll);
+        setActivePoll(poll);
+        setPollId(poll._id);
+        sessionStorage.setItem("activePoll", JSON.stringify(poll));
+      }
+
+      socket.on("polls:new-poll", onNewPollReceived);
+      socket.on("poll:update", ({ pollId, counts }) => {
+        // Update the activePoll's vote counts
+        setPollSubmitting(false);
+        setPollSubmitted(false);
+        setActivePoll(prev => {
+          if (!prev || prev._id !== pollId) return prev;
+          const newOptions = prev.options.map((opt, idx) => ({ ...opt, votes: counts[idx] || 0 }));
+          const updated = { ...prev, options: newOptions };
+          sessionStorage.setItem("activePoll", JSON.stringify(updated));
+          return updated;
+        });
+      });
+
+      socket.on("poll:closed", ({ pollId }) => {
+        console.log("Poll closed:", pollId);
+        setActivePoll(prev => {
+          console.log("Current activePoll:", prev._id," : ",pollId);
+          if (prev && prev._id === pollId) {
+            sessionStorage.removeItem("activePoll");
+            return null;
+          }
+          return prev;
+        });
       });
     });
 
@@ -211,6 +287,15 @@ const ParticipantSession = () => {
       alert("Failed to leave session. Please try again.");
     }
   };
+
+  useEffect(() => {
+    if (activePoll) {
+      sessionStorage.setItem("activePoll", JSON.stringify(activePoll));
+    } else {
+      sessionStorage.removeItem("activePoll");
+    }
+  }, [activePoll]);
+
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
