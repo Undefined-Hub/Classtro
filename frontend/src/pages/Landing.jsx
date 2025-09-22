@@ -1,18 +1,20 @@
-import React from 'react'
-import Navbar from '../components/Navbar'
+import React from "react";
+import Navbar from "../components/Navbar";
+import Footer from "../components/Footer";
 import Hero from '../components/Hero'
 import Details from '../components/Details'
-import Footer from '../components/Footer'
 
 function Landing() {
   return (
-    <div>
-        <Navbar />
+    <div className="min-h-screen flex flex-col bg-white dark:bg-gray-900">
+      <Navbar />
+      <main className="flex-grow">
         <Hero />
         <Details />
-        <Footer />
+      </main>
+      <Footer />
     </div>
   )
 }
 
-export default Landing
+export default Landing;

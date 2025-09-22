@@ -1,46 +1,45 @@
-// {
-//     "_id": "uniqueUserId",
-//     "name": "John Doe",
-//     "email": "john@gmail.com",
-//     "phone": "989092****",
-//     "password": "hashed_password",
-//     "role": "Member", // or "Manager"
-//     "createdAt": "2025-01-19T12:00:00Z",
-//     "updatedAt": "2025-01-19T12:00:00Z"
-// }
 const mongoose = require("mongoose");
+// ! Username isn't required if we use email as key field
+const UserSchema = new mongoose.Schema(
+  {
+    name: { type: String, required: true },
+    username: { type: String, unique: true, sparse: true }, // ? Optional for Google OAuth
+    email: { type: String, unique: true, sparse: true }, // ? Optional for Google OAuth
+    password: { type: String }, // ? Only for local strategy auth
+    googleId: { type: String, unique: true, sparse: true }, // ? For Google OAuth users
+    role: {
+      type: String,
+      enum: ["TEACHER", "STUDENT", "ADMIN", "UNKNOWN"],
+      required: true,
+    },
+    profilePicture: { type: String, default: "" },
 
-const userSchema = mongoose.model("Users", {
-    name: {
-        type: String,
-        required: true,
-    },
-    email: {
-        type: String,
-        required: true,
-    },
-    phone:{
-        type: String,
-        required: true,
-    },
-    password:{
-        type: String,
-        required: true,
-    },
-    role:{
-        type: String,
-        required: true,
-    },
-    created_at:{
-        type: Date,
-        default: Date.now,
-    },
-    updated_at:{
-        type: Date,
-        default: Date.now,
-    },
-});
+    authProvider: { type: String, enum: ["LOCAL", "GOOGLE"], required: true }, // ? Tracks auth type
 
+    status: {
+      type: String,
+      enum: ["ACTIVE", "INACTIVE", "BANNED"],
+      default: "ACTIVE",
+    },
 
+    refreshToken: {
+      type: String,
+      default: "",
+    },
 
-module.exports = userSchema;
+    // ! Email verification fields
+    emailVerified: { type: Boolean, default: false },
+    emailVerifiedAt: { type: Date },
+
+    // ! OTP fields
+    otp: { type: Number },
+    otpExpiry: { type: Date },
+    otpAttempts: { type: Number, default: 0 },
+
+    createdAt: { type: Date, default: Date.now },
+    updatedAt: { type: Date, default: Date.now },
+  },
+  { timestamps: true },
+);
+
+module.exports = mongoose.model("User", UserSchema);
