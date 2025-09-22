@@ -41,8 +41,8 @@ passport.use(
       } catch (err) {
         return done(err);
       }
-    },
-  ),
+    }
+  )
 );
 
 // ? Google Strategy - OAuth, code given by ChatGPT
@@ -51,7 +51,7 @@ passport.use(
     {
       clientID: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      callbackURL: "http://localhost:3000/api/auth/google/callback",
+      callbackURL: `${process.env.SERVER_ORIGIN}/api/auth/google/callback`,
     },
     async (accessToken, refreshToken, profile, done) => {
       try {
@@ -85,8 +85,8 @@ passport.use(
       } catch (err) {
         done(err, null);
       }
-    },
-  ),
+    }
+  )
 );
 
 // ? JWT Strategy - Token based authentication
@@ -94,7 +94,7 @@ passport.use(
   new JwtStrategy(jwtOptions, async (payload, done) => {
     try {
       const user = await User.findById(payload.user.id).select(
-        "-password -__v -updatedAt",
+        "-password -__v -updatedAt"
       );
       // console.log("User authenticated via JWT: ", payload);
       if (!user) return done(null, false);
@@ -102,5 +102,5 @@ passport.use(
     } catch (err) {
       return done(err, false);
     }
-  }),
+  })
 );
