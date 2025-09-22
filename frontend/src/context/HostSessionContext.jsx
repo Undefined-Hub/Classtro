@@ -24,7 +24,18 @@ export const HostSessionProvider = ({ children }) => {
   const [broadcastMessage, setBroadcastMessage] = useState("");
   const [broadcastStatus, setBroadcastStatus] = useState("");
   const [showBroadcastForm, setShowBroadcastForm] = useState(false);
+  const [activeParticipantsCount, setActiveParticipantsCount] = useState(0);
   const socketRef = useRef(null);
+
+  const calculateDuration = () => {
+    const startTime = new Date(sessionData.startAt);
+    const currentTime = new Date();
+    const diffMs = currentTime - startTime;
+    const diffMins = Math.floor(diffMs / 60000);
+    const hours = Math.floor(diffMins / 60);
+    const mins = diffMins % 60;
+    return hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
+  };
 
   const resetHostSession = () => {
     setSessionData({});
@@ -38,6 +49,7 @@ export const HostSessionProvider = ({ children }) => {
     setBroadcastMessage("");
     setBroadcastStatus("");
     setShowBroadcastForm(false);
+    setActiveParticipantsCount(0);
     if (socketRef.current) {
       socketRef.current.disconnect();
       socketRef.current = null;
@@ -48,28 +60,43 @@ export const HostSessionProvider = ({ children }) => {
     () => ({
       sessionData,
       setSessionData,
+
       activeView,
       setActiveView,
+
       participantsList,
       setParticipantsList,
+
       questions,
       setQuestions,
+
       activePoll,
       setActivePoll,
+
       pastPolls,
       setPastPolls,
+
       showPollForm,
       setShowPollForm,
+
       showConfirmClose,
       setShowConfirmClose,
+
       broadcastMessage,
       setBroadcastMessage,
+
       broadcastStatus,
       setBroadcastStatus,
+
       showBroadcastForm,
       setShowBroadcastForm,
+
+      activeParticipantsCount, 
+      setActiveParticipantsCount,
+
       socketRef,
       resetHostSession,
+      calculateDuration
     }),
     [
       sessionData,

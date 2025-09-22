@@ -1,7 +1,8 @@
-import React, { useEffect, useRef, useCallback ,useState} from "react";
-import axios from "axios";
+import React, { useEffect, useRef, useCallback, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { io } from "socket.io-client";
+
+// * Components imports
 import SessionHeader from "../../components/Host/sessionWorkspace/SessionHeader";
 import MainContent from "../../components/Host/sessionWorkspace/MainContent";
 import PollManager from "../../components/Host/sessionWorkspace/PollManager";
@@ -9,13 +10,18 @@ import QAManager from "../../components/Host/sessionWorkspace/QAManager";
 import ParticipantList from "../../components/Host/sessionWorkspace/ParticipantList";
 import QuickActions from "../../components/Host/sessionWorkspace/QuickActions";
 import { useHostSession } from "../../context/HostSessionContext.jsx";
+
+// * API import
 import api from "../../utils/api.js";
+
 const BACKEND_BASE_URL =
-  import.meta.env.VITE_BACKEND_BASE_URL || "http://localhost:5000";
+import.meta.env.VITE_BACKEND_BASE_URL || "http://localhost:5000";
+
 const SOCKET_URL = BACKEND_BASE_URL + "/sessions";
 console.log("Socket URL:", SOCKET_URL);
 // Participants state will be fetched from backend
 
+// !remove in production
 // Mock questions data
 const MOCK_QUESTIONS = [
   {
@@ -38,6 +44,7 @@ const MOCK_QUESTIONS = [
   },
 ];
 
+// !remove in production
 // Mock session data fallback
 const MOCK_SESSION_DATA = {
   _id: "session123",
@@ -50,64 +57,89 @@ const MOCK_SESSION_DATA = {
   roomName: "Computer Science 101",
 };
 
-function SessionWorkspace() {
+// * Main Session Workspace Component
+const SessionWorkspace = () => {
+
+  // * Router hooks
   const navigate = useNavigate();
   const location = useLocation();
 
   // Use HostSessionContext for all state
   const {
+    socketRef,
+
     sessionData,
     setSessionData,
+
     activeView,
     setActiveView,
+
     participantsList,
     setParticipantsList,
+
     questions,
     setQuestions,
+
     activePoll,
     setActivePoll,
+
     pastPolls,
     setPastPolls,
+
     showPollForm,
     setShowPollForm,
+
     showConfirmClose,
     setShowConfirmClose,
+
     broadcastMessage,
     setBroadcastMessage,
+
     broadcastStatus,
     setBroadcastStatus,
+
     showBroadcastForm,
     setShowBroadcastForm,
-    socketRef,
+
     resetHostSession,
   } = useHostSession();
 
-  // Load session data from navigation state
+  // * Load session data from navigation state
   useEffect(() => {
+    // * Getting Session Data from navigation state
     if (location.state?.sessionData) {
+      // * Get State passed via navigation
       const passedSessionData = location.state.sessionData;
       const passedroomName = location.state.roomName;
+
+      // * Debug log
       console.log("Received session data via navigation:", passedSessionData);
-      // Find the room name based on roomId
+      
+      // * RoomId and RoomName handling
       const roomId = passedSessionData.roomId;
       const roomName = passedroomName ? passedroomName : "Unknown Room";
+
+      // * Session Data with Room Name Object
       const newSessionData = {
         ...passedSessionData,
         roomName: roomName,
       };
+
+      // * Set session data in context 
       setSessionData(newSessionData);
-      // Log the latest state of sessionData after setting it     
+      // * Set Questions in context (mock data for now)
       setQuestions(MOCK_QUESTIONS);
     } else {
-      // Use mock data as fallback
+      // * Use mock data as fallback
       console.log("Using mock session data (no data passed in navigation)");
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    
   }, [location]);
 
-    useEffect(() => {
-      console.log("Session Data set in context:", sessionData);
-    }, [sessionData]);
+  // * Debug log session data changes
+  useEffect(() => {
+    console.log("Session Data set in context:", sessionData);
+  }, [sessionData]);
 
   // Fetch participants from backend with debouncing
   const fetchTimeoutRef = useRef(null);
@@ -122,13 +154,8 @@ function SessionWorkspace() {
       // Set a new timeout (300ms debounce)
       fetchTimeoutRef.current = setTimeout(async () => {
         try {
-          const token = localStorage.getItem("accessToken");
-          const res = await axios.get(
-            `${BACKEND_BASE_URL}/api/sessions/code/${sessionCode}/participants`,
-            {
-              headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-              withCredentials: true,
-            }
+          const res = await api.get(
+            `/api/sessions/code/${sessionCode}/participants`
           );
           setParticipantsList(res.data);
         } catch (err) {
@@ -345,44 +372,6 @@ function SessionWorkspace() {
     return colors[hash % colors.length];
   };
 
-  // Handle creating a new poll
-  const handleCreatePoll = (question, options) => {
-    const newPoll = {
-      id: `p${Date.now()}`,
-      question: question,
-      options: options.map((text, idx) => ({
-        id: `o${idx + 1}`,
-        text,
-        votes: 0,
-      })),
-      isActive: true,
-      createdAt: new Date().toISOString(),
-      totalVotes: 0,
-    };
-    setActivePoll(newPoll);
-    setActiveView("polls");
-  };
-
-  // Handle ending an active poll
-  const handleEndPoll = async () => {
-    if (activePoll) {
-      console.log("Active poll to end:", activePoll);
-      const endedPoll = {
-        ...activePoll,
-        isActive: false,
-        endedAt: new Date().toISOString(),
-      };
-      await api.patch(`/api/polls/${activePoll._id}`);
-      console.log("Ending poll:", activePoll.id);
-      socketRef.current.emit("poll:close", {
-        code: sessionData.code,
-        pollId: activePoll._id,
-      });
-      setPastPolls([endedPoll, ...pastPolls]);
-      setActivePoll(null);
-    }
-  };
-
   // Handle upvoting a question
   const handleUpvoteQuestion = (questionId) => {
     setQuestions(
@@ -466,29 +455,11 @@ function SessionWorkspace() {
 
           {/* Main Content */}
           {activeView === "main" && (
-            <MainContent
-              sessionData={sessionData}
-              participants={participantsList}
-              questions={questions}
-              pastPolls={pastPolls}
-              activePoll={activePoll}
-              calculateDuration={calculateDuration}
-              onSetActiveView={setActiveView}
-              onShowPollForm={setShowPollForm}
-            />
+            <MainContent/>
           )}
 
           {/* Poll Manager */}
-          <PollManager
-            activePoll={activePoll}
-            pastPolls={pastPolls}
-            showPollForm={showPollForm}
-            setShowPollForm={setShowPollForm}
-            onCreatePoll={handleCreatePoll}
-            onEndPoll={handleEndPoll}
-            activeView={activeView}
-            setActiveView={setActiveView}
-          />
+          <PollManager/>
 
           {/* Q&A Manager */}
           <QAManager
@@ -586,6 +557,6 @@ function SessionWorkspace() {
       )}
     </div>
   );
-}
+};
 
 export default SessionWorkspace;

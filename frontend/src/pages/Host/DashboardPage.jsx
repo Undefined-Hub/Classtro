@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+
+/* Components import  */
 import RoomList from "../../components/Host/dashboard/RoomList";
 import RoomDetail from "../../components/Host/dashboard/RoomDetail";
 import AllSessionsTable from "../../components/Host/dashboard/AllSessionsTable";
@@ -7,8 +9,13 @@ import CreateRoomModal from "../../components/Host/dashboard/CreateRoomModal";
 import CreateSessionModal from "../../components/Host/dashboard/CreateSessionModal";
 import LogoutModal from "../../components/LogoutModal";
 
+/* Api import */
+import api from "../../utils/api";
+
 const BACKEND_BASE_URL =
-  import.meta.env.VITE_BACKEND_BASE_URL || "http://localhost:3000";
+  import.meta.env.VITE_BACKEND_BASE_URL || "http://localhost:2000";
+
+// !remove in production
 const STATIC_SESSIONS = [
   {
     _id: "68c32b9a72ccbff412c68573",

@@ -1,121 +1,56 @@
 import React, { useEffect, useState } from "react";
 import api from "../../../utils/api";
 import { useHostSession } from "../../../context/HostSessionContext";
-const PollManager = ({
-  activePoll,
-  pastPolls,
-  showPollForm,
-  setShowPollForm,
-  onCreatePoll,
-  onEndPoll,
-  activeView,
-  setActiveView,
-}) => {
-  const { sessionData, socketRef, setActivePoll, setPastPolls } = useHostSession();
-  // useEffect(() => {
-  //   socketRef.current.on("polls:update", ({pollId,counts}) => {
-  //     console.log("Received poll ID : ",pollId, " with counts: ", counts);
-  //     // setActivePoll(updatedPoll);
-  //   });
-  // }, [socketRef]);
-  // // Listen for poll updates from the server
+const PollManager = () => {
+  // * Context
+  const {
+    socketRef,
+    sessionData,
 
-  // Hydrate activePoll and pastPolls on mount
+    activePoll,
+    setActivePoll,
 
-  const fetchPolls = async () => {
-    console.log("Fetching past polls for session:", sessionData);
-      if (!sessionData?._id) return;
-      try {
-        const token = localStorage.getItem("accessToken");
-        const res = await api.get(`/api/sessions/${sessionData._id}/polls`, {
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
-          withCredentials: true,
-        });
-        console.log("Fetched past polls:", res.data);
-        if (Array.isArray(res.data)) {
-          setPastPolls(res.data.filter(p => !p.isActive));
-          setActivePoll(res.data.find(p => p.isActive) || null);
-        }
-      } catch (err) {
-        // Optionally handle error
-        console.error("Failed to fetch past polls:", err);
-      }
-    };
+    setPastPolls,
+    pastPolls,
 
+    showPollForm,
+    setShowPollForm,
 
-  useEffect(() => {
-    fetchPolls();
+    activeView,
+    setActiveView,
+  } = useHostSession();
 
-    try {
-      const raw = sessionStorage.getItem("hostActivePoll");
-      if (raw) {
-        setActivePoll(JSON.parse(raw));
-      }
-    } catch {}
-    // Fetch past polls from backend
-    
-    // eslint-disable-next-line
-  }, [sessionData?._id]);
-
-  useEffect(() => {
-    if (!socketRef.current) return;
-
-    const handlePollUpdate = ({ pollId, counts }) => {
-      // Only update if this is the active poll
-      if (activePoll && activePoll._id === pollId) {
-        const newOptions = activePoll.options.map((opt, idx) => ({ ...opt, votes: counts[idx] || 0 }));
-        const updated = { ...activePoll, options: newOptions };
-        setActivePoll(updated);
-        sessionStorage.setItem("hostActivePoll", JSON.stringify(updated));
-      }
-    };
-
-    socketRef.current.on("poll:update", handlePollUpdate);
-
-    // Cleanup listener on unmount
-    return () => {
-      // socketRef.current.off("poll:update", handlePollUpdate);
-    };
-  }, [socketRef, activePoll, setActivePoll]);
-
-  // Persist activePoll to sessionStorage
-  useEffect(() => {
-    if (activePoll) {
-      sessionStorage.setItem("hostActivePoll", JSON.stringify(activePoll));
-    } else {
-      sessionStorage.removeItem("hostActivePoll");
-    }
-  }, [activePoll]);
-  
-
+  // * Poll Form State (USED IN THE FORM MODAL)
   const [pollFormData, setPollFormData] = useState({
     question: "",
     options: ["", "", "", ""],
   });
 
-  const token = localStorage.getItem("accessToken");
-  // Handle creating a new poll
+  // * Handle Create New Poll
   const handleCreatePoll = async (e) => {
     e.preventDefault();
 
-    // Filter out any empty options
+    // * Filter out any empty options
     const validOptions = pollFormData.options.filter(
       (option) => option.trim() !== ""
     );
 
+    // * Validate Question and Options
     if (pollFormData.question.trim() === "" || validOptions.length < 2) {
       alert("Please provide a question and at least 2 options");
       return;
     }
 
-    onCreatePoll(pollFormData.question, validOptions);
+    // * Setting poll form data to initial state
     setPollFormData({ question: "", options: ["", "", "", ""] });
 
+    // * Prepare Poll Data
     const pollOptions = validOptions.map((option) => ({
       text: option,
       votes: 0,
     }));
 
+    // * Poll Data Object
     const pollData = {
       sessionId: sessionData._id,
       question: pollFormData.question,
@@ -124,45 +59,70 @@ const PollManager = ({
       createdAt: new Date().toISOString(),
     };
 
+    // * Debug Logs
     console.log("Poll Created:", pollData, "Session Data :", sessionData);
-    console.log(token);
 
-    // socketRef.current.emit("poll:create", {
-    //   code: sessionData.code,
-    //   sessionId: sessionData._id,
-    //   question: pollFormData.question,
-    //   options: pollOptions,
-    // });
-
+    // * API Call to create the poll
     const res = await api.post(
       `/api/sessions/${sessionData._id}/polls`,
-      pollData,
-      {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-        withCredentials: true,
-      }
+      pollData
     );
+
+    // * Set Active Poll
     console.log("API Response:", res.data);
     setActivePoll(res.data);
 
+    // * Emit Socket Event for New Poll Creation
     socketRef.current.emit("poll:create", {
       code: sessionData.code,
       poll: res.data,
     });
 
+    // * Close Poll Form Modal
     setShowPollForm(false);
   };
 
-  // Handle poll option change
+  // * Handle Close Poll
+  const handleEndPoll = async () => {
+    if (activePoll) {
+      console.log("Active Poll is Ending", activePoll);
+
+      // * Poll Object with End Parameters
+      const endedPoll = {
+        ...activePoll,
+        isActive: false,
+        endedAt: new Date().toISOString(),
+      };
+
+      // * Api call to patch and make the poll isActive false
+      await api.patch(`/api/polls/${activePoll._id}`);
+
+      // * Poll Close Socket Emit
+      console.log("Ending poll:", activePoll.id);
+      socketRef.current.emit("poll:close", {
+        code: sessionData.code,
+        pollId: activePoll._id,
+      });
+
+      // * Add to Past Polls and Clear Active Poll
+      setPastPolls([endedPoll, ...pastPolls]);
+      setActivePoll(null);
+    }
+  };
+
+  // * Handle poll option change
   const handlePollOptionChange = (index, value) => {
     const newOptions = [...pollFormData.options];
     newOptions[index] = value;
+
+    // * Update Poll Form Data State to New Options State
     setPollFormData({ ...pollFormData, options: newOptions });
   };
 
-  // Handle adding a poll option
+  // * Handle adding a poll option
   const handleAddPollOption = () => {
     if (pollFormData.options.length < 6) {
+      // * Update Poll Form Data State to Add New Empty Option
       setPollFormData({
         ...pollFormData,
         options: [...pollFormData.options, ""],
@@ -170,17 +130,97 @@ const PollManager = ({
     }
   };
 
-  // Handle removing a poll option
+  // * Handle removing a poll option
   const handleRemovePollOption = (index) => {
     if (pollFormData.options.length > 2) {
       const newOptions = [...pollFormData.options];
       newOptions.splice(index, 1);
+
+      // * Update Poll Form Data State to New Options State (REDUCED BY 1)
       setPollFormData({ ...pollFormData, options: newOptions });
     }
   };
 
-  if (activeView !== "polls") return null;
+  // * Fetch Past Polls and Active Polls for the Session (ISOLATED)
+  const fetchPolls = async () => {
+    console.log("Fetching past polls for session:", sessionData);
 
+    // * Validate Session._id
+    if (!sessionData?._id) return;
+
+    // * Session is Valid, Fetching Polls
+    try {
+      // * API call to fetch polls for a specific session (USING SESSION._ID)
+      const res = await api.get(`/api/sessions/${sessionData._id}/polls`);
+      console.log("Fetched past polls:", res.data);
+
+      // * If res is array then set pastPolls and activePoll
+      if (Array.isArray(res.data)) {
+        setPastPolls(res.data.filter((p) => !p.isActive));
+        setActivePoll(res.data.find((p) => p.isActive) || null);
+      }
+    } catch (err) {
+      console.error("Failed to fetch past polls:", err);
+    }
+  };
+
+  // * Fetch Polls UseEffect (ON SESSIONDATA._ID CHANGE)
+  useEffect(() => {
+    // * Fetch Polls for the session
+    fetchPolls();
+    try {
+      // * Load activePoll and set it from sessionStorage if available
+      const raw = sessionStorage.getItem("hostActivePoll");
+      setActivePoll(raw ? JSON.parse(raw) : null);
+    } catch (error) {
+      console.error("Failed to parse activePoll from sessionStorage:", error);
+    }
+  }, [sessionData?._id]);
+
+  // * Poll Vote Update UseEffect
+  useEffect(() => {
+    // * Validate Socket
+    if (!socketRef.current) return;
+
+    // * Poll Vote Update Handler
+    const handlePollUpdate = ({ pollId, counts }) => {
+      // * Only update if this is the active poll
+      if (activePoll && activePoll._id === pollId) {
+        const newOptions = activePoll.options.map((opt, idx) => ({
+          ...opt,
+          votes: counts[idx] || 0,
+        }));
+
+        // * Update Active Poll State and sessionStorage
+        const updated = { ...activePoll, options: newOptions };
+        setActivePoll(updated);
+        sessionStorage.setItem("hostActivePoll", JSON.stringify(updated));
+      }
+    };
+
+    // * Poll Vote Update Listener
+    socketRef.current.on("poll:update", handlePollUpdate);
+
+    // ! Cleanup listener on unmount
+    // TODO: implement cleanup
+    return () => {
+      //! socketRef.current.off("poll:update", handlePollUpdate);
+    };
+  }, [socketRef, activePoll, setActivePoll]);
+
+  // * Persist activePoll to sessionStorage
+  useEffect(() => {
+    if (activePoll) {
+      // * Setting activePoll in sessionStorage
+      sessionStorage.setItem("hostActivePoll", JSON.stringify(activePoll));
+    } else {
+      // * Removing activePoll from sessionStorage
+      sessionStorage.removeItem("hostActivePoll");
+    }
+  }, [activePoll]);
+
+  // * Active View Check
+  if (activeView !== "polls") return null;
 
   return (
     <>
@@ -212,7 +252,9 @@ const PollManager = ({
             <button
               onClick={() => {
                 if (activePoll) {
-                  alert("A poll is already active. Please end the current poll before creating a new one.");
+                  alert(
+                    "A poll is already active. Please end the current poll before creating a new one."
+                  );
                   return;
                 }
                 setShowPollForm(true);
@@ -250,7 +292,7 @@ const PollManager = ({
                 </h3>
               </div>
               <button
-                onClick={onEndPoll}
+                onClick={handleEndPoll}
                 className="inline-flex items-center px-3 py-1.5 bg-red-100 text-red-700 rounded-lg text-sm hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50"
               >
                 <svg
@@ -283,7 +325,7 @@ const PollManager = ({
                       : 0;
 
                   return (
-                    <div key={option.id} className="space-y-2">
+                    <div key={option._id} className="space-y-2">
                       <div className="flex justify-between items-center">
                         <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
                           {option.text}

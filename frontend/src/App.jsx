@@ -36,11 +36,6 @@ function App() {
     }
   };
 
-  const handleLogout = () => {
-    logout();
-    navigate("/test/login");
-  };
-
   return (
     <>
       <Routes>
@@ -53,13 +48,7 @@ function App() {
           <Route path="/test/dashboard" element={<DashboardPage />} />
           <Route
             path="/test/sessionWorkspace"
-            element={
-              <HostSessionProvider>
-                <SessionWorkspace />
-              </HostSessionProvider>
-            }
-          />
-          <Route path="/analytics" element={<AnalyticsPage />} />
+            element={<SessionWorkspace />}/>
         </Route>
         <Route element={<ProtectedRoute roles={["STUDENT"]} />}>
           <Route path="/participant/home" element={<ParticipantHome />} />
