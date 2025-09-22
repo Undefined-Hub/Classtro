@@ -22,7 +22,7 @@ const Register = lazy(() => import("./pages/Register"));
 const VerifyAndRole = lazy(() => import("./pages/VerifyAndRole"));
 
 const BACKEND_BASE_URL =
-  import.meta.env.VITE_BACKEND_BASE_URL || "http://localhost:2000";
+  import.meta.env.VITE_BACKEND_BASE_URL || "http://localhost:3000";
 // console.log("Backend Base URL:", BACKEND_BASE_URL);
 
 function App() {
