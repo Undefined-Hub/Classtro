@@ -414,18 +414,9 @@ const SessionWorkspace = () => {
       const baseURL =
         import.meta.env.VITE_BACKEND_BASE_URL || "http://localhost:5000";
       const token = localStorage.getItem("accessToken");
-      const res = await fetch(
-        `${baseURL}/api/sessions/code/${sessionData.code}/close`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
-          },
-          credentials: "include",
-        }
-      );
-      if (!res.ok) throw new Error("Failed to close session");
+      const res = await api.post(`/api/sessions/code/${sessionData.code}/close`);
+      console.log("Close session response:", res);
+      if (res.statusText!="OK") throw new Error("Failed to close session");
       // After successful close, emit socket event
       const socket = socketRef.current;
       if (socket) {

@@ -32,15 +32,17 @@ const ParticipantSession = () => {
     setPollSubmitted,
     setActivePoll,
     setPollId,
-    participantCount,
-    broadcastMsg,
+    
+    
     selectedOption,
     pollSubmitting,
     pollSubmitted,
-    setParticipantCount,
-    setBroadcastMsg,
+    
+    
   } = useParticipantSession();
 
+  const [broadcastMsg, setBroadcastMsg] = useState(null);
+   const [participantCount, setParticipantCount] = useState(1);
   // * Handle Vote Submission
   const handlePollSubmit = (optionId) => {
     // * Guard clauses
@@ -136,13 +138,7 @@ const ParticipantSession = () => {
       sessionStorage.setItem("activePoll", JSON.stringify(poll));
     };
 
-    // * Handle broadcast messages
-    const onBroadcast = (data) => {
-      setBroadcastMsg(
-        `${data.message}${data.from ? ` (from ${data.from})` : ""}`
-      );
-      console.log("[Participant] broadcast:message", data);
-    };
+    
 
     // * Handle room members update (for debugging)
     const onRoomMembers = (members) => {
@@ -190,6 +186,15 @@ const ParticipantSession = () => {
         role: "student",
       });
     });
+
+    // * Handle broadcast messages
+    const onBroadcast = (data) => {
+      // alert(data.message);
+      setBroadcastMsg(
+        `${data.message}${data.from ? ` (from ${data.from})` : ""}`
+      );
+      console.log("[Participant] broadcast:message", data);
+    };
 
     // * Register event listeners
     socket.on("polls:new-poll", onNewPollReceived);

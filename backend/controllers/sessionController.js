@@ -168,6 +168,14 @@ const closeSession = async (req, res, next) => {
       { new: true },
     );
 
+    console.log("Close session result:", session._id);
+    // Mark all active participants in this session as inactive and set leftAt
+    const participants = await Participant.updateMany(
+      { sessionId: session._id, isActive: true, leftAt: { $exists: false } },
+      { $set: { leftAt: new Date(), isActive: false } },
+    );
+    console.log("Marked participants as left:", participants.modifiedCount);
+
     if (!session) {
       return res
         .status(404)
