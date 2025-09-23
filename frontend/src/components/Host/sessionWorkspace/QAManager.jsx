@@ -54,12 +54,9 @@ const QAManager = ({
                 <div className="flex justify-between items-start mb-3">
                   <div className="flex items-start space-x-3">
                     <div>
-                      <button
-                        onClick={() => onUpvoteQuestion(question.id)}
-                        className="flex flex-col items-center space-y-1"
-                      >
+                      <div className="flex flex-col items-center space-y-1 select-none">
                         <svg
-                          className="w-6 h-6 text-gray-400 hover:text-blue-500 dark:text-gray-500 dark:hover:text-blue-400"
+                          className="w-6 h-6 text-gray-400 dark:text-gray-500"
                           fill="none"
                           stroke="currentColor"
                           viewBox="0 0 24 24"
@@ -74,7 +71,7 @@ const QAManager = ({
                         <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
                           {question.upvotes}
                         </span>
-                      </button>
+                      </div>
                     </div>
                     <div className="flex-1">
                       <p className="text-gray-900 dark:text-white mb-1">

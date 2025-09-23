@@ -1,4 +1,7 @@
+
 const { Server } = require("socket.io");
+
+let ioInstance = null;
 
 function setupSockets(server) {
   const io = new Server(server, {
@@ -7,6 +10,8 @@ function setupSockets(server) {
       credentials: true,
     },
   });
+
+  ioInstance = io;
 
   const sessionNamespace = io.of("/sessions");
 
@@ -75,4 +80,9 @@ function setupSockets(server) {
   return io;
 }
 
-module.exports = { setupSockets };
+function getSessionNamespace() {
+  if (!ioInstance) return null;
+  return ioInstance.of("/sessions");
+}
+
+module.exports = { setupSockets, getSessionNamespace };

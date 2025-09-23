@@ -8,8 +8,7 @@ import CreateSessionModal from "../../components/Host/dashboard/CreateSessionMod
 import LogoutModal from "../../components/LogoutModal";
 
 const BACKEND_BASE_URL =
-  import.meta.env.VITE_BACKEND_BASE_URL || "http://localhost:2000";
-
+  import.meta.env.VITE_BACKEND_BASE_URL || "http://localhost:3000";
 const STATIC_SESSIONS = [
   {
     _id: "68c32b9a72ccbff412c68573",

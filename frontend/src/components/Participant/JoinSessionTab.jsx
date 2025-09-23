@@ -5,7 +5,7 @@ import { useParticipantSession } from "../../context/ParticipantSessionContext.j
 import { STORAGE_KEY } from "../../context/ParticipantSessionContext.jsx";
 
 const BACKEND_BASE_URL =
-  import.meta.env.VITE_BACKEND_BASE_URL || "http://localhost:2000";
+  import.meta.env.VITE_BACKEND_BASE_URL || "http://localhost:3000";
 const JoinSessionTab = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
