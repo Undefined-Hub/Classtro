@@ -1,5 +1,6 @@
 const Session = require("../models/Session");
 const Room = require("../models/Room");
+const Poll = require("../models/Polls");
 const Participant = require("../models/Participant");
 const { validateInput } = require("../utils/validateInput");
 const crypto = require("crypto");
@@ -167,6 +168,12 @@ const closeSession = async (req, res, next) => {
       { $set: { isActive: false, endAt: new Date() } },
       { new: true },
     );
+
+    const polls = await Poll.updateMany(
+      { sessionId: session._id, isActive: true },
+      { $set: { isActive: false, closedAt: new Date() } },
+    );
+    console.log("Closed polls:", polls.modifiedCount);
 
     console.log("Close session result:", session._id);
     // Mark all active participants in this session as inactive and set leftAt

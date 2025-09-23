@@ -10,7 +10,7 @@ import QAManager from "../../components/Host/sessionWorkspace/QAManager";
 import ParticipantList from "../../components/Host/sessionWorkspace/ParticipantList";
 import QuickActions from "../../components/Host/sessionWorkspace/QuickActions";
 import { useHostSession } from "../../context/HostSessionContext.jsx";
-
+import axios from "axios";
 // * API import
 import api from "../../utils/api.js";
 
@@ -413,9 +413,12 @@ const SessionWorkspace = () => {
     try {
       const baseURL =
         import.meta.env.VITE_BACKEND_BASE_URL || "http://localhost:5000";
+
       const token = localStorage.getItem("accessToken");
+
       const res = await api.post(`/api/sessions/code/${sessionData.code}/close`);
       console.log("Close session response:", res);
+
       if (res.statusText!="OK") throw new Error("Failed to close session");
       // After successful close, emit socket event
       const socket = socketRef.current;
@@ -482,7 +485,7 @@ const SessionWorkspace = () => {
           handleBroadcast={handleBroadcast}
         />
       </div>
-
+          
       {/* Confirm Close Session Modal */}
       {showConfirmClose && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">

@@ -50,7 +50,9 @@ function App() {
           <Route
             path="/test/sessionWorkspace"
             element={<SessionWorkspace />}/>
+            <Route path="/analytics" element={<AnalyticsPage/>} />
         </Route>
+        
         <Route element={<ProtectedRoute roles={["STUDENT"]} />}>
           <Route path="/participant/home" element={<ParticipantHome />} />
           <Route path="/participant/session" element={<ParticipantSession />} />

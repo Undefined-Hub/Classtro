@@ -18,15 +18,50 @@ const server = http.createServer(app);
 connectDB();
 
 // 🔧 Middleware
-const allowedOrigins = [
-  "http://localhost:5173",
-  process.env.CLIENT_ORIGIN,
-].filter(Boolean);
+// const allowedOrigins = [
+//   "http://localhost:5173",
+//   process.env.CLIENT_ORIGIN,
+// ].filter(Boolean);
+
+// Define your base domains
+const allowedBaseDomains = [
+  "classtro.vercel.app",
+  "classtro-dev.vercel.app",
+  "localhost",
+];
+
+
+// Function to check if origin is allowed
+const isAllowedOrigin = (origin) => {
+  if (!origin) return true; // allow requests like Postman / server-to-server
+
+  try {
+    const url = new URL(origin);
+    const hostname = url.hostname;
+
+    // ✅ Check against fixed allowed domains
+    if (allowedBaseDomains.includes(hostname)) return true;
+
+    // ✅ Allow any preview subdomain ending with vercel.app
+    if (hostname.endsWith("vercel.app")) {
+      // Optionally tighten this rule to only your project:
+      if (hostname.includes("classtro") || hostname.includes("classtro-dev")) {
+        return true;
+      }
+    }
+
+    return false;
+  } catch (err) {
+    return false;
+  }
+};
+
+
 
 app.use(
   cors({
     origin: (origin, callback) => {
-      if (!origin || allowedOrigins.includes(origin)) {
+      if (isAllowedOrigin(origin)) {
         callback(null, true);
       } else {
         callback(new Error("Not allowed by CORS"));

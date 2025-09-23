@@ -1,16 +1,22 @@
 // ParticipantLivePoll.jsx
-import React, { use } from "react";
+import React, { useEffect } from "react";
 import { useParticipantSession } from "../../context/ParticipantSessionContext";
 
 const ParticipantLivePoll = ({ onVote }) => {
-  const { activePoll, selectedOption, pollSubmitting, pollSubmitted } =
+  const { selectedOption, pollSubmitting, pollSubmitted, activePoll } =
     useParticipantSession();
-  if (!activePoll) return null;
+  if (!activePoll) {
+    alert("active poll yet nahi");
+    return null;
+  }
 
   const totalVotes = activePoll.options.reduce(
     (sum, opt) => sum + (typeof opt.votes === "number" ? opt.votes : 0),
     0
   );
+  useEffect(() => {
+    console.log("Active Poll Updated:", activePoll);
+  }, [activePoll]);
 
   return (
     <div className="w-full max-w-md mx-auto bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl shadow-xl p-8 animate-fade-in">
@@ -80,6 +86,7 @@ const ParticipantLivePoll = ({ onVote }) => {
         </div>
       )}
     </div>
+    
   );
 };
 

@@ -192,7 +192,7 @@ const googleAuthCallback = async (req, res) => {
     isNewUser: req.user.isNewUser || false, // Include isNewUser flag
   };
 
-  const targetOrigin = process.env.FRONTEND_ORIGIN || "http://localhost:5173"; // Frontend origin
+  const targetOrigin = process.env.CLIENT_ORIGIN || "http://localhost:5173"; // Frontend origin
 
   const html = `<!DOCTYPE html>
   <html lang="en">
