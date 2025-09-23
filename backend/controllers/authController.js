@@ -45,7 +45,7 @@ const loginUser = async (req, res) => {
     // ! Existing login logic
     const payload = { user: { id: user.id } };
     const accessToken = generateToken(payload, process.env.JWT_SECRET, {
-      expiresIn: "1h",
+      expiresIn: "2h",
     });
 
     const refreshToken = generateToken(payload, process.env.JWT_REFRESH_SECRET, {

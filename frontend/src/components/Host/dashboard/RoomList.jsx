@@ -16,8 +16,10 @@ const RoomList = ({
     <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6">
       My Classrooms
     </h2>
+    
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {/* Create New Room Card */}
+      {rooms.length > 0 && (
       <div
         className="bg-gray-50 dark:bg-gray-800/50 border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg p-6 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors"
         onClick={onCreateRoom}
@@ -43,7 +45,9 @@ const RoomList = ({
         <p className="text-gray-500 dark:text-gray-400 text-sm">
           Set up a new classroom for your students
         </p>
-      </div>
+      </div>)}
+
+      {/* Room Cards */}
       {rooms.length > 0
         ? rooms.map((room) => (
             <div
@@ -117,7 +121,7 @@ const RoomList = ({
           ))
         : !loading &&
           !error && (
-            <div className="col-span-2 md:col-span-2 lg:col-span-2 p-6 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700">
+            <div className="col-span-2 md:col-span-3 lg:col-span-3 py-6 md:px-6 md:py-30 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700">
               <div className="text-center">
                 <svg
                   className="w-12 h-12 mx-auto mb-4 text-gray-400"
