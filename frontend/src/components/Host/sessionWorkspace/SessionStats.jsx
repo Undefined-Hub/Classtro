@@ -1,12 +1,15 @@
-import React from "react";
+import React, { use } from "react";
+import { useHostSession } from "../../../context/HostSessionContext";
 
-const SessionStats = ({
-  activeParticipantsCount,
-  questions,
-  pastPolls,
-  calculateDuration,
-  activePoll,
-}) => {
+const SessionStats = () => {
+  // * Context
+  const {
+    calculateDuration, 
+    activeParticipantsCount,
+    questions,
+    pastPolls,
+    activePoll} = useHostSession();
+
   return (
     <div className="bg-white dark:bg-gray-700 rounded-lg shadow-md p-4">
       <h3 className="font-semibold text-base text-gray-900 dark:text-white mb-3">

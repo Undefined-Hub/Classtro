@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-
+const { createPoll, listPolls } = require("../controllers/pollController");
 const {
   createSessionStandalone,
   getSessionByCode,
@@ -33,4 +33,6 @@ router.post("/code/:code/leave", authenticateJWT, leaveSession); // Student leav
 router.get("/code/:code/participants", authenticateJWT, getSessionParticipants); // Get participants of a session (teacher only)
 router.get("/participants/:participantId", authenticateJWT, getParticipantById); // Get individual participant record
 
+router.post("/:sessionId/polls", authenticateJWT, createPoll); // Create a poll in a session (teacher only)
+router.get("/:sessionId/polls", authenticateJWT, listPolls); // List all polls in a session (teacher only)
 module.exports = router;

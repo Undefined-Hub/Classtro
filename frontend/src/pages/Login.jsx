@@ -111,6 +111,8 @@ function Login({ onLogin }) {
       // Only accept messages from our backend origin (the popup)
       try {
         const backendOrigin = new URL(BACKEND_URL).origin;
+        // console.log("Expected origin:", backendOrigin);
+        // console.log("Received message from origin:", event.origin);
         if (event.origin !== backendOrigin) return;
       } catch (err) {
         return;

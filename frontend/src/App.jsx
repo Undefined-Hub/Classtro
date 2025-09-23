@@ -4,6 +4,7 @@ import { Routes, Route, useNavigate, Navigate } from "react-router-dom";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import { useAuth } from "./context/UserContext.jsx";
 
+
 const Landing = lazy(() => import("./pages/Landing"));
 const Login = lazy(() => import("./pages/Login"));
 const DashboardPage = lazy(() => import("./pages/Host/DashboardPage.jsx"));
@@ -36,11 +37,6 @@ function App() {
     }
   };
 
-  const handleLogout = () => {
-    logout();
-    navigate("/test/login");
-  };
-
   return (
     <>
       <Routes>
@@ -53,14 +49,10 @@ function App() {
           <Route path="/test/dashboard" element={<DashboardPage />} />
           <Route
             path="/test/sessionWorkspace"
-            element={
-              <HostSessionProvider>
-                <SessionWorkspace />
-              </HostSessionProvider>
-            }
-          />
-          <Route path="/analytics" element={<AnalyticsPage />} />
+            element={<SessionWorkspace />}/>
+            <Route path="/analytics" element={<AnalyticsPage/>} />
         </Route>
+        
         <Route element={<ProtectedRoute roles={["STUDENT"]} />}>
           <Route path="/participant/home" element={<ParticipantHome />} />
           <Route path="/participant/session" element={<ParticipantSession />} />

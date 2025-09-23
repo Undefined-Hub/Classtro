@@ -20,7 +20,8 @@
     "zod": "^3.24.1"
   },
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "dev": "nodemon server.js"
   },
   "name": "ally21",
   "description": "This README outlines the folder structure and purpose of files in the backend project.",
