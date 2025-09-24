@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/UserContext.jsx";
 import safeToast from "../utils/toastUtils";
-
+import api from "../utils/api.js";
 export default function Register() {
   const { login } = useAuth();
   const BACKEND_URL =
@@ -32,13 +32,10 @@ export default function Register() {
     setSuccess("");
     const pendingToastId = safeToast.loading("Registering...");
     try {
-      const res = await fetch(`${BACKEND_URL}/api/auth/register`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
-      });
-      const data = await res.json();
-      if (res.ok) {
+      const res = await api.post(`/api/auth/register`, form);
+      const data = res.data || {};
+      console.log("Response Reg : ",res);
+      if (res.statusText == "Created") {
         // Show success toast
         safeToast.success(
           data.emailSent

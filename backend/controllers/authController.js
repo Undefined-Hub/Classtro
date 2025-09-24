@@ -13,7 +13,7 @@ dotenv.config();
 const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
-    
+    console.log("Login attempt for email:", email, " Password: ", password);
     // ! Find user and check password
     const user = await User.findOne({ email });
     if (!user || !(await bcrypt.compare(password, user.password))) {

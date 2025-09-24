@@ -10,9 +10,7 @@ import ParticipantQnA from "../../components/Participant/ParticipantQnA.jsx";
 import AskQuestionModal from "../../components/Participant/AskQuestionModal.jsx";
 import api from "../../utils/api.js";
 import axios from "axios";
-const SOCKET_URL =
-  (import.meta.env?.VITE_BACKEND_BASE_URL || "http://localhost:5000") +
-  "/sessions";
+const SOCKET_URL = (import.meta.env?.VITE_BACKEND_BASE_URL || "http://localhost:3000") + "/sessions";
 
 const ParticipantSession = () => {
   const navigate = useNavigate();
@@ -317,12 +315,7 @@ const ParticipantSession = () => {
     if (!sessionData?.session?._id) return;
     const fetchQuestions = async () => {
       try {
-        const baseURL = import.meta.env?.VITE_BACKEND_BASE_URL || 'http://localhost:5000';
-        const token = localStorage.getItem('accessToken');
-        const res = await axios.get(`${baseURL}/api/questions/session/${sessionData.session._id}`, {
-          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-          withCredentials: true,
-        });
+        const res = await api.get(`/api/questions/session/${sessionData.session._id}`);
         const normalized = (res.data.questions || []).map((q) => ({
           id: q._id,
           text: q.text,
@@ -345,16 +338,9 @@ const ParticipantSession = () => {
   const postQuestion = async ({ text, isAnonymous }) => {
     if (!sessionData?.session?._id) return;
     try {
-      const baseURL =
-        import.meta.env?.VITE_BACKEND_BASE_URL || "http://localhost:5000";
-      const token = localStorage.getItem("accessToken");
-      await axios.post(
-        `${baseURL}/api/questions`,
-        { sessionId: sessionData.session._id, text, isAnonymous },
-        {
-          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-          withCredentials: true,
-        }
+      await api.post(
+        `/api/questions`,
+        { sessionId: sessionData.session._id, text, isAnonymous }             
       );
       // Rely on socket event to update UI
     } catch (err) {
@@ -365,12 +351,7 @@ const ParticipantSession = () => {
 
   const upvoteQuestion = async (questionId) => {
     try {
-      const baseURL = import.meta.env?.VITE_BACKEND_BASE_URL || 'http://localhost:5000';
-      const token = localStorage.getItem('accessToken');
-      await axios.post(`${baseURL}/api/questions/${questionId}/upvote`, null, {
-        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-        withCredentials: true,
-      });
+      await api.post(`/api/questions/${questionId}/upvote`);
       // rely on socket event
     } catch (err) {
       console.error('Failed to upvote', err);
