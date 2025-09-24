@@ -50,11 +50,12 @@ const EmailVerificationStep = ({
         disabled={loading}
       />
 
-      <button
-        className="w-full inline-flex items-center justify-center px-5 py-3 text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-base dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 disabled:opacity-50 disabled:cursor-not-allowed"
-        type="submit"
-        disabled={loading || otp.length !== 6}
-      >
+      <div className="flex justify-center">
+        <button
+          className="w-full max-w-xs inline-flex items-center justify-center px-5 py-3 text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-base dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 disabled:opacity-50 disabled:cursor-not-allowed"
+          type="submit"
+          disabled={loading || otp.length !== 6}
+        >
         <svg
           className="w-5 h-5 mr-2"
           fill="none"
@@ -70,6 +71,7 @@ const EmailVerificationStep = ({
         </svg>
         {loading ? "Verifying..." : "Verify"}
       </button>
+      </div>
 
       <div className="mt-4 text-center">
         <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">

@@ -42,7 +42,7 @@ export default function VerifyAndRole() {
     try {
       const res = await api.post(`/api/auth/verify-email`, { email, otp });
       const data = res.data || {};
-      if (res.status == 201) {
+      if (res.status == 200) {
         safeToast.success("Email verified successfully");
         setStep(2);
       } else {
@@ -140,8 +140,8 @@ export default function VerifyAndRole() {
 
       {/* // ! Verification/Role Selection Section */}
       <div className="max-w-screen-xl mx-auto px-4 py-16">
-        <div className="max-w-2xl mx-auto">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8">
+        <div className="max-w-lg mx-auto">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 sm:p-8">
             {step === 1 && (
               <EmailVerificationStep
                 email={email}
