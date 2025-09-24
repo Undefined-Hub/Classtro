@@ -406,7 +406,7 @@ const SessionWorkspace = () => {
       const res = await api.post(`/api/sessions/code/${sessionData.code}/close`);
       console.log("Close session response:", res);
 
-      if (res.statusText != "OK") throw new Error("Failed to close session");
+      if (res.status != 200) throw new Error("Failed to close session");
       // After successful close, emit socket event
       const socket = socketRef.current;
       if (socket) {

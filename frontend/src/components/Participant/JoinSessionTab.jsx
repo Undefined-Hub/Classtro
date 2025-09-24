@@ -29,7 +29,7 @@ const JoinSessionTab = () => {
           name: user?.name || "Anonymous Student",
         });
 
-      if (res.statusText !== "OK" && res.statusText !== "Created") {
+      if (res.status !== 200 && res.status !== 201) {
         const errorData = res.error;
         throw new Error(errorData || "Failed to join session");
       }

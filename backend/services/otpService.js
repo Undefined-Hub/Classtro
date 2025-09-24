@@ -47,7 +47,7 @@ class OTPService {
         otp,
         userName || user.name,
       );
-
+      console.log(emailResult);
       if (emailResult.success) {
         console.log(`OTP sent to ${email}: ${otp}`); // Remove in production
         return {

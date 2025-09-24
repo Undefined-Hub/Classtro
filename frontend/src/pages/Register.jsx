@@ -34,8 +34,8 @@ export default function Register() {
     try {
       const res = await api.post(`/api/auth/register`, form);
       const data = res.data || {};
-      console.log("Response Reg : ",res);
-      if (res.statusText == "Created") {
+      
+      if (res.status == 201) {
         // Show success toast
         safeToast.success(
           data.emailSent

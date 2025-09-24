@@ -20,7 +20,7 @@ const handleSubmit = async (e) => {
   try {
     const res = await api.post('/api/auth/login', { email: username, password });
     let data = res.data || {};
-    if (res.statusText === "OK" && data.user && data.accessToken) {
+    if (res.status == 200 && data.user && data.accessToken) {
       login(data.user, data.accessToken);
       safeToast.dismiss(pending);
       safeToast.success("Logged in successfully");

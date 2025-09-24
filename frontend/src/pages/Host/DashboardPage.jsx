@@ -106,7 +106,7 @@ function DashboardPage() {
       setRoomsError(null);
       try {
         const res = await api.get(`/api/rooms/?page=${currentPage}&limit=${pageSize}`);
-        if (res.statusText != "OK") throw new Error("Failed to fetch rooms");
+        if (res.status != 200) throw new Error("Failed to fetch rooms");
         const data = res.data || {};
 
         // Set rooms from API response
@@ -155,7 +155,7 @@ function DashboardPage() {
         `/api/rooms/${roomId}/sessions`
       );
 
-      if (res.statusText != "OK") {
+      if (res.status != 200) {
         throw new Error("Failed to fetch sessions");
       }
 
@@ -197,7 +197,7 @@ function DashboardPage() {
       });
 
       // Check if response is ok
-      if (res.statusText != "Created") {
+      if (res.status != 201) {
         console.log("Error : ",res);
         const errorData = res.error;
         throw new Error(errorData || "Failed to create room");
@@ -245,7 +245,7 @@ function DashboardPage() {
           });
 
       // Check if response is ok
-      if (res.statusText != "Created") {
+      if (res.status != 201) {
         const errorData = res.error;
         throw new Error(errorData || "Failed to create session");
       }

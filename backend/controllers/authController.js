@@ -65,7 +65,7 @@ const loginUser = async (req, res) => {
     });
 
     res.status(200).json({
-      message: "Login successful new version",
+      message: "Login successful",
       accessToken,
       user,
     });

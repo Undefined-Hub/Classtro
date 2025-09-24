@@ -42,7 +42,7 @@ export default function VerifyAndRole() {
     try {
       const res = await api.post(`/api/auth/verify-email`, { email, otp });
       const data = res.data || {};
-      if (res.statusText == "OK") {
+      if (res.status == 201) {
         safeToast.success("Email verified successfully");
         setStep(2);
       } else {
@@ -64,7 +64,7 @@ export default function VerifyAndRole() {
     try {
       const res = await api.post(`/api/auth/resend-otp`, { email });
       const data = res.data || {};
-      if (res.statusText == "OK") {
+      if (res.status == 200) {
         setResendMessage(
           `New OTP sent successfully!${
             data.expiresIn ? ` (Expires in ${data.expiresIn} minutes)` : ""
@@ -96,7 +96,7 @@ export default function VerifyAndRole() {
     try {
       const res = await api.post(`/api/auth/set-role`, { email, role });
       const data = res.data || {};
-      if (res.statusText == "OK") {
+      if (res.status == 200) {
         if (oauth) {
           // ! For OAuth users, log them in after role selection
           if (accessToken && user) {
