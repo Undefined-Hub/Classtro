@@ -10,9 +10,7 @@ import ParticipantQnA from "../../components/Participant/ParticipantQnA.jsx";
 import AskQuestionModal from "../../components/Participant/AskQuestionModal.jsx";
 import api from "../../utils/api.js";
 import axios from "axios";
-const SOCKET_URL =
-  (import.meta.env?.VITE_BACKEND_BASE_URL || "http://localhost:3000") +
-  "/sessions";
+const SOCKET_URL = (import.meta.env?.VITE_BACKEND_BASE_URL || "http://localhost:3000") + "/sessions";
 
 const ParticipantSession = () => {
   const navigate = useNavigate();
@@ -191,7 +189,6 @@ const ParticipantSession = () => {
     const onParticipantsUpdate = (data) => {
       console.log("[Participant] participants:update", data);
       if (data.code === sessionData.joinCode) {
-        console.log("Setting the Participant Count : ",data)
         setParticipantCount(data.count);
       }
     };
@@ -341,10 +338,9 @@ const ParticipantSession = () => {
   const postQuestion = async ({ text, isAnonymous }) => {
     if (!sessionData?.session?._id) return;
     try {
-   
       await api.post(
         `/api/questions`,
-        { sessionId: sessionData.session._id, text, isAnonymous }        
+        { sessionId: sessionData.session._id, text, isAnonymous }             
       );
       // Rely on socket event to update UI
     } catch (err) {

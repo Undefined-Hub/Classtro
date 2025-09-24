@@ -58,7 +58,7 @@ passport.use(
         // Check if user already exists
         let user = await User.findOne({ email: profile.emails[0].value });
         let isNewUser = false;
-        // console.log("Google profile:", profile);
+
         if (!user) {
           // console.log("Creating new user for Google profile:", profile);
           // ? First-time Google login → Create user
