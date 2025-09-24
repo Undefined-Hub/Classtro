@@ -178,11 +178,7 @@ const SessionWorkspace = () => {
     // Fetch questions for this session
     const fetchQuestions = async () => {
       try {
-        const token = localStorage.getItem('accessToken');
-        const res = await axios.get(`${BACKEND_BASE_URL}/api/questions/session/${sessionData._id}`, {
-          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-          withCredentials: true,
-        });
+        const res = await api.get(`/api/questions/session/${sessionData._id}`);
         // Normalize backend question shape to frontend expected fields
         const normalized = (res.data.questions || []).map((q) => ({
           id: q._id,
@@ -387,11 +383,7 @@ const SessionWorkspace = () => {
   // Handle marking a question as answered
   const handleMarkAnswered = async (questionId) => {
     try {
-      const token = localStorage.getItem("accessToken");
-      await axios.patch(`${BACKEND_BASE_URL}/api/questions/${questionId}/answer`, null, {
-        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-        withCredentials: true,
-      });
+      await api.patch(`/api/questions/${questionId}/answer`);
       // Socket event will update all clients' state
     } catch (err) {
       console.error('Failed to mark question as answered:', err);
@@ -411,15 +403,10 @@ const SessionWorkspace = () => {
   const handleEndSession = async () => {
     if (!sessionData?.code) return;
     try {
-      const baseURL =
-        import.meta.env.VITE_BACKEND_BASE_URL || "http://localhost:5000";
-
-      const token = localStorage.getItem("accessToken");
-
       const res = await api.post(`/api/sessions/code/${sessionData.code}/close`);
       console.log("Close session response:", res);
 
-      if (res.statusText!="OK") throw new Error("Failed to close session");
+      if (res.statusText != "OK") throw new Error("Failed to close session");
       // After successful close, emit socket event
       const socket = socketRef.current;
       if (socket) {

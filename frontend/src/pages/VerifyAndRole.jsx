@@ -5,13 +5,12 @@ import PageHeader from "../components/verification/PageHeader.jsx";
 import EmailVerificationStep from "../components/verification/EmailVerificationStep.jsx";
 import RoleSelectionStep from "../components/verification/RoleSelectionStep.jsx";
 import safeToast from "../utils/toastUtils";
-
+import api from "../utils/api.js";
 export default function VerifyAndRole() {
   const location = useLocation();
   const navigate = useNavigate();
   const { login } = useAuth();
-  const BACKEND_URL =
-    import.meta.env.VITE_BACKEND_BASE_URL || "http://localhost:3000";
+
   const {
     email,
     google,
@@ -41,13 +40,9 @@ export default function VerifyAndRole() {
     setOtpError("");
     setLoading(true);
     try {
-      const res = await fetch(`${BACKEND_URL}/api/auth/verify-email`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, otp }),
-      });
-      const data = await res.json();
-      if (res.ok) {
+      const res = await api.post(`/api/auth/verify-email`, { email, otp });
+      const data = res.data || {};
+      if (res.statusText == "OK") {
         safeToast.success("Email verified successfully");
         setStep(2);
       } else {
@@ -67,19 +62,17 @@ export default function VerifyAndRole() {
     setResendMessage("");
     setOtpError("");
     try {
-      const res = await fetch(`${BACKEND_URL}/api/auth/resend-otp`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
-      });
-      const data = await res.json();
-      if (res.ok) {
+      const res = await api.post(`/api/auth/resend-otp`, { email });
+      const data = res.data || {};
+      if (res.statusText == "OK") {
         setResendMessage(
-          `New OTP sent successfully!${data.expiresIn ? ` (Expires in ${data.expiresIn} minutes)` : ""}`,
+          `New OTP sent successfully!${
+            data.expiresIn ? ` (Expires in ${data.expiresIn} minutes)` : ""
+          }`
         );
         setOtp("");
         safeToast.success(
-          `New OTP sent (expires in ${data.expiresIn || "N/A"} mins)`,
+          `New OTP sent (expires in ${data.expiresIn || "N/A"} mins)`
         );
       } else {
         setOtpError(data.message || "Failed to resend OTP");
@@ -101,13 +94,9 @@ export default function VerifyAndRole() {
     }
     setLoading(true);
     try {
-      const res = await fetch(`${BACKEND_URL}/api/auth/set-role`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, role }),
-      });
-      const data = await res.json();
-      if (res.ok) {
+      const res = await api.post(`/api/auth/set-role`, { email, role });
+      const data = res.data || {};
+      if (res.statusText == "OK") {
         if (oauth) {
           // ! For OAuth users, log them in after role selection
           if (accessToken && user) {

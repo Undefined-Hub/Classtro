@@ -105,17 +105,9 @@ function DashboardPage() {
       setRoomsLoading(true);
       setRoomsError(null);
       try {
-        const res = await fetch(
-          `${BACKEND_BASE_URL}/api/rooms/?page=${currentPage}&limit=${pageSize}`,
-          {
-            headers: {
-              "Content-Type": "application/json",
-              ...(token ? { Authorization: `Bearer ${token}` } : {}),
-            },
-          },
-        );
-        if (!res.ok) throw new Error("Failed to fetch rooms");
-        const data = await res.json();
+        const res = await api.get(`/api/rooms/?page=${currentPage}&limit=${pageSize}`);
+        if (res.statusText != "OK") throw new Error("Failed to fetch rooms");
+        const data = res.data || {};
 
         // Set rooms from API response
         setRooms(data.rooms || []);
@@ -159,22 +151,15 @@ function DashboardPage() {
     setSessionsError(null);
 
     try {
-      const authToken = localStorage.getItem("accessToken");
-      const response = await fetch(
-        `${BACKEND_BASE_URL}/api/rooms/${roomId}/sessions`,
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${authToken}`,
-          },
-        },
+      const res = await api.get(
+        `/api/rooms/${roomId}/sessions`
       );
 
-      if (!response.ok) {
+      if (res.statusText != "OK") {
         throw new Error("Failed to fetch sessions");
       }
 
-      const data = await response.json();
+      const data = res.data || {};
       setSessions(data || []);
     } catch (error) {
       console.error("Error fetching sessions:", error);
@@ -203,31 +188,23 @@ function DashboardPage() {
     setCreateRoomLoading(true);
 
     try {
-      // Get auth token from localStorage
-      const authToken = localStorage.getItem("accessToken");
 
       // Make API call to create room
-      const response = await fetch(`${BACKEND_BASE_URL}/api/rooms/`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${authToken}`,
-        },
-        body: JSON.stringify({
+      const res = await api.post(`/api/rooms/`, {
           name: roomFormData.name,
           description: roomFormData.description,
           defaultMaxStudents: roomFormData.defaultMaxStudents,
-        }),
       });
 
       // Check if response is ok
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Failed to create room");
+      if (res.statusText != "Created") {
+        console.log("Error : ",res);
+        const errorData = res.error;
+        throw new Error(errorData || "Failed to create room");
       }
 
       // Parse response data
-      const data = await response.json();
+      const data = res.data || {};
       // Add new room to rooms list
       setRooms((prevRooms) => [data, ...prevRooms]);
 
@@ -260,32 +237,21 @@ function DashboardPage() {
 
     try {
       // Get auth token from localStorage
-      const authToken = localStorage.getItem("accessToken");
 
       // Make API call to create session
-      const response = await fetch(
-        `${BACKEND_BASE_URL}/api/rooms/${selectedRoom._id}/sessions`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${authToken}`,
-          },
-          body: JSON.stringify({
+      const res = await api.post(`/api/rooms/${selectedRoom._id}/sessions`,{
             title: sessionFormData.title,
             maxStudents: sessionFormData.maxStudents,
-          }),
-        },
-      );
+          });
 
       // Check if response is ok
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Failed to create session");
+      if (res.statusText != "Created") {
+        const errorData = res.error;
+        throw new Error(errorData || "Failed to create session");
       }
 
       // Parse response data
-      const sessionData = await response.json();
+      const sessionData = res.data || {};
 
       // Update sessions state with the new session
       // Add to the beginning of the array to show it at the top of the list
