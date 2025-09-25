@@ -42,46 +42,47 @@ const handleSubmit = async (e) => {
           "Login failed. Please check your credentials and try again.",
       );
     }
-  } catch (err) {
+  }   catch (err) {
     safeToast.dismiss(pending);
-    // Handle 403 for verification steps
-    if (err.response && err.response.status === 403 && err.response.data?.requiresVerification) {
-      const data = err.response.data;
-      if (data.step === 1) {
-        safeToast.success("Please verify your email to continue");
-        navigate("/verify", {
-          replace: true,
-          state: {
-            step: 1,
-            email: username,
-            google: false,
-            oauth: false,
-            emailSent: data.emailSent,
-            expiresIn: data.expiresIn
-          },
-        });
-      } else if (data.step === 2) {
-        safeToast.success("Please complete your profile");
-        navigate("/verify", {
-          replace: true,
-          state: {
-            step: 2,
-            email: data.email,
-            google: false,
-            oauth: false
-          },
-        });
+    if (err.response) {
+      const { status, data } = err.response;
+      // Handle 403 for verification steps
+      if (status === 403 && data?.requiresVerification) {
+        if (data.step === 1) {
+          safeToast.success("Please verify your email to continue");
+          navigate("/verify", {
+            replace: true,
+            state: {
+              step: 1,
+              email: username,
+              google: false,
+              oauth: false,
+              emailSent: data.emailSent,
+              expiresIn: data.expiresIn
+            },
+          });
+        } else if (data.step === 2) {
+          safeToast.success("Please complete your profile");
+          navigate("/verify", {
+            replace: true,
+            state: {
+              step: 2,
+              email: data.email,
+              google: false,
+              oauth: false
+            },
+          });
+        }
+        setError(data.message);
+      } else {
+        // Show backend error message for 404, 401, 500, etc.
+        safeToast.error(data?.message || "Login failed. Please try again.");
+        setError(data?.message || "Login failed. Please try again.");
       }
-      setError(data.message);
     } else {
-      safeToast.error(
-        "Network error. Please check your connection and try again.",
-      );
-      setError(
-        err?.message
-          ? ` ${err}`
-          : "Network error. Please check your connection and try again.",
-      );
+      // Network or unknown error
+        safeToast.error("Network error. Please try again.");
+        setError("Network error. Please try again.");
     }
   }
 };

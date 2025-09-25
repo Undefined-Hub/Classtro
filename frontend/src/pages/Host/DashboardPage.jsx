@@ -12,52 +12,6 @@ import LogoutModal from "../../components/LogoutModal";
 /* Api import */
 import api from "../../utils/api";
 
-const BACKEND_BASE_URL =
-  import.meta.env.VITE_BACKEND_BASE_URL || "http://localhost:2000";
-
-// !remove in production
-const STATIC_SESSIONS = [
-  {
-    _id: "68c32b9a72ccbff412c68573",
-    roomId: "68c1acaeb8545df5d77a1d3e",
-    teacherId: "68c03b7690aa7d09254bb622",
-    title: "MongoDB Lecture Day 31",
-    code: "9DE8DD",
-    isActive: true,
-    maxStudents: 150,
-    participantCount: 32,
-    startAt: "2025-09-11T20:05:46.911Z",
-    createdAt: "2025-09-11T20:05:46.911Z",
-    updatedAt: "2025-09-11T20:05:46.911Z",
-  },
-  {
-    _id: "68c32b9a72ccbff412c68574",
-    roomId: "68c1acaeb8545df5d77a1d3e",
-    teacherId: "68c03b7690aa7d09254bb622",
-    title: "SQL Joins and Subqueries",
-    code: "XYZ123",
-    isActive: false,
-    maxStudents: 200,
-    participantCount: 187,
-    startAt: "2025-09-09T14:30:00.000Z",
-    createdAt: "2025-09-09T14:30:00.000Z",
-    updatedAt: "2025-09-09T16:45:00.000Z",
-  },
-  {
-    _id: "68c32b9a72ccbff412c68575",
-    roomId: "68c1aca7b8545df5d77a1d3a",
-    teacherId: "68c03b7690aa7d09254bb622",
-    title: "React Hooks Introduction",
-    code: "ABC456",
-    isActive: false,
-    maxStudents: 150,
-    participantCount: 142,
-    startAt: "2025-09-08T10:15:00.000Z",
-    createdAt: "2025-09-08T10:15:00.000Z",
-    updatedAt: "2025-09-08T12:00:00.000Z",
-  },
-];
-
 function DashboardPage() {
   const [activeTab, setActiveTab] = useState("rooms");
   const [selectedRoom, setSelectedRoom] = useState(null);
@@ -488,7 +442,6 @@ function DashboardPage() {
             </h2>
             {/* Search/filter/sort UI can be extracted if needed */}
             <AllSessionsTable
-              sessions={STATIC_SESSIONS}
               rooms={rooms}
               onSessionClick={handleSessionClick}
             />

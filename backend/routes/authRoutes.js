@@ -56,7 +56,7 @@ router.get(
 
 // Handle OAuth failures
 router.get("/google/failure", (req, res) => {
-  const targetOrigin = process.env.FRONTEND_ORIGIN || "http://localhost:5173";
+  const targetOrigin = process.env.CLIENT_ORIGIN || "http://localhost:5173";
   
   const html = `<!DOCTYPE html>
   <html lang="en">

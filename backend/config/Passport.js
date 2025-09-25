@@ -23,19 +23,21 @@ passport.use(
       console.log("Authenticating user: ", email);
       try {
         const user = await User.findOne({ email });
-        console.log("Found user: ", user);
+        // console.log("Found user: ", user);
 
-        if (!user) return done(null, false, { message: "User not found" });
+        if (!user) return done(null, false, { message: "Invalid credentials." });
 
-        if (user.authProvider !== "LOCAL") {
-          return done(null, false, {
-            message: `This account was registered via ${user.authProvider}. Please login using that method.`,
-          });
-        }
+     if (user.authProvider !== "LOCAL") {
+        console.warn(`Auth attempt with wrong provider for user: ${user.email}`);
+        return done(null, false, {
+          message: "Invalid login method.",
+        });
+      }
+
 
         const isMatch = await bcrypt.compare(password, user.password);
 
-        if (!isMatch) return done(null, false, { message: "Invalid password" });
+        if (!isMatch) return done(null, false, { message: "Invalid password." });
 
         return done(null, user);
       } catch (err) {
@@ -76,9 +78,10 @@ passport.use(
         }
         // console.log("Authenticated Google user:", user);
         if (user.authProvider !== "GOOGLE") {
-          return done(null, false, {
-            message: `This account was registered via ${user.authProvider}. Please login using that method.`,
-          });
+           console.warn(`Auth attempt with wrong provider for user: ${user.email}`);
+            return done(null, false, {
+              message: "Invalid login method.",
+            });
         }
 
         // Add isNewUser flag to user object for use in callback
@@ -102,7 +105,7 @@ passport.use(
       if (!user) return done(null, false);
       return done(null, user);
     } catch (err) {
-      return done(err, false);
+      return done(err, false);  
     }
   })
 );

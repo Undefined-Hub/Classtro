@@ -59,7 +59,7 @@ const JoinSessionTab = () => {
 
   return (
     <div className="max-w-2xl mx-auto">
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-8">
+      <div className="bg-white dark:bg-gray-800 rounded-lg  p-8">
         <div className="text-center mb-8">
           <div className="mx-auto flex items-center justify-center w-16 h-16 bg-blue-100 dark:bg-blue-900/30 rounded-full mb-4">
             <svg

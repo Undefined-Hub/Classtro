@@ -84,7 +84,7 @@ class EmailService {
         timeout: this.timeout,
       });
 
-      console.log("Brevo API connection verified:", response.data);
+      console.log("Brevo API connection verified:", response.data.organization_id); // removed whole object and logged just a id
       return true;
     } catch (error) {
       console.error("Brevo API connection failed:", error.response?.data || error.message);

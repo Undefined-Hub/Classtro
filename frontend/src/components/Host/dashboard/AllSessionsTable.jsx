@@ -1,8 +1,53 @@
 import React from "react";
 
-const AllSessionsTable = ({ sessions, rooms, onSessionClick }) => (
-  <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden">
-    <div className="overflow-x-auto">
+const AllSessionsTable = ({rooms, onSessionClick }) => { 
+  
+  const sessions = [
+    {
+      _id: "68c32b9a72ccbff412c68573",
+      roomId: "68c1acaeb8545df5d77a1d3e",
+      teacherId: "68c03b7690aa7d09254bb622",
+      title: "MongoDB Lecture Day 31",
+      code: "9DE8DD",
+      isActive: true,
+      maxStudents: 150,
+      participantCount: 32,
+      startAt: "2025-09-11T20:05:46.911Z",
+      createdAt: "2025-09-11T20:05:46.911Z",
+      updatedAt: "2025-09-11T20:05:46.911Z",
+    },
+    {
+      _id: "68c32b9a72ccbff412c68574",
+      roomId: "68c1acaeb8545df5d77a1d3e",
+      teacherId: "68c03b7690aa7d09254bb622",
+      title: "SQL Joins and Subqueries",
+      code: "XYZ123",
+      isActive: false,
+      maxStudents: 200,
+      participantCount: 187,
+      startAt: "2025-09-09T14:30:00.000Z",
+      createdAt: "2025-09-09T14:30:00.000Z",
+      updatedAt: "2025-09-09T16:45:00.000Z",
+    },
+    {
+      _id: "68c32b9a72ccbff412c68575",
+      roomId: "68c1aca7b8545df5d77a1d3a",
+      teacherId: "68c03b7690aa7d09254bb622",
+      title: "React Hooks Introduction",
+      code: "ABC456",
+      isActive: false,
+      maxStudents: 150,
+      participantCount: 142,
+      startAt: "2025-09-08T10:15:00.000Z",
+      createdAt: "2025-09-08T10:15:00.000Z",
+      updatedAt: "2025-09-08T12:00:00.000Z",
+    },
+  ];
+  
+
+  return (
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden">
+      <div className="overflow-x-auto">
       <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
         <thead className="bg-gray-50 dark:bg-gray-700">
           <tr>
@@ -88,6 +133,6 @@ const AllSessionsTable = ({ sessions, rooms, onSessionClick }) => (
       </table>
     </div>
   </div>
-);
+)};
 
 export default AllSessionsTable;

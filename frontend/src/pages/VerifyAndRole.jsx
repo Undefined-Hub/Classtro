@@ -46,11 +46,11 @@ export default function VerifyAndRole() {
         safeToast.success("Email verified successfully");
         setStep(2);
       } else {
-        setOtpError(data.message || "Invalid OTP");
+        // setOtpError(data.message || "Invalid OTP");
         safeToast.error(data.message || "Invalid OTP");
       }
     } catch (err) {
-      setOtpError("Network error");
+      // setOtpError("Network error");
       safeToast.error("Network error while verifying OTP");
     }
     setLoading(false);
@@ -75,11 +75,11 @@ export default function VerifyAndRole() {
           `New OTP sent (expires in ${data.expiresIn || "N/A"} mins)`
         );
       } else {
-        setOtpError(data.message || "Failed to resend OTP");
+        // setOtpError(data.message || "Failed to resend OTP");
         safeToast.error(data.message || "Failed to resend OTP");
       }
     } catch (err) {
-      setOtpError("Network error while resending OTP");
+      // setOtpError("Network error while resending OTP");
       safeToast.error("Network error while resending OTP");
     }
     setResendLoading(false);
@@ -120,11 +120,11 @@ export default function VerifyAndRole() {
           navigate("/login");
         }
       } else {
-        setRoleError(data.message || "Failed to set role");
+        // setRoleError(data.message || "Failed to set role");
         safeToast.error(data.message || "Failed to set role");
       }
     } catch (err) {
-      setRoleError("Network error");
+      // setRoleError("Network error");
       safeToast.error("Network error while setting role");
     }
     setLoading(false);
@@ -140,7 +140,7 @@ export default function VerifyAndRole() {
 
       {/* // ! Verification/Role Selection Section */}
       <div className="max-w-screen-xl mx-auto px-4 py-16">
-        <div className="max-w-lg mx-auto">
+        <div className="max-w-2xl mx-auto">
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 sm:p-8">
             {step === 1 && (
               <EmailVerificationStep
