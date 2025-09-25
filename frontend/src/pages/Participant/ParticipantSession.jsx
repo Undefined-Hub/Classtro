@@ -43,46 +43,7 @@ const ParticipantSession = () => {
   const [qnaOpen, setQnaOpen] = useState(false);
 
   // * Handle Vote Submission
-  const handlePollSubmit = (optionId) => {
-
-    // * Guard clauses
-    if (!activePoll || !optionId || !socketRef.current) return;
-
-    // * set submitting state
-    setPollSubmitting(true);
-
-    // * Find option index
-    const optionIndex = activePoll.options.findIndex(
-      (opt) => opt._id === optionId
-    );
-    if (optionIndex === -1) return;
-
-    // * Debug log
-    console.log("Submitting vote for option index:", {
-      code: sessionData?.joinCode,
-      pollId: activePoll._id,
-      participantId: sessionData?.participantId,
-      optionIndex,
-    });
-
-    // * Emit poll:vote event
-    socketRef.current.emit(
-      "poll:vote",
-      {
-        code: sessionData?.joinCode,
-        pollId: activePoll._id,
-        participantId: sessionData?.participantId,
-        optionIndex,
-      },
-
-      // * Callback on acknowledgment
-      () => {
-        setSelectedOption(optionId);
-        setPollSubmitting(false);
-        setPollSubmitted(true);
-      }
-    );
-  };
+  
 
   // * Handle Leave Session Handler
   const handleLeaveSession = async () => {
@@ -387,7 +348,6 @@ const ParticipantSession = () => {
             broadcastMsg={broadcastMsg}
             questionsCount={questions.length}
             onShowQNA={() => setQnaOpen(true)}
-            handlePollSubmit={handlePollSubmit}
             participantCount={participantCount}
           />
         ) : (

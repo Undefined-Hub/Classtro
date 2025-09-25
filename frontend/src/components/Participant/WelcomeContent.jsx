@@ -102,7 +102,7 @@ const WelcomeContent = ({
             </div>
           </div>
 
-          {activePoll && <ParticipantLivePoll onVote={handlePollSubmit} />}
+          {activePoll && <ParticipantLivePoll/>}
 
           {/* Only show "Waiting for Host" if there is NO activePoll and NO broadcastMsg */}
           {!activePoll && !broadcastMsg && (
