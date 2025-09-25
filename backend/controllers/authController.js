@@ -7,6 +7,10 @@ const { generateToken, verifyToken } = require("../utils/jwtUtils");
 const otpService = require("../services/otpService");
 const emailService = require("../services/emailService");
 
+
+emailService.verifyConnection().then(ok => {
+  if (!ok) console.error("SMTP connection failed on startup!");
+});
 // Load environment variables
 dotenv.config();
 
