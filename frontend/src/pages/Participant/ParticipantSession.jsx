@@ -9,7 +9,6 @@ import WelcomeContent from "../../components/Participant/WelcomeContent.jsx";
 import ParticipantQnA from "../../components/Participant/ParticipantQnA.jsx";
 import AskQuestionModal from "../../components/Participant/AskQuestionModal.jsx";
 import api from "../../utils/api.js";
-import axios from "axios";
 const SOCKET_URL = (import.meta.env?.VITE_BACKEND_BASE_URL || "http://localhost:3000") + "/sessions";
 
 const ParticipantSession = () => {
@@ -45,10 +44,13 @@ const ParticipantSession = () => {
 
   // * Handle Vote Submission
   const handlePollSubmit = (optionId) => {
+
     // * Guard clauses
     if (!activePoll || !optionId || !socketRef.current) return;
+
     // * set submitting state
     setPollSubmitting(true);
+
     // * Find option index
     const optionIndex = activePoll.options.findIndex(
       (opt) => opt._id === optionId
@@ -87,15 +89,18 @@ const ParticipantSession = () => {
     if (!sessionData) return;
     try {
       console.log("Attempting to leave session:", sessionData.joinCode);
+
       // * Update DB to remove participant from session
       await api.post(`/api/sessions/code/${sessionData.joinCode}/leave`, {
         participantId: sessionData.participantId,
       });
       console.log("Left session in DB");
+
       // * After DB update, emit socket event
       const socket = socketRef.current;
       if (socket) {
         console.log("Emitting leave-session via socket");
+
         // * Emit leave-session event
         socket.emit("leave-session", {
           code: sessionData.joinCode,
@@ -372,7 +377,6 @@ const ParticipantSession = () => {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <SessionHeader
         sessionData={sessionData}
-        participantCount={participantCount}
         onLeave={handleLeaveSession}
       />
 
@@ -384,7 +388,7 @@ const ParticipantSession = () => {
             questionsCount={questions.length}
             onShowQNA={() => setQnaOpen(true)}
             handlePollSubmit={handlePollSubmit}
-             participantCount={participantCount}
+            participantCount={participantCount}
           />
         ) : (
           <ParticipantQnA
