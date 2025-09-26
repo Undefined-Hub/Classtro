@@ -29,10 +29,6 @@ const ParticipantSession = () => {
     setPollSubmitted,
 
     setPollId,
-
-    selectedOption,
-    pollSubmitting,
-    pollSubmitted,
   } = useParticipantSession();
 
   const [broadcastMsg, setBroadcastMsg] = useState(null);
@@ -41,6 +37,19 @@ const ParticipantSession = () => {
   const [questions, setQuestions] = useState([]);
   const [askOpen, setAskOpen] = useState(false);
   const [qnaOpen, setQnaOpen] = useState(false);
+
+  // Fetch session data and participant count
+  const fetchSessionData = async (sessionCode) => {
+    try {
+      const res = await api.get(`/api/sessions/code/${sessionCode}`);
+      if (res.data && res.data.participantCount) {
+        setParticipantCount(res.data.participantCount);
+        console.log("[Participant] Session data fetched, participant count:", res.data.participantCount);
+      }
+    } catch (err) {
+      console.error("Failed to fetch session data:", err);
+    }
+  };
 
   // * Handle Vote Submission
   
@@ -85,6 +94,13 @@ const ParticipantSession = () => {
       navigate("/participant/home");
     }
   }, [sessionData, setSessionData, navigate]);
+
+  // Fetch session data and participant count on initial load
+  useEffect(() => {
+    if (sessionData?.joinCode) {
+      fetchSessionData(sessionData.joinCode);
+    }
+  }, [sessionData?.joinCode]);
 
   // Initialize socket on mount and join session room
   // Initialize socket on mount and join session room
@@ -150,7 +166,8 @@ const ParticipantSession = () => {
     const onParticipantsUpdate = (data) => {
       
       if (data.code === sessionData.joinCode) {
-        setParticipantCount(data.count);
+        // Fetch reliable count from API instead of using socket data
+        fetchSessionData(sessionData.joinCode);
       }
     };
 
