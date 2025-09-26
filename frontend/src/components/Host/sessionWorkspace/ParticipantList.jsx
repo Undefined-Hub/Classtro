@@ -1,4 +1,5 @@
 import React from "react";
+import ProfileImageOrInitials from "../../ProfileImageOrInitials";
 
 const ParticipantList = ({
   participants,
@@ -60,21 +61,13 @@ const ParticipantList = ({
                 className="flex items-center justify-between p-2 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg group"
               >
                 <div className="flex items-center">
-                  {participant.userId.profilePicture ? (
-                    <img
-                      src={participant.userId.profilePicture}
-                      alt={participant.userId.name}
-                      className="w-8 h-8 rounded-full mr-3"
-                    />
-                  ) : (
-                    <div
-                      className={`w-8 h-8 rounded-full mr-3 flex items-center justify-center text-white ${getAvatarColor(
-                        participant.name,
-                      )}`}
-                    >
-                      {getInitials(participant.userId.name)}
-                    </div>
-                  )}
+                  <ProfileImageOrInitials
+                    src={participant.userId.profilePicture}
+                    alt={participant.userId.name}
+                    initials={getInitials(participant.userId.name)}
+                    className="w-8 h-8 rounded-full mr-3"
+                    avatarColorClass={getAvatarColor(participant.name)}
+                  />
                   <div>
                     <div className="text-sm font-medium text-gray-900 dark:text-white">
                       {participant.name}
@@ -122,19 +115,13 @@ const ParticipantList = ({
                   key={participant._id}
                   className="flex items-center p-2 opacity-60"
                 >
-                  {participant.userId?.profilePicture ? (
-                    <img
-                      src={participant.userId.profilePicture}
-                      alt={getInitials(participant.userId.name)}
-                      className="w-8 h-8 rounded-full mr-3 grayscale"
-                    />
-                  ) : (
-                    <div
-                      className={`w-8 h-8 rounded-full mr-3 flex items-center justify-center text-white bg-gray-400 dark:bg-gray-600`}
-                    >
-                      {getInitials(participant.userId.name)}
-                    </div>
-                  )}
+                  <ProfileImageOrInitials
+                    src={participant.userId?.profilePicture}
+                    alt={participant.userId.name}
+                    initials={getInitials(participant.userId.name)}
+                    className="w-8 h-8 rounded-full mr-3 grayscale"
+                    avatarColorClass="bg-gray-400 dark:bg-gray-600"
+                  />
                   <div>
                     <div className="text-sm font-medium text-gray-500 dark:text-gray-400">
                       {participant.userId.name}
