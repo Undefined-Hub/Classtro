@@ -23,7 +23,7 @@ const SessionHeader = () => {
 
   const handleExport = (format) => {
     // TODO: Implement export functionality
-    console.log(`Exporting analytics as ${format}`);
+    
     alert(`Export as ${format.toUpperCase()} - Feature coming soon!`);
   };
 

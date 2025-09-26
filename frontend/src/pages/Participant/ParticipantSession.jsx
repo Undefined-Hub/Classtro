@@ -7,7 +7,7 @@ import { STORAGE_KEY } from "../../context/ParticipantSessionContext.jsx";
 import SessionHeader from "../../components/Participant/SessionHeader.jsx";
 import WelcomeContent from "../../components/Participant/WelcomeContent.jsx";
 import ParticipantQnA from "../../components/Participant/ParticipantQnA.jsx";
-import AskQuestionModal from "../../components/Participant/AskQuestionModal.jsx";
+// AskQuestionModal was replaced by an inline ask panel inside ParticipantQnA
 import api from "../../utils/api.js";
 const SOCKET_URL = (import.meta.env?.VITE_BACKEND_BASE_URL || "http://localhost:3000") + "/sessions";
 
@@ -52,58 +52,20 @@ const ParticipantSession = () => {
   };
 
   // * Handle Vote Submission
-  const handlePollSubmit = (optionId) => {
-    // * Guard clauses
-    if (!activePoll || !optionId || !socketRef.current) return;
-    // * set submitting state
-    setPollSubmitting(true);
-    // * Find option index
-    const optionIndex = activePoll.options.findIndex(
-      (opt) => opt._id === optionId
-    );
-    if (optionIndex === -1) return;
-
-    // * Debug log
-    console.log("Submitting vote for option index:", {
-      code: sessionData?.joinCode,
-      pollId: activePoll._id,
-      participantId: sessionData?.participantId,
-      optionIndex,
-    });
-
-    // * Emit poll:vote event
-    socketRef.current.emit(
-      "poll:vote",
-      {
-        code: sessionData?.joinCode,
-        pollId: activePoll._id,
-        participantId: sessionData?.participantId,
-        optionIndex,
-      },
-
-      // * Callback on acknowledgment
-      () => {
-        setSelectedOption(optionId);
-        setPollSubmitting(false);
-        setPollSubmitted(true);
-      }
-    );
-  };
+  
 
   // * Handle Leave Session Handler
   const handleLeaveSession = async () => {
     if (!sessionData) return;
     try {
-      console.log("Attempting to leave session:", sessionData.joinCode);
       // * Update DB to remove participant from session
       await api.post(`/api/sessions/code/${sessionData.joinCode}/leave`, {
         participantId: sessionData.participantId,
       });
-      console.log("Left session in DB");
       // * After DB update, emit socket event
       const socket = socketRef.current;
       if (socket) {
-        console.log("Emitting leave-session via socket");
+
         // * Emit leave-session event
         socket.emit("leave-session", {
           code: sessionData.joinCode,
@@ -172,14 +134,14 @@ const ParticipantSession = () => {
     };
 
     const onNewPollReceived = (poll) => {
-      console.log("[Participant] New poll received:", poll);
+      
       setActivePoll(poll);
       setPollId(poll._id);
       sessionStorage.setItem("activePoll", JSON.stringify(poll));
     };
 
     const onPollClosed = ({ pollId }) => {
-      console.log("Poll closed:", pollId);
+      
       setActivePoll((prev) => {
         if (prev && prev._id === pollId) {
           sessionStorage.removeItem("activePoll");
@@ -194,15 +156,15 @@ const ParticipantSession = () => {
       setBroadcastMsg(
         `${data.message}${data.from ? ` (from ${data.from})` : ""}`
       );
-      console.log("[Participant] broadcast:message", data);
+      
     };
 
     const onRoomMembers = (members) => {
-      console.log("[Participant] room:members", members);
+      
     };
 
     const onParticipantsUpdate = (data) => {
-      console.log("[Participant] participants:update", data);
+      
       if (data.code === sessionData.joinCode) {
         // Fetch reliable count from API instead of using socket data
         fetchSessionData(sessionData.joinCode);
@@ -210,7 +172,7 @@ const ParticipantSession = () => {
     };
 
     const onSessionEnded = (payload) => {
-      console.log("[Participant] session:ended", payload);
+      
       alert("Session has ended by the host. You will be redirected.");
       clearSession();
       navigate("/participant/home");
@@ -219,7 +181,9 @@ const ParticipantSession = () => {
     // Q&A Handlers
     const onCreated = (payload) => {
       const q = payload.question;
+
       const normalized = {
+        authorId: q.authorId,
         id: q._id,
         text: q.text,
         upvotes: q.upvotes || 0,
@@ -270,7 +234,7 @@ const ParticipantSession = () => {
     // ------------------- Socket Listeners -------------------
 
     socket.on("connect", () => {
-      console.log("[Participant] connected:", socket.id);
+      
       socket.emit("join-session", {
         code: sessionData.joinCode,
         participantId: sessionData.participantId,
@@ -333,6 +297,7 @@ const ParticipantSession = () => {
       try {
         const res = await api.get(`/api/questions/session/${sessionData.session._id}`);
         const normalized = (res.data.questions || []).map((q) => ({
+          authorId: q.authorId,
           id: q._id,
           text: q.text,
           upvotes: q.upvotes || 0,
@@ -353,12 +318,10 @@ const ParticipantSession = () => {
   // Post a new question
   const postQuestion = async ({ text, isAnonymous }) => {
     if (!sessionData?.session?._id) return;
+
     try {
-      await api.post(
-        `/api/questions`,
-        { sessionId: sessionData.session._id, text, isAnonymous }             
-      );
-      // Rely on socket event to update UI
+      // Send to server; rely on socket event to update UI (no local optimistic insert)
+      await api.post(`/api/questions`, { sessionId: sessionData.session._id, text, isAnonymous });
     } catch (err) {
       console.error("Failed to post question", err);
       alert("Failed to post question");
@@ -366,7 +329,7 @@ const ParticipantSession = () => {
   };
 
   const upvoteQuestion = async (questionId) => {
-    try {
+    try {     
       await api.post(`/api/questions/${questionId}/upvote`);
       // rely on socket event
     } catch (err) {
@@ -388,7 +351,6 @@ const ParticipantSession = () => {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <SessionHeader
         sessionData={sessionData}
-        participantCount={participantCount}
         onLeave={handleLeaveSession}
       />
 
@@ -399,25 +361,20 @@ const ParticipantSession = () => {
             broadcastMsg={broadcastMsg}
             questionsCount={questions.length}
             onShowQNA={() => setQnaOpen(true)}
-            handlePollSubmit={handlePollSubmit}
             participantCount={participantCount}
           />
         ) : (
           <ParticipantQnA
-            questions={questions}
-            onUpvote={upvoteQuestion}
-            askOpen={askOpen}
-            setAskOpen={setAskOpen}
-            onBack={() => setQnaOpen(false)}
-          />
+              questions={questions}
+              onUpvote={upvoteQuestion}
+              askOpen={askOpen}
+              setAskOpen={setAskOpen}
+              onBack={() => setQnaOpen(false)}
+              onSubmit={postQuestion}
+            />
         )}
       </div>
 
-      <AskQuestionModal
-        open={askOpen}
-        onClose={() => setAskOpen(false)}
-        onSubmit={postQuestion}
-      />
     </div>
   );
 };
