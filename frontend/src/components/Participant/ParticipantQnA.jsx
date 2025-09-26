@@ -9,8 +9,7 @@ const ParticipantQnA = ({
   setAskOpen,
   onBack,
 }) => {
-  
-  const {user} = useAuth();
+  const { user } = useAuth();
   return (
     <div className="max-w-xs sm:max-w-md lg:max-w-lg mx-auto px-1 sm:px-0">
       {/* Make the QnA container visually blend with the page background by removing
@@ -59,72 +58,69 @@ const ParticipantQnA = ({
             </div>
           ) : (
             <div className="divide-y divide-gray-200 dark:divide-gray-600">
-              {
-                console.log(questions)
-              }{
-              [...questions]
+              {console.log(questions)}
+              {[...questions]
                 .sort((a, b) => {
-                  
                   if ((b.upvotes || 0) !== (a.upvotes || 0))
                     return (b.upvotes || 0) - (a.upvotes || 0);
                   return new Date(b.timestamp) - new Date(a.timestamp);
                 })
                 .map((q) => (
-                  
                   <div
-                    key={q.id}
-                    className="flex justify-between space-x-3 py-3 sm:py-4 first:pt-0 last:pb-0 relative"
-                  >
-                    <div>
-                      {q.authorId && user?.id && q.authorId === user.id && (
-                        <span className="self-start text-blue-400 bg-gray-700 px-2 rounded-xl text-xs border-2 border-blue-400 font-bold text-center">
-                          your question
-                        </span>
-                      )}
+  key={q.id}
+  className="flex justify-between space-x-3 py-3 sm:py-4 first:pt-0 last:pb-0 relative"
+>
+  <div className="flex-1 min-w-0 flex flex-col gap-1">
+    {q.authorId && user?.id && q.authorId === user.id && (
+      <span className="self-start text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 px-2 rounded-xl text-xs border-2 border-blue-200 dark:border-blue-700 font-bold text-center">
+        your question
+      </span>
+    )}
 
-                      <div className="flex-1 min-w-0 flex flex-col">
-                        {/* Show author's name when question is not anonymous */}
-                        {!q.isAnonymous && (q.studentName || q.authorName) && (
-                          <div className="text-xs text-gray-600 dark:text-gray-400 mb-1 truncate">
-                            {q.studentName || q.authorName}
-                          </div>
-                        )}
-                        <div className="flex-1 min-w-0 flex items-center">
-                          <p className="text-gray-900 dark:text-gray-400 text-sm sm:text-base leading-relaxed text-left break-words">
-                            {q.text}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
+    <div className="flex-1 min-w-0 flex flex-col">
+      <div className="flex-1 min-w-0 flex items-center">
+        <p className="text-gray-900 dark:text-gray-100 text-sm sm:text-base leading-relaxed text-left break-words">
+          {q.text}
+        </p>
+      </div>
+    </div>
 
-                    <div className="flex flex-col items-center flex-shrink-0 min-w-[2rem] mt-2 gap-2">
-                      <button
-                        onClick={() => onUpvote(q.id)}
-                        className="text-gray-400 hover:text-blue-500 dark:hover:text-blue-400 transition-colors p-1.5 -m-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 hover:cursor-pointer bg-gray-700"
-                      >
-                        <svg
-                          className="w-3.5 h-3.5 sm:w-4 sm:h-4"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M5 15l7-7 7 7"
-                          />
-                        </svg>
-                      </button>
-                      <span className="text-xs font-medium text-gray-600 dark:text-gray-400 mt-1">
-                        {q.upvotes || 0}
-                      </span>
-                    </div>
+    {/* Show author's name when question is not anonymous
+    {!q.isAnonymous && (q.studentName || q.authorName) && (
+      <div className="text-xs text-gray-600 dark:text-gray-400 mb-1 truncate">
+        {q.studentName || q.authorName}
+      </div>
+    )} */}
+  </div>
 
-                    {/* {q.answered && (
-                                        <div className="absolute right-2 sm:right-4 top-1/2 transform -translate-y-1/2 h-8 sm:h-10 w-1 sm:w-1.5 rounded-full bg-green-400 dark:bg-green-500" aria-hidden="true" />
-                                    )} */}
-                  </div>
+  <div className="flex flex-col items-center flex-shrink-0 min-w-[2rem] mt-2 gap-2">
+    <button
+      onClick={() => onUpvote(q.id)}
+      className="text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors p-1.5 -m-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700"
+    >
+      <svg
+        className="w-3.5 h-3.5 sm:w-4 sm:h-4"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M5 15l7-7 7 7"
+        />
+      </svg>
+    </button>
+    <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
+      {q.upvotes || 0}
+    </span>
+  </div>
+
+  {/* {q.answered && (
+    <div className="absolute right-2 sm:right-4 top-1/2 transform -translate-y-1/2 h-8 sm:h-10 w-1 sm:w-1.5 rounded-full bg-green-500 dark:bg-green-400" aria-hidden="true" />
+  )} */}
+</div>
                 ))}
             </div>
           )}

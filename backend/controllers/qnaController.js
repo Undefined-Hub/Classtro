@@ -46,7 +46,9 @@ const createQuestion = async (req, res) => {
 
     // Shape the question object for frontend/socket
     const question = {
-      id: questionDoc._id,
+      
+      _id: questionDoc._id,
+      authorId: authorId,
       sessionId: questionDoc.sessionId,
       text: questionDoc.text,
       isAnonymous: questionDoc.isAnonymous,
@@ -55,7 +57,7 @@ const createQuestion = async (req, res) => {
     };
 
     console.log("Created Question:", question);
-
+    
     // Emit real-time event
     emitToSession(session.code, 'qna:question:created', { question });
 
@@ -204,7 +206,7 @@ const getQuestionsBySession = async (req, res) => {
     questions.forEach(q => {
       q.authorName = q.authorId ? userMap[q.authorId.toString()] || null : null;
     });
-
+    console.log("Fetched Questions from getQuestionsFromSession:", questions);
     res.status(200).json({ questions});
   } catch (err) {
     console.error('getQuestionsBySession error', err);

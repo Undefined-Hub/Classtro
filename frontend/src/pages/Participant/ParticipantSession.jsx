@@ -321,7 +321,9 @@ const ParticipantSession = () => {
 
   const upvoteQuestion = async (questionId) => {
     try {
+      console.log("Upvoting question:", questionId);
       await api.post(`/api/questions/${questionId}/upvote`);
+      console.log("Upvote API call successful");
       // rely on socket event
     } catch (err) {
       console.error('Failed to upvote', err);
