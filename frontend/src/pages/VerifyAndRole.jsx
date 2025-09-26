@@ -20,6 +20,21 @@ export default function VerifyAndRole() {
     user,
   } = location.state || {};
 
+  // ! Authorization check - redirect if user didn't come through proper flow
+  useEffect(() => {
+    // If no email is provided, user didn't come from registration or login flow
+    if (!email) {
+      safeToast.error("Unauthorized access. Please register or login first.");
+      navigate("/login", { replace: true });
+      return;
+    }
+  }, [email, navigate]);
+
+  // Early return if not authorized
+  if (!email) {
+    return null; // Component will unmount and redirect
+  }
+
   const [step, setStep] = useState(initialStep || 1); // Use passed step or default to 1 for email verification
   const [otp, setOtp] = useState("");
   const [otpError, setOtpError] = useState("");
@@ -66,8 +81,7 @@ export default function VerifyAndRole() {
       const data = res.data || {};
       if (res.status == 200) {
         setResendMessage(
-          `New OTP sent successfully!${
-            data.expiresIn ? ` (Expires in ${data.expiresIn} minutes)` : ""
+          `New OTP sent successfully!${data.expiresIn ? ` (Expires in ${data.expiresIn} minutes)` : ""
           }`
         );
         setOtp("");
@@ -140,7 +154,7 @@ export default function VerifyAndRole() {
 
       {/* // ! Verification/Role Selection Section */}
       <div className="max-w-screen-xl mx-auto px-4 py-16">
-        <div className="max-w-2xl mx-auto">
+        <div className="max-w-lg mx-auto">
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 sm:p-8">
             {step === 1 && (
               <EmailVerificationStep
