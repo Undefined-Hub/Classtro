@@ -438,7 +438,7 @@ const SessionWorkspace = () => {
         {/* Main content area (2/3) */}
         <div className="flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-800 relative">
           {/* Floating Quick Actions Menu */}
-          <QuickActions questions={questions} onSetActiveView={setActiveView} />
+          <QuickActions questions={questions} onSetActiveView={setActiveView} activeView={activeView} />
 
           {/* Main Content */}
           {activeView === "main" && (

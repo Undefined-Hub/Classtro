@@ -38,7 +38,7 @@ const QAManager = ({
           Back
         </button>
       </div>
-    {console.log(questions[0])}
+      {console.log(questions[0])}
       {sortedQuestions.length > 0 ? (
         <div className="space-y-4">
           {sortedQuestions.map((question) => (
@@ -52,32 +52,31 @@ const QAManager = ({
             >
               <div className="p-4">
                 <div className="flex justify-between items-start mb-3">
-                  <div className="flex items-start space-x-3">
-                    <div>
-                      <div className="flex flex-col items-center space-y-1 select-none">
-                        <svg
-                          className="w-6 h-6 text-gray-400 dark:text-gray-500"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M5 15l7-7 7 7"
-                          />
-                        </svg>
-                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                          {question.upvotes}
-                        </span>
-                      </div>
+                  <div className="flex items-start space-x-3 w-[85%]">
+                    <div className="flex flex-col items-center space-y-1 select-none flex-shrink-0">
+                      <svg
+                        className="w-6 h-6 text-gray-400 dark:text-gray-500"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M5 15l7-7 7 7"
+                        />
+                      </svg>
+                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                        {question.upvotes}
+                      </span>
                     </div>
-                    <div className="flex-1">
-                      <p className="text-gray-900 dark:text-white mb-1">
+
+                    <div className="flex-1 min-w-0">
+                      <p className="text-gray-900 dark:text-white mb-1 break-words">
                         {question.text}
                       </p>
-                      <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
+                      <div className="flex flex-wrap items-center text-sm text-gray-500 dark:text-gray-400">
                         {question.isAnonymous ? (
                           <span>Anonymous Student</span>
                         ) : (
