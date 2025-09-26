@@ -91,7 +91,7 @@ export default function Register() {
         if (!isNewUser && user.role && user.role !== "UNKNOWN") {
           login(user, accessToken);
           if (user.role === "TEACHER") {
-            navigate("/test/dashboard", { replace: true });
+            navigate("/dashboard", { replace: true });
           } else if (user.role === "STUDENT") {
             navigate("/participant/home", { replace: true });
           }

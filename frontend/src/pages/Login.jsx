@@ -23,11 +23,11 @@ function Login({ onLogin }) {
         safeToast.dismiss(pending);
         safeToast.success("Logged in successfully");
         if (data.user?.role === "TEACHER") {
-          navigate("/test/dashboard", { replace: true });
+          navigate("/dashboard", { replace: true });
         } else if (data.user?.role === "STUDENT") {
           navigate("/participant/home", { replace: true });
         } else {
-          navigate("/test/dashboard", { replace: true });
+          navigate("/dashboard", { replace: true });
         }
       } else {
         // Ensure the loading toast is dismissed even on malformed 200 responses
@@ -116,7 +116,7 @@ function Login({ onLogin }) {
           login(user, accessToken);
           // Navigate to dashboard based on role
           if (user.role === "TEACHER") {
-            navigate("/test/dashboard", { replace: true });
+            navigate("/dashboard", { replace: true });
           } else if (user.role === "STUDENT") {
             navigate("/participant/home", { replace: true });
           }

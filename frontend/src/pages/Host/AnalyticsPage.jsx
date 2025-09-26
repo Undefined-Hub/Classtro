@@ -14,7 +14,7 @@ function AnalyticsPage() {
   const navigate = useNavigate();
 
   const handleBackToDashboard = () => {
-    navigate('/test/dashboard');
+    navigate('/dashboard');
   };
 
   return (

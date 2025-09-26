@@ -123,7 +123,7 @@ export default function VerifyAndRole() {
           // ! Navigate to appropriate dashboard
           if (role === "TEACHER") {
             safeToast.success("Role set successfully — redirecting...");
-            navigate("/test/dashboard", { replace: true });
+            navigate("/dashboard", { replace: true });
           } else if (role === "STUDENT") {
             safeToast.success("Role set successfully — redirecting...");
             navigate("/participant/home", { replace: true });
