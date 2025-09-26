@@ -179,6 +179,8 @@ const SessionWorkspace = () => {
     const fetchQuestions = async () => {
       try {
         const res = await api.get(`/api/questions/session/${sessionData._id}`);
+        console.log("Fetched questions:", res.data);
+        
         // Normalize backend question shape to frontend expected fields
         const normalized = (res.data.questions || []).map((q) => ({
           id: q._id,
@@ -186,7 +188,7 @@ const SessionWorkspace = () => {
           upvotes: q.upvotes || 0,
           answered: !!q.isAnswered,
           isAnonymous: !!q.isAnonymous,
-          studentName: q.studentName || (q.authorName || ''),
+          studentName: q?.authorName || "N/A",
           timestamp: q.createdAt,
         }));
         setQuestions(normalized);
@@ -224,13 +226,14 @@ const SessionWorkspace = () => {
     // Q&A socket listeners
     const onCreated = (payload) => {
       const q = payload.question;
+      console.log("New question received via socket:", q);
       const normalized = {
         id: q._id,
         text: q.text,
         upvotes: q.upvotes || 0,
         answered: !!q.isAnswered,
         isAnonymous: !!q.isAnonymous,
-        studentName: q.studentName || (q.authorName || ''),
+        studentName: q.authorName || "N/A",
         timestamp: q.createdAt,
       };
       setQuestions((prev) => [normalized, ...prev]);
@@ -435,7 +438,7 @@ const SessionWorkspace = () => {
         {/* Main content area (2/3) */}
         <div className="flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-800 relative">
           {/* Floating Quick Actions Menu */}
-          <QuickActions questions={questions} onSetActiveView={setActiveView} />
+          <QuickActions questions={questions} onSetActiveView={setActiveView} activeView={activeView} />
 
           {/* Main Content */}
           {activeView === "main" && (

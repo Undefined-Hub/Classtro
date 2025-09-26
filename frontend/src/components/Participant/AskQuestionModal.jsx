@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 
 const AskQuestionModal = ({ open, onClose, onSubmit }) => {
   const [text, setText] = useState('');
-  const [anon, setAnon] = useState(true);
+  const [anon, setAnon] = useState(false);
 
   if (!open) return null;
 

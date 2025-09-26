@@ -7,7 +7,7 @@ import { STORAGE_KEY } from "../../context/ParticipantSessionContext.jsx";
 import SessionHeader from "../../components/Participant/SessionHeader.jsx";
 import WelcomeContent from "../../components/Participant/WelcomeContent.jsx";
 import ParticipantQnA from "../../components/Participant/ParticipantQnA.jsx";
-import AskQuestionModal from "../../components/Participant/AskQuestionModal.jsx";
+// AskQuestionModal was replaced by an inline ask panel inside ParticipantQnA
 import api from "../../utils/api.js";
 const SOCKET_URL = (import.meta.env?.VITE_BACKEND_BASE_URL || "http://localhost:3000") + "/sessions";
 
@@ -169,7 +169,9 @@ const ParticipantSession = () => {
     // Q&A Handlers
     const onCreated = (payload) => {
       const q = payload.question;
+      console.log("[Participant] New question received:", q);
       const normalized = {
+        authorId: q.authorId,
         id: q._id,
         text: q.text,
         upvotes: q.upvotes || 0,
@@ -283,6 +285,7 @@ const ParticipantSession = () => {
       try {
         const res = await api.get(`/api/questions/session/${sessionData.session._id}`);
         const normalized = (res.data.questions || []).map((q) => ({
+          authorId: q.authorId,
           id: q._id,
           text: q.text,
           upvotes: q.upvotes || 0,
@@ -303,12 +306,10 @@ const ParticipantSession = () => {
   // Post a new question
   const postQuestion = async ({ text, isAnonymous }) => {
     if (!sessionData?.session?._id) return;
+    console.log("Question Type : ",isAnonymous)
     try {
-      await api.post(
-        `/api/questions`,
-        { sessionId: sessionData.session._id, text, isAnonymous }             
-      );
-      // Rely on socket event to update UI
+      // Send to server; rely on socket event to update UI (no local optimistic insert)
+      await api.post(`/api/questions`, { sessionId: sessionData.session._id, text, isAnonymous });
     } catch (err) {
       console.error("Failed to post question", err);
       alert("Failed to post question");
@@ -317,7 +318,9 @@ const ParticipantSession = () => {
 
   const upvoteQuestion = async (questionId) => {
     try {
+      console.log("Upvoting question:", questionId);
       await api.post(`/api/questions/${questionId}/upvote`);
+      console.log("Upvote API call successful");
       // rely on socket event
     } catch (err) {
       console.error('Failed to upvote', err);
@@ -352,20 +355,16 @@ const ParticipantSession = () => {
           />
         ) : (
           <ParticipantQnA
-            questions={questions}
-            onUpvote={upvoteQuestion}
-            askOpen={askOpen}
-            setAskOpen={setAskOpen}
-            onBack={() => setQnaOpen(false)}
-          />
+              questions={questions}
+              onUpvote={upvoteQuestion}
+              askOpen={askOpen}
+              setAskOpen={setAskOpen}
+              onBack={() => setQnaOpen(false)}
+              onSubmit={postQuestion}
+            />
         )}
       </div>
 
-      <AskQuestionModal
-        open={askOpen}
-        onClose={() => setAskOpen(false)}
-        onSubmit={postQuestion}
-      />
     </div>
   );
 };
