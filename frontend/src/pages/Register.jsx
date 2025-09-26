@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/UserContext.jsx";
 import safeToast from "../utils/toastUtils";
 import api from "../utils/api.js";
+import { useSubmitDebounce } from "../hooks/useDebounce.js";
 export default function Register() {
   const { login } = useAuth();
   const BACKEND_URL =
@@ -26,8 +27,8 @@ export default function Register() {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  // Debounced registration to prevent spam submissions
+  const { execute: debouncedRegister } = useSubmitDebounce(async () => {
     setError("");
     setSuccess("");
     const pendingToastId = safeToast.loading("Registering...");
@@ -65,9 +66,15 @@ export default function Register() {
       safeToast.error("Network error");
       setError("Network error");
     }
+  }, 500); // 500ms debounce for registration
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    debouncedRegister();
   };
 
-  const handleGoogleRegister = () => {
+  // Debounced Google registration to prevent multiple popups
+  const { execute: debouncedGoogleRegister } = useSubmitDebounce(() => {
     const popup = window.open(
       `${BACKEND_URL}/api/auth/google?prompt=select_account`,
       "google-oauth",
@@ -91,7 +98,7 @@ export default function Register() {
         if (!isNewUser && user.role && user.role !== "UNKNOWN") {
           login(user, accessToken);
           if (user.role === "TEACHER") {
-            navigate("/test/dashboard", { replace: true });
+            navigate("/dashboard", { replace: true });
           } else if (user.role === "STUDENT") {
             navigate("/participant/home", { replace: true });
           }
@@ -132,6 +139,10 @@ export default function Register() {
         clearInterval(checkClosed);
       }
     }, 1000);
+  }, 1000); // 1s debounce for Google registration
+
+  const handleGoogleRegister = () => {
+    debouncedGoogleRegister();
   };
 
   return (

@@ -29,11 +29,11 @@ function App() {
     // For components still passing onLogin prop; delegate to context
     login(userObj, localStorage.getItem("accessToken"));
     if (userObj.role === "TEACHER") {
-      navigate("/test/dashboard");
+      navigate("/dashboard");
     } else if (userObj.role === "STUDENT") {
       navigate("/participant/home");
     } else {
-      navigate("/test/dashboard");
+      navigate("/dashboard");
     }
   };
 
@@ -46,7 +46,7 @@ function App() {
         <Route path="/verify" element={<VerifyAndRole />} />
         {/* Protected routes group */}
         <Route element={<ProtectedRoute roles={["TEACHER"]} />}>
-          <Route path="/test/dashboard" element={<DashboardPage />} />
+          <Route path="/dashboard" element={<DashboardPage />} />
           <Route
             path="/test/sessionWorkspace"
             element={<SessionWorkspace />}/>
