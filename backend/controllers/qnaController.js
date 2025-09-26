@@ -13,7 +13,7 @@ function emitToSession(sessionCode, event, payload) {
 // Create a question
 const createQuestion = async (req, res) => {
   try {
-    const { sessionId, text } = req.body;
+    const { sessionId, text, isAnonymous } = req.body;
     const authorId = req.user?.id;
     console.log('createQuestion called', { sessionId, text, authorId });
     if (!sessionId || !text) return res.status(400).json({ message: 'sessionId and text are required' });
@@ -22,7 +22,8 @@ const createQuestion = async (req, res) => {
     const session = await Session.findById(sessionId).lean();
     if (!session) return res.status(404).json({ message: 'Session not found' });
 
-    const question = await Question.create({ sessionId, authorId, text });
+    console.log("Question Type : ", isAnonymous);
+    const question = await Question.create({ sessionId, authorId, text ,isAnonymous});
 
     // Emit real-time event with the new question
     emitToSession(session.code, 'qna:question:created', { question });
@@ -163,7 +164,16 @@ const getQuestionsBySession = async (req, res) => {
 
     // Sort by upvotes desc then createdAt desc
     const questions = await Question.find(filters).sort({ upvotes: -1, createdAt: -1 }).lean();
-    res.status(200).json({ questions });
+
+    const userIds = questions.map(q => q.authorId).filter(Boolean);
+    const users = await require('../models/User').find({ _id: { $in: userIds } }, { name: 1 }).lean();
+    const userMap = {};
+    users.forEach(u => { userMap[u._id.toString()] = u.name; });
+    questions.forEach(q => {
+      q.authorName = q.authorId ? userMap[q.authorId.toString()] || null : null;
+    });
+
+    res.status(200).json({ questions});
   } catch (err) {
     console.error('getQuestionsBySession error', err);
     res.status(500).json({ message: 'Failed to load questions', error: err.message });

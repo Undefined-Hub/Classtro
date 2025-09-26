@@ -169,7 +169,9 @@ const ParticipantSession = () => {
     // Q&A Handlers
     const onCreated = (payload) => {
       const q = payload.question;
+      console.log("[Participant] New question received:", q);
       const normalized = {
+        authorId: q.authorId,
         id: q._id,
         text: q.text,
         upvotes: q.upvotes || 0,
@@ -283,6 +285,7 @@ const ParticipantSession = () => {
       try {
         const res = await api.get(`/api/questions/session/${sessionData.session._id}`);
         const normalized = (res.data.questions || []).map((q) => ({
+          authorId: q.authorId,
           id: q._id,
           text: q.text,
           upvotes: q.upvotes || 0,
@@ -303,6 +306,7 @@ const ParticipantSession = () => {
   // Post a new question
   const postQuestion = async ({ text, isAnonymous }) => {
     if (!sessionData?.session?._id) return;
+    console.log("Question Type : ",isAnonymous)
     try {
       await api.post(
         `/api/questions`,

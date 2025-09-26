@@ -179,6 +179,7 @@ const SessionWorkspace = () => {
     const fetchQuestions = async () => {
       try {
         const res = await api.get(`/api/questions/session/${sessionData._id}`);
+        console.log("Fetched questions:", res.data);
         // Normalize backend question shape to frontend expected fields
         const normalized = (res.data.questions || []).map((q) => ({
           id: q._id,
@@ -230,7 +231,7 @@ const SessionWorkspace = () => {
         upvotes: q.upvotes || 0,
         answered: !!q.isAnswered,
         isAnonymous: !!q.isAnonymous,
-        studentName: q.studentName || (q.authorName || ''),
+        studentName: q.authorName || "Anonymous",
         timestamp: q.createdAt,
       };
       setQuestions((prev) => [normalized, ...prev]);

@@ -1,19 +1,21 @@
 // ParticipantLivePoll.jsx
 import React, { useEffect } from "react";
 import { useParticipantSession } from "../../context/ParticipantSessionContext";
+import { useState } from "react";
 
 const ParticipantLivePoll = () => {
   const {
     sessionData,
     socketRef,
-    selectedOption,
     pollSubmitting,
     pollSubmitted,
     activePoll,
     setPollSubmitted,
     setPollSubmitting,
-    setSelectedOption
   } = useParticipantSession();
+
+  const [selectedOption, setSelectedOption] = useState();
+
   if (!activePoll) {
     alert("active poll yet nahi");
     return null;
@@ -29,8 +31,15 @@ const ParticipantLivePoll = () => {
 
   const handlePollSubmit = (optionId) => {
     // * Guard clauses
-    if (!activePoll || !optionId || !socketRef.current) return;
+    if (!activePoll) return;
+    if (!optionId) return;
+    if (!socketRef.current) {
+      console.warn("No socket available to submit vote");
+      return;
+    }
 
+    // Optimistically mark selected option so UI updates immediately
+    setSelectedOption(optionId);
     // * set submitting state
     setPollSubmitting(true);
 
@@ -60,11 +69,19 @@ const ParticipantLivePoll = () => {
 
       // * Callback on acknowledgment
       () => {
-        setSelectedOption(optionId);
+        // server acknowledged
         setPollSubmitting(false);
         setPollSubmitted(true);
       }
     );
+
+    // Fallback: if server does not ack within 8s, clear submitting state
+    setTimeout(() => {
+      if (pollSubmitting) {
+        console.warn("Vote ack timeout - clearing submitting state");
+        setPollSubmitting(false);
+      }
+    }, 8000);
   };
 
   return (
@@ -87,61 +104,62 @@ const ParticipantLivePoll = () => {
               onClick={() => {
                 if (!isDisabled) handlePollSubmit(opt._id);
               }}
-              className={`relative w-full text-left rounded-xl border transition-all shadow-sm overflow-hidden px-0 py-0
-                ${
-                  isSelected
-                    ? "border-blue-700 bg-blue-500/90 dark:bg-blue-700/90 ring-2 ring-blue-400 dark:ring-blue-500"
-                    : "border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/40 hover:border-blue-300 dark:hover:border-blue-500"
-                }
-                ${
-                  isDisabled
-                    ? "opacity-60 cursor-not-allowed"
-                    : "cursor-pointer"
-                }
-              `}
-              style={{ minHeight: "3.5rem" }}
+              className={`
+    relative w-full text-left rounded-lg border overflow-hidden
+    transition-all duration-200 min-h-[3.5rem] 
+    ${
+      isSelected
+        ? "border-blue-500 bg-white dark:bg-gray-900"
+        : "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900"
+    }
+    ${
+      isDisabled
+        ? "opacity-50 cursor-not-allowed"
+        : "cursor-pointer hover:border-gray-300 dark:hover:border-blue-600 hover:shadow-sm"
+    } hover:border-blue-500
+  `}
             >
-              {/* Progress bar background */}
-              <div
-                className={`absolute left-0 top-0 h-full transition-all duration-300 ${
-                  isSelected
-                    ? "bg-blue-400/60 dark:bg-blue-800/60"
-                    : "bg-gray-100 dark:bg-gray-800/40"
-                }`}
-                style={{ width: `${percentage}%`, zIndex: 1 }}
-              />
-              {/* Option content */}
-              <div className="relative flex items-center justify-between px-4 py-3 z-10">
-                <span
-                  className={`text-base font-semibold transition-colors ${
+              {/* Simplified progress bar */}
+              {percentage > 0 && (
+                <div
+                  className={`absolute left-0 top-0 h-full transition-all duration-500 ${
                     isSelected
-                      ? "text-white dark:text-white"
+                      ? "bg-blue-50 dark:bg-blue-950/50"
+                      : "bg-gray-50 dark:bg-gray-800/50"
+                  }`}
+                  style={{ width: `${percentage}%` }}
+                />
+              )}
+
+              {/* Content */}
+              <div className="relative flex items-center justify-between px-4 py-3">
+                <span
+                  className={`font-medium ${
+                    isSelected
+                      ? "text-blue-700 dark:text-blue-400"
                       : "text-gray-900 dark:text-gray-100"
-                  } ${
-                    !isSelected
-                      ? "group-hover:text-blue-700 dark:group-hover:text-blue-300"
-                      : ""
                   }`}
                 >
                   {opt.text}
                 </span>
-                <span
-                  className={`ml-4 px-3 py-1 rounded-lg text-xs font-semibold min-w-[2.5rem] text-center border ${
+
+                <div
+                  className={`px-2.5 py-1 rounded-md text-xs font-medium ${
                     isSelected
-                      ? "bg-blue-100/60 dark:bg-blue-900/60 border-blue-300 dark:border-blue-700 text-blue-900 dark:text-blue-200"
-                      : "bg-white/80 dark:bg-gray-900/60 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200"
+                      ? "bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-400"
+                      : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400"
                   }`}
                 >
-                  {votes} vote{votes === 1 ? "" : "s"}
+                  {votes} {votes === 1 ? "vote" : "votes"}
                   {totalVotes > 0 && (
-                    <span className="ml-1 text-[10px] text-gray-500 dark:text-gray-400">
-                      ({percentage}%)
-                    </span>
+                    <span className="ml-1 opacity-75">({percentage}%)</span>
                   )}
-                </span>
+                </div>
               </div>
+
+              {/* Subtle selected indicator */}
               {isSelected && (
-                <div className="absolute inset-0 pointer-events-none rounded-xl border-2 border-blue-700 dark:border-blue-400 animate-pulse"></div>
+                <div className="absolute left-0 top-0 w-1 h-full bg-blue-500" />
               )}
             </button>
           );
