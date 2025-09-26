@@ -164,7 +164,7 @@ const ParticipantQnA = ({
           </h2>
           <div className="w-12" />
         </div>
-        {}
+
         {/* Questions Content Area - Scrollable */}
         <div
           ref={scrollRef}
@@ -194,7 +194,7 @@ const ParticipantQnA = ({
             </div>
           ) : (
             <div className="divide-y divide-gray-200 dark:divide-gray-600">
-              {}
+
               {[...questions]
                 .sort((a, b) => {
                   if ((b.upvotes || 0) !== (a.upvotes || 0))

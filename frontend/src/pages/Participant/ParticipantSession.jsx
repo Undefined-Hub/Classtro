@@ -49,18 +49,13 @@ const ParticipantSession = () => {
   const handleLeaveSession = async () => {
     if (!sessionData) return;
     try {
-      
-
       // * Update DB to remove participant from session
       await api.post(`/api/sessions/code/${sessionData.joinCode}/leave`, {
         participantId: sessionData.participantId,
       });
-      
-
       // * After DB update, emit socket event
       const socket = socketRef.current;
       if (socket) {
-        
 
         // * Emit leave-session event
         socket.emit("leave-session", {
@@ -169,7 +164,7 @@ const ParticipantSession = () => {
     // Q&A Handlers
     const onCreated = (payload) => {
       const q = payload.question;
-      
+
       const normalized = {
         authorId: q.authorId,
         id: q._id,
@@ -306,7 +301,7 @@ const ParticipantSession = () => {
   // Post a new question
   const postQuestion = async ({ text, isAnonymous }) => {
     if (!sessionData?.session?._id) return;
-    
+
     try {
       // Send to server; rely on socket event to update UI (no local optimistic insert)
       await api.post(`/api/questions`, { sessionId: sessionData.session._id, text, isAnonymous });
@@ -317,10 +312,8 @@ const ParticipantSession = () => {
   };
 
   const upvoteQuestion = async (questionId) => {
-    try {
-      
+    try {     
       await api.post(`/api/questions/${questionId}/upvote`);
-      
       // rely on socket event
     } catch (err) {
       console.error('Failed to upvote', err);

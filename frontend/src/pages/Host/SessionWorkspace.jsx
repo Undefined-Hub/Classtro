@@ -179,8 +179,7 @@ const SessionWorkspace = () => {
     const fetchQuestions = async () => {
       try {
         const res = await api.get(`/api/questions/session/${sessionData._id}`);
-        
-        
+       
         // Normalize backend question shape to frontend expected fields
         const normalized = (res.data.questions || []).map((q) => ({
           id: q._id,
@@ -226,7 +225,6 @@ const SessionWorkspace = () => {
     // Q&A socket listeners
     const onCreated = (payload) => {
       const q = payload.question;
-      
       const normalized = {
         id: q._id,
         text: q.text,
