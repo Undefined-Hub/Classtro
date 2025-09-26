@@ -180,6 +180,7 @@ const SessionWorkspace = () => {
       try {
         const res = await api.get(`/api/questions/session/${sessionData._id}`);
         console.log("Fetched questions:", res.data);
+        
         // Normalize backend question shape to frontend expected fields
         const normalized = (res.data.questions || []).map((q) => ({
           id: q._id,
@@ -187,7 +188,7 @@ const SessionWorkspace = () => {
           upvotes: q.upvotes || 0,
           answered: !!q.isAnswered,
           isAnonymous: !!q.isAnonymous,
-          studentName: q.studentName || (q.authorName || ''),
+          studentName: q?.authorName || "N/A",
           timestamp: q.createdAt,
         }));
         setQuestions(normalized);
@@ -225,13 +226,14 @@ const SessionWorkspace = () => {
     // Q&A socket listeners
     const onCreated = (payload) => {
       const q = payload.question;
+      console.log("New question received via socket:", q);
       const normalized = {
         id: q._id,
         text: q.text,
         upvotes: q.upvotes || 0,
         answered: !!q.isAnswered,
         isAnonymous: !!q.isAnonymous,
-        studentName: q.authorName || "Anonymous",
+        studentName: q.authorName || "N/A",
         timestamp: q.createdAt,
       };
       setQuestions((prev) => [normalized, ...prev]);
