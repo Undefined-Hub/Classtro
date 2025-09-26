@@ -62,7 +62,7 @@ const PollManager = () => {
     };
 
     // * Debug Logs
-    console.log("Poll Created:", pollData, "Session Data :", sessionData);
+    
 
     // * API Call to create the poll
     const res = await api.post(
@@ -71,7 +71,7 @@ const PollManager = () => {
     );
 
     // * Set Active Poll
-    console.log("API Response:", res.data);
+    
     setActivePoll(res.data);
 
     // * Emit Socket Event for New Poll Creation
@@ -87,7 +87,7 @@ const PollManager = () => {
   // * Handle End Poll
   const handleEndPoll = async () => {
       if (activePoll) {
-        console.log("Active Poll is Ending", activePoll);
+        
   
         // * Poll Object with End Parameters
         const endedPoll = {
@@ -100,7 +100,7 @@ const PollManager = () => {
         await api.patch(`/api/polls/${activePoll._id}`);
   
         // * Poll Close Socket Emit
-        console.log("Ending poll:", activePoll.id);
+        
         socketRef.current.emit("poll:close", {
           code: sessionData.code,
           pollId: activePoll._id,
@@ -146,7 +146,7 @@ const PollManager = () => {
 
   // * Fetch Past Polls and Active Polls for the Session (ISOLATED)
   const fetchPolls = async () => {
-    console.log("Fetching past polls for session:", sessionData);
+    
 
     // * Validate Session._id
     if (!sessionData?._id) return;
@@ -155,7 +155,7 @@ const PollManager = () => {
     try {
       // * API call to fetch polls for a specific session (USING SESSION._ID)
       const res = await api.get(`/api/sessions/${sessionData._id}/polls`);
-      console.log("Fetched past polls:", res.data);
+      
 
       // * If res is array then set pastPolls and activePoll
       if (Array.isArray(res.data)) {

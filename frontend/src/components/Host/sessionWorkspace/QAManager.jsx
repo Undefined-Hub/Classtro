@@ -38,7 +38,7 @@ const QAManager = ({
           Back
         </button>
       </div>
-      {console.log(questions[0])}
+      {}
       {sortedQuestions.length > 0 ? (
         <div className="space-y-4">
           {sortedQuestions.map((question) => (
