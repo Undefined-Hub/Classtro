@@ -89,7 +89,7 @@ const OTPInput = ({
 
   const getInputClassName = (hasError) => {
     const baseClasses =
-      "w-12 h-12 text-center text-lg font-bold border-2 rounded-lg focus:ring-2 focus:outline-none transition-all duration-200 bg-white dark:bg-gray-700 text-gray-900 dark:text-white";
+      "w-10 h-10 sm:w-12 sm:h-12 text-center text-base sm:text-lg font-bold border-2 rounded-lg focus:ring-2 focus:outline-none transition-all duration-200 bg-white dark:bg-gray-700 text-gray-900 dark:text-white";
 
     if (hasError) {
       return `${baseClasses} border-red-500 dark:border-red-400 focus:ring-red-500 focus:border-red-500`;
@@ -100,10 +100,10 @@ const OTPInput = ({
 
   return (
     <div>
-      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-4 text-center">
+      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3 sm:mb-4 text-center">
         Enter 6-Digit OTP
       </label>
-      <div className="flex justify-center gap-3 mb-6">
+      <div className="flex justify-center gap-2 sm:gap-3 mb-4 sm:mb-6">
         {digits.map((digit, index) => (
           <input
             key={index}

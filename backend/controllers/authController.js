@@ -7,13 +7,17 @@ const { generateToken, verifyToken } = require("../utils/jwtUtils");
 const otpService = require("../services/otpService");
 const emailService = require("../services/emailService");
 
+
+emailService.verifyConnection().then(ok => {
+  if (!ok) console.error("SMTP connection failed on startup!");
+});
 // Load environment variables
 dotenv.config();
 
 const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
-    
+    console.log("Login attempt for email:", email, " Password: ", password);
     // ! Find user and check password
     const user = await User.findOne({ email });
     if (!user || !(await bcrypt.compare(password, user.password))) {
@@ -45,7 +49,7 @@ const loginUser = async (req, res) => {
     // ! Existing login logic
     const payload = { user: { id: user.id } };
     const accessToken = generateToken(payload, process.env.JWT_SECRET, {
-      expiresIn: "1h",
+      expiresIn: "2h",
     });
 
     const refreshToken = generateToken(payload, process.env.JWT_REFRESH_SECRET, {
@@ -58,6 +62,16 @@ const loginUser = async (req, res) => {
     user.__v = undefined;
     user.updatedAt = undefined;
 
+    const safeUser = {
+      id: user.id,
+      name: user.name,
+      username: user.username,
+      email: user.email,
+      role: user.role,
+      profilePicture: user.profilePicture,
+    };
+
+    // Set refresh token in HTTP-only cookie
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
@@ -67,10 +81,10 @@ const loginUser = async (req, res) => {
     res.status(200).json({
       message: "Login successful",
       accessToken,
-      user,
+      user: safeUser,
     });
   } catch (err) {
-    res.status(500).json({ message: "Login failed.", error: err.message });
+  res.status(500).json({ message: "Server error. Please try again later.", error: err.message });
   }
 };
 
@@ -183,6 +197,7 @@ const googleAuthCallback = async (req, res) => {
     username: req.user.username,
     email: req.user.email,
     role: req.user.role,
+    profilePicture: req.user.profilePicture,
   };
 
   const payloadForOpener = {
@@ -192,7 +207,7 @@ const googleAuthCallback = async (req, res) => {
     isNewUser: req.user.isNewUser || false, // Include isNewUser flag
   };
 
-  const targetOrigin = process.env.FRONTEND_ORIGIN || "http://localhost:5173"; // Frontend origin
+  const targetOrigin = process.env.CLIENT_ORIGIN || "http://localhost:5173"; // Frontend origin
 
   const html = `<!DOCTYPE html>
   <html lang="en">

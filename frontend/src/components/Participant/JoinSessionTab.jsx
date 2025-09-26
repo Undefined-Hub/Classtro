@@ -3,9 +3,9 @@ import { useAuth } from "../../context/UserContext";
 import { useNavigate } from "react-router-dom";
 import { useParticipantSession } from "../../context/ParticipantSessionContext.jsx";
 import { STORAGE_KEY } from "../../context/ParticipantSessionContext.jsx";
-
+import api from "../../utils/api.js";
 const BACKEND_BASE_URL =
-  import.meta.env.VITE_BACKEND_BASE_URL || "http://localhost:2000";
+  import.meta.env.VITE_BACKEND_BASE_URL || "http://localhost:3000";
 const JoinSessionTab = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -24,28 +24,17 @@ const JoinSessionTab = () => {
 
     try {
       // 🔹 1. Call REST API first
-      const accessToken = localStorage.getItem("accessToken");
-      const response = await fetch(
-        `${BACKEND_BASE_URL}/api/sessions/code/${joinCode}/join`,
+      const res = await api.post(`/api/sessions/code/${joinCode}/join`, 
         {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
-          },
-          credentials: "include",
-          body: JSON.stringify({
-            name: user?.name || "Anonymous Student",
-          }),
-        },
-      );
+          name: user?.name || "Anonymous Student",
+        });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Failed to join session");
+      if (res.status !== 200 && res.status !== 201) {
+        const errorData = res.error;
+        throw new Error(errorData || "Failed to join session");
       }
 
-      const sessionData = await response.json();
+      const sessionData = res.data || {};
       console.log("✅ Successfully joined session:", sessionData);
 
       // 🔹 2. Save to storage (preempt hydrate) and context, then navigate
@@ -61,7 +50,7 @@ const JoinSessionTab = () => {
       console.error("❌ Failed to join session:", error);
       setError(
         error.message ||
-          "Failed to join session. Please check the code and try again.",
+          "Failed to join session. Please check the code and try again."
       );
     } finally {
       setLoading(false);
@@ -70,7 +59,7 @@ const JoinSessionTab = () => {
 
   return (
     <div className="max-w-2xl mx-auto">
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-8">
+      <div className="bg-white dark:bg-gray-800 rounded-lg  p-8">
         <div className="text-center mb-8">
           <div className="mx-auto flex items-center justify-center w-16 h-16 bg-blue-100 dark:bg-blue-900/30 rounded-full mb-4">
             <svg

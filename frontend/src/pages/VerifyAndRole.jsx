@@ -5,13 +5,12 @@ import PageHeader from "../components/verification/PageHeader.jsx";
 import EmailVerificationStep from "../components/verification/EmailVerificationStep.jsx";
 import RoleSelectionStep from "../components/verification/RoleSelectionStep.jsx";
 import safeToast from "../utils/toastUtils";
-
+import api from "../utils/api.js";
 export default function VerifyAndRole() {
   const location = useLocation();
   const navigate = useNavigate();
   const { login } = useAuth();
-  const BACKEND_URL =
-    import.meta.env.VITE_BACKEND_BASE_URL || "http://localhost:3000";
+
   const {
     email,
     google,
@@ -41,21 +40,17 @@ export default function VerifyAndRole() {
     setOtpError("");
     setLoading(true);
     try {
-      const res = await fetch(`${BACKEND_URL}/api/auth/verify-email`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, otp }),
-      });
-      const data = await res.json();
-      if (res.ok) {
+      const res = await api.post(`/api/auth/verify-email`, { email, otp });
+      const data = res.data || {};
+      if (res.status == 200) {
         safeToast.success("Email verified successfully");
         setStep(2);
       } else {
-        setOtpError(data.message || "Invalid OTP");
+        // setOtpError(data.message || "Invalid OTP");
         safeToast.error(data.message || "Invalid OTP");
       }
     } catch (err) {
-      setOtpError("Network error");
+      // setOtpError("Network error");
       safeToast.error("Network error while verifying OTP");
     }
     setLoading(false);
@@ -67,26 +62,24 @@ export default function VerifyAndRole() {
     setResendMessage("");
     setOtpError("");
     try {
-      const res = await fetch(`${BACKEND_URL}/api/auth/resend-otp`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
-      });
-      const data = await res.json();
-      if (res.ok) {
+      const res = await api.post(`/api/auth/resend-otp`, { email });
+      const data = res.data || {};
+      if (res.status == 200) {
         setResendMessage(
-          `New OTP sent successfully!${data.expiresIn ? ` (Expires in ${data.expiresIn} minutes)` : ""}`,
+          `New OTP sent successfully!${
+            data.expiresIn ? ` (Expires in ${data.expiresIn} minutes)` : ""
+          }`
         );
         setOtp("");
         safeToast.success(
-          `New OTP sent (expires in ${data.expiresIn || "N/A"} mins)`,
+          `New OTP sent (expires in ${data.expiresIn || "N/A"} mins)`
         );
       } else {
-        setOtpError(data.message || "Failed to resend OTP");
+        // setOtpError(data.message || "Failed to resend OTP");
         safeToast.error(data.message || "Failed to resend OTP");
       }
     } catch (err) {
-      setOtpError("Network error while resending OTP");
+      // setOtpError("Network error while resending OTP");
       safeToast.error("Network error while resending OTP");
     }
     setResendLoading(false);
@@ -101,13 +94,9 @@ export default function VerifyAndRole() {
     }
     setLoading(true);
     try {
-      const res = await fetch(`${BACKEND_URL}/api/auth/set-role`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, role }),
-      });
-      const data = await res.json();
-      if (res.ok) {
+      const res = await api.post(`/api/auth/set-role`, { email, role });
+      const data = res.data || {};
+      if (res.status == 200) {
         if (oauth) {
           // ! For OAuth users, log them in after role selection
           if (accessToken && user) {
@@ -131,11 +120,11 @@ export default function VerifyAndRole() {
           navigate("/login");
         }
       } else {
-        setRoleError(data.message || "Failed to set role");
+        // setRoleError(data.message || "Failed to set role");
         safeToast.error(data.message || "Failed to set role");
       }
     } catch (err) {
-      setRoleError("Network error");
+      // setRoleError("Network error");
       safeToast.error("Network error while setting role");
     }
     setLoading(false);
@@ -151,8 +140,8 @@ export default function VerifyAndRole() {
 
       {/* // ! Verification/Role Selection Section */}
       <div className="max-w-screen-xl mx-auto px-4 py-16">
-        <div className="max-w-md mx-auto">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8">
+        <div className="max-w-2xl mx-auto">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 sm:p-8">
             {step === 1 && (
               <EmailVerificationStep
                 email={email}

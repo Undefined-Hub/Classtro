@@ -52,18 +52,47 @@ const Header = ({ onLogout }) => {
             <div className="text-right">
               <p className="text-sm text-blue-100">Student ID</p>
               <p className="font-medium">
-                {user?.email?.split("@")[0] || "N/A"}
+                {user?.username || user?.email?.split("@")[0] || "N/A"}
               </p>
             </div>
-            <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center">
-              <span className="text-lg font-bold">
-                {getInitials(user?.name)}
-              </span>
+            <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center overflow-hidden">
+              {user?.profilePicture ? (
+                <ProfileImageOrInitials
+                  src={user.profilePicture}
+                  alt="Profile"
+                  initials={getInitials(user?.name)}
+                />
+              ) : (
+                <span className="text-lg font-bold">
+                  {getInitials(user?.name)}
+                </span>
+              )}
             </div>
           </div>
         </div>
       </div>
     </div>
+  );
+};
+
+const ProfileImageOrInitials = ({ src, alt, initials }) => {
+  const [imgError, setImgError] = React.useState(false);
+
+  if (!src || imgError) {
+    return (
+      <span className="text-lg font-bold">
+        {initials}
+      </span>
+    );
+  }
+
+  return (
+    <img
+      src={src}
+      alt={alt}
+      className="w-full h-full object-cover"
+      onError={() => setImgError(true)}
+    />
   );
 };
 

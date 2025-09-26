@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/UserContext.jsx";
 import safeToast from "../utils/toastUtils";
-
+import api from "../utils/api.js";
 function Login({ onLogin }) {
   const navigate = useNavigate();
   const { login } = useAuth();
@@ -12,44 +12,43 @@ function Login({ onLogin }) {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError("");
-    const pending = safeToast.loading("Signing in...");
-    try {
-      const res = await fetch(`${BACKEND_URL}/api/auth/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ email: username, password }),
-      });
-      let data = {};
-      try {
-        data = await res.json();
-      } catch (jsonErr) {
-        console.error("Error parsing JSON:", jsonErr);
-        // If response is not JSON, fallback to text
-        data = { message: await res.text() };
+
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  setError("");
+  const pending = safeToast.loading("Signing in...");
+  try {
+    const res = await api.post('/api/auth/login', { email: username, password });
+    let data = res.data || {};
+    if (res.status == 200 && data.user && data.accessToken) {
+      login(data.user, data.accessToken);
+      safeToast.dismiss(pending);
+      safeToast.success("Logged in successfully");
+      if (data.user?.role === "TEACHER") {
+        navigate("/test/dashboard", { replace: true });
+      } else if (data.user?.role === "STUDENT") {
+        navigate("/participant/home", { replace: true });
+      } else {
+        navigate("/test/dashboard", { replace: true });
       }
-      if (res.ok) {
-        // Update global auth state
-        login(data.user, data.accessToken);
-        safeToast.dismiss(pending);
-        safeToast.success("Logged in successfully");
-        // Navigate by role
-        if (data.user?.role === "TEACHER") {
-          navigate("/test/dashboard", { replace: true });
-        } else if (data.user?.role === "STUDENT") {
-          navigate("/participant/home", { replace: true });
-        } else {
-          navigate("/test/dashboard", { replace: true });
-        }
-      } else if (res.status === 403 && data.requiresVerification) {
-        // ! Handle incomplete registration
-        safeToast.dismiss(pending);
-        
+    } else {
+      safeToast.dismiss(pending);
+      safeToast.error(
+        data.message ||
+          "Login failed. Please check your credentials and try again.",
+      );
+      setError(
+        data.message ||
+          "Login failed. Please check your credentials and try again.",
+      );
+    }
+  }   catch (err) {
+    safeToast.dismiss(pending);
+    if (err.response) {
+      const { status, data } = err.response;
+      // Handle 403 for verification steps
+      if (status === 403 && data?.requiresVerification) {
         if (data.step === 1) {
-          // Email verification needed
           safeToast.success("Please verify your email to continue");
           navigate("/verify", {
             replace: true,
@@ -63,7 +62,6 @@ function Login({ onLogin }) {
             },
           });
         } else if (data.step === 2) {
-          // Role selection needed
           safeToast.success("Please complete your profile");
           navigate("/verify", {
             replace: true,
@@ -75,29 +73,20 @@ function Login({ onLogin }) {
             },
           });
         }
+        setError(data.message);
       } else {
-        safeToast.dismiss(pending);
-        safeToast.error(
-          data.message ||
-            "Login failed. Please check your credentials and try again.",
-        );
-        setError(
-          data.message ||
-            "Login failed. Please check your credentials and try again.",
-        );
+        // Show backend error message for 404, 401, 500, etc.
+        safeToast.error(data?.message || "Login failed. Please try again.");
+        setError(data?.message || "Login failed. Please try again.");
       }
-    } catch (err) {
-      safeToast.dismiss(pending);
-      safeToast.error(
-        "Network error. Please check your connection and try again.",
-      );
-      setError(
-        err?.message
-          ? ` ${err}`
-          : "Network error. Please check your connection and try again.",
-      );
+    } else {
+      // Network or unknown error
+        safeToast.error("Network error. Please try again.");
+        setError("Network error. Please try again.");
     }
-  };
+  }
+};
+
 
   const handleGoogleLogin = () => {
     const popup = window.open(
@@ -111,6 +100,8 @@ function Login({ onLogin }) {
       // Only accept messages from our backend origin (the popup)
       try {
         const backendOrigin = new URL(BACKEND_URL).origin;
+        // console.log("Expected origin:", backendOrigin);
+        // console.log("Received message from origin:", event.origin);
         if (event.origin !== backendOrigin) return;
       } catch (err) {
         return;

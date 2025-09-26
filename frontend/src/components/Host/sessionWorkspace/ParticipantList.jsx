@@ -122,10 +122,10 @@ const ParticipantList = ({
                   key={participant._id}
                   className="flex items-center p-2 opacity-60"
                 >
-                  {participant.userId.profilePicture ? (
+                  {participant.userId?.profilePicture ? (
                     <img
                       src={participant.userId.profilePicture}
-                      alt={participant.userId.name}
+                      alt={getInitials(participant.userId.name)}
                       className="w-8 h-8 rounded-full mr-3 grayscale"
                     />
                   ) : (

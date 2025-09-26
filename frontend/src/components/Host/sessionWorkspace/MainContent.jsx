@@ -1,18 +1,26 @@
 import React from "react";
 import SessionStats from "./SessionStats";
+import { useHostSession } from "../../../context/HostSessionContext";
 
-const MainContent = ({
-  sessionData,
-  participants,
-  questions,
-  pastPolls,
-  activePoll,
-  calculateDuration,
-  onSetActiveView,
-  onShowPollForm,
-}) => {
-  const activeParticipantsCount = participants.filter((p) => p.isActive).length;
+const MainContent = () => {
+  // * Context
+  const {
+    sessionData, 
+    participantsList,
+    questions,
+    pastPolls,
+    activePoll,
+    setActiveView,
+    setShowPollForm,
+    setActiveParticipantsCount
+    
+  } = useHostSession();
 
+  // * Active Participants Count
+  const activeParticipantsCount = participantsList.filter((p) => p.isActive).length;
+  // * Setting active participants count in context to be used in other components
+  setActiveParticipantsCount(activeParticipantsCount);
+  
   return (
     <div className="p-4 h-full flex flex-col items-center justify-center text-center">
       <div className="max-w-xl mx-auto">
@@ -67,8 +75,8 @@ const MainContent = ({
             </p>
             <button
               onClick={() => {
-                onSetActiveView("polls");
-                onShowPollForm(true);
+                setActiveView("polls");
+                setShowPollForm(true);
               }}
               className="inline-flex items-center px-3 py-1.5 bg-blue-600 text-white rounded-lg text-xs hover:bg-blue-700 focus:ring-2 focus:ring-blue-500"
             >
@@ -97,7 +105,7 @@ const MainContent = ({
               View and answer student questions.
             </p>
             <button
-              onClick={() => onSetActiveView("qa")}
+              onClick={() => setActiveView("qa")}
               className="inline-flex items-center px-3 py-1.5 bg-blue-600 text-white rounded-lg text-xs hover:bg-blue-700 focus:ring-2 focus:ring-blue-500"
             >
               <svg
@@ -123,7 +131,6 @@ const MainContent = ({
           questions={questions}
           pastPolls={pastPolls}
           activePoll={activePoll}
-          calculateDuration={calculateDuration}
         />
       </div>
     </div>

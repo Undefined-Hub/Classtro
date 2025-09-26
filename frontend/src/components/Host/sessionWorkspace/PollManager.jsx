@@ -1,49 +1,131 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import api from "../../../utils/api";
+import LivePoll from "./LivePoll";
+import PastPolls from "./PastPolls";
+import { useHostSession } from "../../../context/HostSessionContext";
+const PollManager = () => {
+  // * Context
+  const {
+    socketRef,
+    sessionData,
 
-const PollManager = ({
-  activePoll,
-  pastPolls,
-  showPollForm,
-  setShowPollForm,
-  onCreatePoll,
-  onEndPoll,
-  activeView,
-  setActiveView,
-}) => {
+    activePoll,
+    setActivePoll,
+
+    setPastPolls,
+    pastPolls,
+
+    showPollForm,
+    setShowPollForm,
+
+    activeView,
+    setActiveView,
+  } = useHostSession();
+
+  // * Poll Form State (USED IN THE FORM MODAL)
   const [pollFormData, setPollFormData] = useState({
     question: "",
     options: ["", "", "", ""],
   });
 
-  // Handle creating a new poll
-  const handleCreatePoll = (e) => {
+  // * Handle Create New Poll
+  const handleCreatePoll = async (e) => {
     e.preventDefault();
 
-    // Filter out any empty options
+    // * Filter out any empty options
     const validOptions = pollFormData.options.filter(
-      (option) => option.trim() !== "",
+      (option) => option.trim() !== ""
     );
 
+    // * Validate Question and Options
     if (pollFormData.question.trim() === "" || validOptions.length < 2) {
       alert("Please provide a question and at least 2 options");
       return;
     }
 
-    onCreatePoll(pollFormData.question, validOptions);
+    // * Setting poll form data to initial state
     setPollFormData({ question: "", options: ["", "", "", ""] });
+
+    // * Prepare Poll Data
+    const pollOptions = validOptions.map((option) => ({
+      text: option,
+      votes: 0,
+    }));
+
+    // * Poll Data Object
+    const pollData = {
+      sessionId: sessionData._id,
+      question: pollFormData.question,
+      options: pollOptions,
+      isActive: true,
+      createdAt: new Date().toISOString(),
+    };
+
+    // * Debug Logs
+    console.log("Poll Created:", pollData, "Session Data :", sessionData);
+
+    // * API Call to create the poll
+    const res = await api.post(
+      `/api/sessions/${sessionData._id}/polls`,
+      pollData
+    );
+
+    // * Set Active Poll
+    console.log("API Response:", res.data);
+    setActivePoll(res.data);
+
+    // * Emit Socket Event for New Poll Creation
+    socketRef.current.emit("poll:create", {
+      code: sessionData.code,
+      poll: res.data,
+    });
+
+    // * Close Poll Form Modal
     setShowPollForm(false);
   };
 
-  // Handle poll option change
+  // * Handle End Poll
+  const handleEndPoll = async () => {
+      if (activePoll) {
+        console.log("Active Poll is Ending", activePoll);
+  
+        // * Poll Object with End Parameters
+        const endedPoll = {
+          ...activePoll,
+          isActive: false,
+          endedAt: new Date().toISOString(),
+        };
+  
+        // * Api call to patch and make the poll isActive false
+        await api.patch(`/api/polls/${activePoll._id}`);
+  
+        // * Poll Close Socket Emit
+        console.log("Ending poll:", activePoll.id);
+        socketRef.current.emit("poll:close", {
+          code: sessionData.code,
+          pollId: activePoll._id,
+        });
+  
+        // * Add to Past Polls and Clear Active Poll
+        setPastPolls([endedPoll, ...pastPolls]);
+        setActivePoll(null);
+      }
+    };
+
+
+  // * Handle poll option change
   const handlePollOptionChange = (index, value) => {
     const newOptions = [...pollFormData.options];
     newOptions[index] = value;
+
+    // * Update Poll Form Data State to New Options State
     setPollFormData({ ...pollFormData, options: newOptions });
   };
 
-  // Handle adding a poll option
+  // * Handle adding a poll option
   const handleAddPollOption = () => {
     if (pollFormData.options.length < 6) {
+      // * Update Poll Form Data State to Add New Empty Option
       setPollFormData({
         ...pollFormData,
         options: [...pollFormData.options, ""],
@@ -51,15 +133,96 @@ const PollManager = ({
     }
   };
 
-  // Handle removing a poll option
+  // * Handle removing a poll option
   const handleRemovePollOption = (index) => {
     if (pollFormData.options.length > 2) {
       const newOptions = [...pollFormData.options];
       newOptions.splice(index, 1);
+
+      // * Update Poll Form Data State to New Options State (REDUCED BY 1)
       setPollFormData({ ...pollFormData, options: newOptions });
     }
   };
 
+  // * Fetch Past Polls and Active Polls for the Session (ISOLATED)
+  const fetchPolls = async () => {
+    console.log("Fetching past polls for session:", sessionData);
+
+    // * Validate Session._id
+    if (!sessionData?._id) return;
+
+    // * Session is Valid, Fetching Polls
+    try {
+      // * API call to fetch polls for a specific session (USING SESSION._ID)
+      const res = await api.get(`/api/sessions/${sessionData._id}/polls`);
+      console.log("Fetched past polls:", res.data);
+
+      // * If res is array then set pastPolls and activePoll
+      if (Array.isArray(res.data)) {
+        setPastPolls(res.data.filter((p) => !p.isActive));
+        setActivePoll(res.data.find((p) => p.isActive) || null);
+      }
+    } catch (err) {
+      console.error("Failed to fetch past polls:", err);
+    }
+  };
+
+  // * Fetch Polls UseEffect (ON SESSIONDATA._ID CHANGE)
+  useEffect(() => {
+    // * Fetch Polls for the session
+    fetchPolls();
+    try {
+      // * Load activePoll and set it from sessionStorage if available
+      const raw = sessionStorage.getItem("hostActivePoll");
+      setActivePoll(raw ? JSON.parse(raw) : null);
+    } catch (error) {
+      console.error("Failed to parse activePoll from sessionStorage:", error);
+    }
+  }, [sessionData?._id]);
+
+  // * Poll Vote Update UseEffect
+  useEffect(() => {
+    // * Validate Socket
+    if (!socketRef.current) return;
+
+    // * Poll Vote Update Handler
+    const handlePollUpdate = ({ pollId, counts }) => {
+      // * Only update if this is the active poll
+      if (activePoll && activePoll._id === pollId) {
+        const newOptions = activePoll.options.map((opt, idx) => ({
+          ...opt,
+          votes: counts[idx] || 0,
+        }));
+
+        // * Update Active Poll State and sessionStorage
+        const updated = { ...activePoll, options: newOptions };
+        setActivePoll(updated);
+        sessionStorage.setItem("hostActivePoll", JSON.stringify(updated));
+      }
+    };
+
+    // * Poll Vote Update Listener
+    socketRef.current.on("poll:update", handlePollUpdate);
+
+    // ! Cleanup listener on unmount
+    // TODO: implement cleanup
+    return () => {
+      //! socketRef.current.off("poll:update", handlePollUpdate);
+    };
+  }, [socketRef, activePoll, setActivePoll]);
+
+  // * Persist activePoll to sessionStorage
+  useEffect(() => {
+    if (activePoll) {
+      // * Setting activePoll in sessionStorage
+      sessionStorage.setItem("hostActivePoll", JSON.stringify(activePoll));
+    } else {
+      // * Removing activePoll from sessionStorage
+      sessionStorage.removeItem("hostActivePoll");
+    }
+  }, [activePoll]);
+
+  // * Active View Check
   if (activeView !== "polls") return null;
 
   return (
@@ -90,7 +253,15 @@ const PollManager = ({
               Back
             </button>
             <button
-              onClick={() => setShowPollForm(true)}
+              onClick={() => {
+                if (activePoll) {
+                  alert(
+                    "A poll is already active. Please end the current poll before creating a new one."
+                  );
+                  return;
+                }
+                setShowPollForm(true);
+              }}
               className="inline-flex items-center px-2 py-1 bg-blue-600 text-white rounded-lg text-xs hover:bg-blue-700 focus:ring-2 focus:ring-blue-500"
             >
               <svg
@@ -112,182 +283,31 @@ const PollManager = ({
         </div>
 
         {/* Active Poll Display */}
-        {activePoll && (
-          <div className="bg-white dark:bg-gray-700 rounded-lg shadow-lg mb-8 overflow-hidden">
-            <div className="p-5 border-b border-gray-200 dark:border-gray-600 flex justify-between items-center">
-              <div>
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
-                  Live Poll
-                </span>
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mt-2">
-                  {activePoll.question}
-                </h3>
-              </div>
-              <button
-                onClick={onEndPoll}
-                className="inline-flex items-center px-3 py-1.5 bg-red-100 text-red-700 rounded-lg text-sm hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50"
-              >
-                <svg
-                  className="w-4 h-4 mr-1"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-                End Poll
-              </button>
-            </div>
-
-            <div className="p-5">
-              <div className="space-y-4">
-                {activePoll.options.map((option, index) => {
-                  const totalVotes = activePoll.options.reduce(
-                    (sum, opt) => sum + opt.votes,
-                    0,
-                  );
-                  const percentage =
-                    totalVotes > 0
-                      ? Math.round((option.votes / totalVotes) * 100)
-                      : 0;
-
-                  return (
-                    <div key={option.id} className="space-y-2">
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                          {option.text}
-                        </span>
-                        <span className="text-sm text-gray-500 dark:text-gray-400">
-                          {option.votes} votes ({percentage}%)
-                        </span>
-                      </div>
-                      <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2">
-                        <div
-                          className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                          style={{ width: `${percentage}%` }}
-                        ></div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-
-              <div className="mt-6 text-center">
-                <div className="text-lg font-bold text-gray-900 dark:text-white">
-                  Total Responses:{" "}
-                  {activePoll.options.reduce((sum, opt) => sum + opt.votes, 0)}
-                </div>
-                <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                  Students can vote in real-time
-                </div>
-              </div>
-            </div>
+        {activePoll ? (
+          <LivePoll onPollSubmit={handleEndPoll} />
+        ) : pastPolls.length > 0 ? (
+          <div className="flex flex-col items-center justify-center py-12">
+            <svg
+              className="w-12 h-12 text-gray-300 dark:text-gray-600 mb-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+              />
+            </svg>
+            <span className="text-gray-400 dark:text-gray-500 text-lg font-medium text-center">
+              No live polls yet
+            </span>
           </div>
-        )}
+        ) : null}
 
         {/* Past Polls */}
-        {pastPolls.length > 0 && (
-          <div>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-              Past Polls
-            </h3>
-            <div className="space-y-4">
-              {pastPolls.map((poll) => {
-                const totalVotes = poll.options.reduce(
-                  (sum, opt) => sum + opt.votes,
-                  0,
-                );
-                const winningOption = [...poll.options].sort(
-                  (a, b) => b.votes - a.votes,
-                )[0];
-                const winningPercentage =
-                  totalVotes > 0
-                    ? Math.round((winningOption.votes / totalVotes) * 100)
-                    : 0;
-
-                return (
-                  <div
-                    key={poll.id}
-                    className="bg-white dark:bg-gray-700 rounded-lg shadow-md overflow-hidden"
-                  >
-                    <div className="p-4 border-b border-gray-200 dark:border-gray-600">
-                      <h4 className="font-medium text-gray-900 dark:text-white">
-                        {poll.question}
-                      </h4>
-                      <div className="flex items-center mt-1 text-sm text-gray-500 dark:text-gray-400">
-                        <svg
-                          className="w-4 h-4 mr-1"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                          />
-                        </svg>
-                        Ended{" "}
-                        {new Date(poll.endedAt).toLocaleTimeString([], {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                      </div>
-                    </div>
-
-                    <div className="p-4">
-                      <div className="text-sm mb-3">
-                        <span className="font-medium text-gray-700 dark:text-gray-300">
-                          Most Popular Answer:
-                        </span>{" "}
-                        <span className="text-gray-900 dark:text-white">
-                          "{winningOption.text}" ({winningPercentage}%)
-                        </span>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-3 text-sm">
-                        {poll.options.map((option) => {
-                          const optionPercentage =
-                            totalVotes > 0
-                              ? Math.round((option.votes / totalVotes) * 100)
-                              : 0;
-
-                          return (
-                            <div key={option.id} className="flex items-center">
-                              <div
-                                className={`w-3 h-3 rounded-full mr-2 ${
-                                  option.id === winningOption.id
-                                    ? "bg-green-500"
-                                    : "bg-gray-300 dark:bg-gray-500"
-                                }`}
-                              ></div>
-                              <span className="text-gray-700 dark:text-gray-300 truncate">
-                                {option.text}
-                              </span>
-                              <span className="ml-auto text-gray-500 dark:text-gray-400">
-                                {optionPercentage}%
-                              </span>
-                            </div>
-                          );
-                        })}
-                      </div>
-
-                      <div className="mt-3 text-sm text-gray-500 dark:text-gray-400">
-                        Total responses: {totalVotes}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
+        {pastPolls.length > 0 && <PastPolls />}
 
         {/* Empty State */}
         {!activePoll && pastPolls.length === 0 && !showPollForm && (

@@ -4,25 +4,21 @@ import { Routes, Route, useNavigate, Navigate } from "react-router-dom";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import { useAuth } from "./context/UserContext.jsx";
 
+
 const Landing = lazy(() => import("./pages/Landing"));
 const Login = lazy(() => import("./pages/Login"));
 const DashboardPage = lazy(() => import("./pages/Host/DashboardPage.jsx"));
-const SessionWorkspace = lazy(
-  () => import("./pages/Host/SessionWorkspace.jsx"),
-);
-const ParticipantHome = lazy(
-  () => import("./pages/Participant/ParticipantHome"),
-);
-const ParticipantSession = lazy(
-  () => import("./pages/Participant/ParticipantSession"),
-);
+const SessionWorkspace = lazy(() => import("./pages/Host/SessionWorkspace.jsx"));
+const ParticipantHome = lazy(() => import("./pages/Participant/ParticipantHome"));
+const ParticipantSession = lazy(() => import("./pages/Participant/ParticipantSession"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const Unauthorized = lazy(() => import("./pages/Unauthorized"));
 const Register = lazy(() => import("./pages/Register"));
 const VerifyAndRole = lazy(() => import("./pages/VerifyAndRole"));
+const AnalyticsPage = lazy(() => import("./pages/Host/AnalyticsPage.jsx"));
 
 const BACKEND_BASE_URL =
-  import.meta.env.VITE_BACKEND_BASE_URL || "http://localhost:2000";
+  import.meta.env.VITE_BACKEND_BASE_URL || "http://localhost:3000";
 // console.log("Backend Base URL:", BACKEND_BASE_URL);
 
 function App() {
@@ -41,11 +37,6 @@ function App() {
     }
   };
 
-  const handleLogout = () => {
-    logout();
-    navigate("/test/login");
-  };
-
   return (
     <>
       <Routes>
@@ -58,13 +49,10 @@ function App() {
           <Route path="/test/dashboard" element={<DashboardPage />} />
           <Route
             path="/test/sessionWorkspace"
-            element={
-              <HostSessionProvider>
-                <SessionWorkspace />
-              </HostSessionProvider>
-            }
-          />
+            element={<SessionWorkspace />}/>
+            <Route path="/analytics" element={<AnalyticsPage/>} />
         </Route>
+        
         <Route element={<ProtectedRoute roles={["STUDENT"]} />}>
           <Route path="/participant/home" element={<ParticipantHome />} />
           <Route path="/participant/session" element={<ParticipantSession />} />

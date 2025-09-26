@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+
+/* Components import  */
 import RoomList from "../../components/Host/dashboard/RoomList";
 import RoomDetail from "../../components/Host/dashboard/RoomDetail";
 import AllSessionsTable from "../../components/Host/dashboard/AllSessionsTable";
@@ -7,50 +9,8 @@ import CreateRoomModal from "../../components/Host/dashboard/CreateRoomModal";
 import CreateSessionModal from "../../components/Host/dashboard/CreateSessionModal";
 import LogoutModal from "../../components/LogoutModal";
 
-const BACKEND_BASE_URL =
-  import.meta.env.VITE_BACKEND_BASE_URL || "http://localhost:2000";
-
-const STATIC_SESSIONS = [
-  {
-    _id: "68c32b9a72ccbff412c68573",
-    roomId: "68c1acaeb8545df5d77a1d3e",
-    teacherId: "68c03b7690aa7d09254bb622",
-    title: "MongoDB Lecture Day 31",
-    code: "9DE8DD",
-    isActive: true,
-    maxStudents: 150,
-    participantCount: 32,
-    startAt: "2025-09-11T20:05:46.911Z",
-    createdAt: "2025-09-11T20:05:46.911Z",
-    updatedAt: "2025-09-11T20:05:46.911Z",
-  },
-  {
-    _id: "68c32b9a72ccbff412c68574",
-    roomId: "68c1acaeb8545df5d77a1d3e",
-    teacherId: "68c03b7690aa7d09254bb622",
-    title: "SQL Joins and Subqueries",
-    code: "XYZ123",
-    isActive: false,
-    maxStudents: 200,
-    participantCount: 187,
-    startAt: "2025-09-09T14:30:00.000Z",
-    createdAt: "2025-09-09T14:30:00.000Z",
-    updatedAt: "2025-09-09T16:45:00.000Z",
-  },
-  {
-    _id: "68c32b9a72ccbff412c68575",
-    roomId: "68c1aca7b8545df5d77a1d3a",
-    teacherId: "68c03b7690aa7d09254bb622",
-    title: "React Hooks Introduction",
-    code: "ABC456",
-    isActive: false,
-    maxStudents: 150,
-    participantCount: 142,
-    startAt: "2025-09-08T10:15:00.000Z",
-    createdAt: "2025-09-08T10:15:00.000Z",
-    updatedAt: "2025-09-08T12:00:00.000Z",
-  },
-];
+/* Api import */
+import api from "../../utils/api";
 
 function DashboardPage() {
   const [activeTab, setActiveTab] = useState("rooms");
@@ -99,17 +59,9 @@ function DashboardPage() {
       setRoomsLoading(true);
       setRoomsError(null);
       try {
-        const res = await fetch(
-          `${BACKEND_BASE_URL}/api/rooms/?page=${currentPage}&limit=${pageSize}`,
-          {
-            headers: {
-              "Content-Type": "application/json",
-              ...(token ? { Authorization: `Bearer ${token}` } : {}),
-            },
-          },
-        );
-        if (!res.ok) throw new Error("Failed to fetch rooms");
-        const data = await res.json();
+        const res = await api.get(`/api/rooms/?page=${currentPage}&limit=${pageSize}`);
+        if (res.status != 200) throw new Error("Failed to fetch rooms");
+        const data = res.data || {};
 
         // Set rooms from API response
         setRooms(data.rooms || []);
@@ -153,22 +105,15 @@ function DashboardPage() {
     setSessionsError(null);
 
     try {
-      const authToken = localStorage.getItem("accessToken");
-      const response = await fetch(
-        `${BACKEND_BASE_URL}/api/rooms/${roomId}/sessions`,
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${authToken}`,
-          },
-        },
+      const res = await api.get(
+        `/api/rooms/${roomId}/sessions`
       );
 
-      if (!response.ok) {
+      if (res.status != 200) {
         throw new Error("Failed to fetch sessions");
       }
 
-      const data = await response.json();
+      const data = res.data || {};
       setSessions(data || []);
     } catch (error) {
       console.error("Error fetching sessions:", error);
@@ -197,31 +142,23 @@ function DashboardPage() {
     setCreateRoomLoading(true);
 
     try {
-      // Get auth token from localStorage
-      const authToken = localStorage.getItem("accessToken");
 
       // Make API call to create room
-      const response = await fetch(`${BACKEND_BASE_URL}/api/rooms/`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${authToken}`,
-        },
-        body: JSON.stringify({
+      const res = await api.post(`/api/rooms/`, {
           name: roomFormData.name,
           description: roomFormData.description,
           defaultMaxStudents: roomFormData.defaultMaxStudents,
-        }),
       });
 
       // Check if response is ok
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Failed to create room");
+      if (res.status != 201) {
+        console.log("Error : ",res);
+        const errorData = res.error;
+        throw new Error(errorData || "Failed to create room");
       }
 
       // Parse response data
-      const data = await response.json();
+      const data = res.data || {};
       // Add new room to rooms list
       setRooms((prevRooms) => [data, ...prevRooms]);
 
@@ -254,32 +191,21 @@ function DashboardPage() {
 
     try {
       // Get auth token from localStorage
-      const authToken = localStorage.getItem("accessToken");
 
       // Make API call to create session
-      const response = await fetch(
-        `${BACKEND_BASE_URL}/api/rooms/${selectedRoom._id}/sessions`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${authToken}`,
-          },
-          body: JSON.stringify({
+      const res = await api.post(`/api/rooms/${selectedRoom._id}/sessions`,{
             title: sessionFormData.title,
             maxStudents: sessionFormData.maxStudents,
-          }),
-        },
-      );
+          });
 
       // Check if response is ok
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Failed to create session");
+      if (res.status != 201) {
+        const errorData = res.error;
+        throw new Error(errorData || "Failed to create session");
       }
 
       // Parse response data
-      const sessionData = await response.json();
+      const sessionData = res.data || {};
 
       // Update sessions state with the new session
       // Add to the beginning of the array to show it at the top of the list
@@ -319,6 +245,7 @@ function DashboardPage() {
 
   const handleSessionClick = (session) => {
     // Navigate to the session workspace with session data as state
+    console.log("Navigating to session:", session);
     navigate("/test/sessionWorkspace", {
       state: {
         sessionId: session._id,
@@ -515,7 +442,6 @@ function DashboardPage() {
             </h2>
             {/* Search/filter/sort UI can be extracted if needed */}
             <AllSessionsTable
-              sessions={STATIC_SESSIONS}
               rooms={rooms}
               onSessionClick={handleSessionClick}
             />

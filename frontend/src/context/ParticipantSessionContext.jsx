@@ -4,6 +4,7 @@ import React, {
   useEffect,
   useMemo,
   useState,
+  useRef,
 } from "react";
 
 export const STORAGE_KEY = "participantSession";
@@ -11,6 +12,7 @@ export const STORAGE_KEY = "participantSession";
 const ParticipantSessionContext = createContext(null);
 
 export const ParticipantSessionProvider = ({ children }) => {
+  const [pollId, setPollId] = useState(null);
   const [sessionData, setSessionData] = useState(() => {
     try {
       const raw = sessionStorage.getItem(STORAGE_KEY);
@@ -19,7 +21,21 @@ export const ParticipantSessionProvider = ({ children }) => {
       return null;
     }
   });
-
+  // const [activePoll, setActivePoll] = useState(null);
+  const socketRef = useRef(null);
+  const [broadcastMsg, setBroadcastMsg] = useState(null);
+  const [participantCount, setParticipantCount] = useState(1);
+  const [selectedOption, setSelectedOption] = useState(null);
+  const [pollSubmitting, setPollSubmitting] = useState(false);
+  const [pollSubmitted, setPollSubmitted] = useState(false);
+  const [activePoll, setActivePoll] = useState(() => {
+    try {
+      const raw = sessionStorage.getItem("activePoll");
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      return null;
+    }
+  });
   useEffect(() => {
     try {
       if (sessionData) {
@@ -32,11 +48,41 @@ export const ParticipantSessionProvider = ({ children }) => {
     }
   }, [sessionData]);
 
-  const clearSession = () => setSessionData(null);
+  const clearSession = () => {
+    setSessionData(null);
+    setActivePoll(null);
+  };
 
   const value = useMemo(
-    () => ({ sessionData, setSessionData, clearSession }),
-    [sessionData],
+    () => ({
+      socketRef,
+      clearSession,
+
+      sessionData,
+      setSessionData,      
+
+      activePoll,
+      setActivePoll,
+      
+      broadcastMsg, 
+      setBroadcastMsg,
+
+      participantCount, 
+      setParticipantCount,
+      
+      selectedOption, 
+      setSelectedOption,
+
+      pollSubmitting, 
+      setPollSubmitting,
+
+      pollSubmitted, 
+      setPollSubmitted,
+
+      pollId, 
+      setPollId
+    }),
+    [sessionData, activePoll]
   );
 
   return (
@@ -50,7 +96,7 @@ export const useParticipantSession = () => {
   const ctx = useContext(ParticipantSessionContext);
   if (!ctx)
     throw new Error(
-      "useParticipantSession must be used within ParticipantSessionProvider",
+      "useParticipantSession must be used within ParticipantSessionProvider"
     );
   return ctx;
 };

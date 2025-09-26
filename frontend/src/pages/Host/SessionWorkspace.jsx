@@ -1,7 +1,8 @@
-import React, { useEffect, useRef, useCallback } from "react";
-import axios from "axios";
+import React, { useEffect, useRef, useCallback, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { io } from "socket.io-client";
+
+// * Components imports
 import SessionHeader from "../../components/Host/sessionWorkspace/SessionHeader";
 import MainContent from "../../components/Host/sessionWorkspace/MainContent";
 import PollManager from "../../components/Host/sessionWorkspace/PollManager";
@@ -9,13 +10,18 @@ import QAManager from "../../components/Host/sessionWorkspace/QAManager";
 import ParticipantList from "../../components/Host/sessionWorkspace/ParticipantList";
 import QuickActions from "../../components/Host/sessionWorkspace/QuickActions";
 import { useHostSession } from "../../context/HostSessionContext.jsx";
+import axios from "axios";
+// * API import
+import api from "../../utils/api.js";
 
 const BACKEND_BASE_URL =
-  import.meta.env.VITE_BACKEND_BASE_URL || "http://localhost:5000";
+import.meta.env.VITE_BACKEND_BASE_URL || "http://localhost:5000";
+
 const SOCKET_URL = BACKEND_BASE_URL + "/sessions";
 console.log("Socket URL:", SOCKET_URL);
 // Participants state will be fetched from backend
 
+// !remove in production
 // Mock questions data
 const MOCK_QUESTIONS = [
   {
@@ -38,6 +44,7 @@ const MOCK_QUESTIONS = [
   },
 ];
 
+// !remove in production
 // Mock session data fallback
 const MOCK_SESSION_DATA = {
   _id: "session123",
@@ -50,57 +57,89 @@ const MOCK_SESSION_DATA = {
   roomName: "Computer Science 101",
 };
 
-function SessionWorkspace() {
+// * Main Session Workspace Component
+const SessionWorkspace = () => {
+
+  // * Router hooks
   const navigate = useNavigate();
   const location = useLocation();
 
   // Use HostSessionContext for all state
   const {
+    socketRef,
+
     sessionData,
     setSessionData,
+
     activeView,
     setActiveView,
+
     participantsList,
     setParticipantsList,
+
     questions,
     setQuestions,
+
     activePoll,
     setActivePoll,
+
     pastPolls,
     setPastPolls,
+
     showPollForm,
     setShowPollForm,
+
     showConfirmClose,
     setShowConfirmClose,
+
     broadcastMessage,
     setBroadcastMessage,
+
     broadcastStatus,
     setBroadcastStatus,
+
     showBroadcastForm,
     setShowBroadcastForm,
-    socketRef,
+
     resetHostSession,
   } = useHostSession();
 
-  // Load session data from navigation state
+  // * Load session data from navigation state
   useEffect(() => {
+    // * Getting Session Data from navigation state
     if (location.state?.sessionData) {
+      // * Get State passed via navigation
       const passedSessionData = location.state.sessionData;
       const passedroomName = location.state.roomName;
-      // Find the room name based on roomId
+
+      // * Debug log
+      console.log("Received session data via navigation:", passedSessionData);
+      
+      // * RoomId and RoomName handling
       const roomId = passedSessionData.roomId;
       const roomName = passedroomName ? passedroomName : "Unknown Room";
-      setSessionData({
+
+      // * Session Data with Room Name Object
+      const newSessionData = {
         ...passedSessionData,
         roomName: roomName,
-      });
+      };
+
+      // * Set session data in context 
+      setSessionData(newSessionData);
+      // * Set Questions in context (mock data for now)
       setQuestions(MOCK_QUESTIONS);
     } else {
-      // Use mock data as fallback
+      // * Use mock data as fallback
       console.log("Using mock session data (no data passed in navigation)");
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    
   }, [location]);
+
+  // * Debug log session data changes
+  useEffect(() => {
+    console.log("Session Data set in context:", sessionData);
+  }, [sessionData]);
 
   // Fetch participants from backend with debouncing
   const fetchTimeoutRef = useRef(null);
@@ -115,13 +154,11 @@ function SessionWorkspace() {
       // Set a new timeout (300ms debounce)
       fetchTimeoutRef.current = setTimeout(async () => {
         try {
-          const token = localStorage.getItem("accessToken");
-          const res = await axios.get(
-            `${BACKEND_BASE_URL}/api/sessions/code/${sessionCode}/participants`,
-            {
-              headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-              withCredentials: true,
-            },
+          console.log(api);
+          const res = await api.get(
+            `/api/sessions/code/${sessionCode}/participants`,{headers: {
+              'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
+            }}
           );
           setParticipantsList(res.data);
         } catch (err) {
@@ -130,7 +167,7 @@ function SessionWorkspace() {
         }
       }, 300); // 300ms debounce time
     },
-    [BACKEND_BASE_URL, setParticipantsList],
+    [BACKEND_BASE_URL, setParticipantsList]
   );
 
   // Connect to socket.io backend on mount
@@ -138,6 +175,27 @@ function SessionWorkspace() {
     if (!sessionData?.code) return;
     // Fetch participants initially
     fetchParticipants(sessionData.code);
+    // Fetch questions for this session
+    const fetchQuestions = async () => {
+      try {
+        const res = await api.get(`/api/questions/session/${sessionData._id}`);
+        // Normalize backend question shape to frontend expected fields
+        const normalized = (res.data.questions || []).map((q) => ({
+          id: q._id,
+          text: q.text,
+          upvotes: q.upvotes || 0,
+          answered: !!q.isAnswered,
+          isAnonymous: !!q.isAnonymous,
+          studentName: q.studentName || (q.authorName || ''),
+          timestamp: q.createdAt,
+        }));
+        setQuestions(normalized);
+      } catch (err) {
+        console.error('Failed to fetch questions:', err);
+        setQuestions([]);
+      }
+    };
+    fetchQuestions();
     // Connect only once
     if (!socketRef.current) {
       const token = localStorage.getItem("accessToken");
@@ -163,6 +221,56 @@ function SessionWorkspace() {
       code: sessionData.code,
       participantId: "teacher1",
     });
+    // Q&A socket listeners
+    const onCreated = (payload) => {
+      const q = payload.question;
+      const normalized = {
+        id: q._id,
+        text: q.text,
+        upvotes: q.upvotes || 0,
+        answered: !!q.isAnswered,
+        isAnonymous: !!q.isAnonymous,
+        studentName: q.studentName || (q.authorName || ''),
+        timestamp: q.createdAt,
+      };
+      setQuestions((prev) => [normalized, ...prev]);
+    };
+    const onUpdated = (payload) => {
+      const q = payload.question;
+      setQuestions((prev) =>
+        prev.map((item) =>
+          item.id === q._id
+            ? {
+              ...item,
+              text: q.text || item.text,
+              answered: !!q.isAnswered,
+            }
+            : item,
+        ),
+      );
+    };
+    const onDeleted = (payload) => {
+      const { questionId } = payload;
+      setQuestions((prev) => prev.filter((item) => item.id !== questionId));
+    };
+    const onUpvoted = (payload) => {
+      const { questionId, delta } = payload;
+      setQuestions((prev) =>
+        prev.map((item) =>
+          item.id === questionId ? { ...item, upvotes: (item.upvotes || 0) + delta } : item,
+        ),
+      );
+    };
+    const onAnswered = (payload) => {
+      const { questionId } = payload;
+      setQuestions((prev) => prev.map((item) => (item.id === questionId ? { ...item, answered: true } : item)));
+    };
+
+    socket.on('qna:question:created', onCreated);
+    socket.on('qna:question:updated', onUpdated);
+    socket.on('qna:question:deleted', onDeleted);
+    socket.on('qna:question:upvoted', onUpvoted);
+    socket.on('qna:question:answered', onAnswered);
     // Listen for room members
     socket.on("room:members", (data) => {
       console.log("Room members (teacher):", data.sockets);
@@ -185,10 +293,15 @@ function SessionWorkspace() {
           code: sessionData.code,
           participantId: "teacher1",
         });
-      } catch {}
+      } catch { }
       socket.off("room:members");
       socket.off("participants:update");
       socket.off("broadcast:message");
+      socket.off('qna:question:created', onCreated);
+      socket.off('qna:question:updated', onUpdated);
+      socket.off('qna:question:deleted', onDeleted);
+      socket.off('qna:question:upvoted', onUpvoted);
+      socket.off('qna:question:answered', onAnswered);
       socket.off("connect");
       socket.off("connect_error");
       socket.off("disconnect");
@@ -258,82 +371,42 @@ function SessionWorkspace() {
     return colors[hash % colors.length];
   };
 
-  // Handle creating a new poll
-  const handleCreatePoll = (question, options) => {
-    const newPoll = {
-      id: `p${Date.now()}`,
-      question: question,
-      options: options.map((text, idx) => ({
-        id: `o${idx + 1}`,
-        text,
-        votes: 0,
-      })),
-      isActive: true,
-      createdAt: new Date().toISOString(),
-      totalVotes: 0,
-    };
-    setActivePoll(newPoll);
-    setActiveView("polls");
-  };
-
-  // Handle ending an active poll
-  const handleEndPoll = () => {
-    if (activePoll) {
-      const endedPoll = {
-        ...activePoll,
-        isActive: false,
-        endedAt: new Date().toISOString(),
-      };
-      setPastPolls([endedPoll, ...pastPolls]);
-      setActivePoll(null);
-    }
-  };
-
   // Handle upvoting a question
   const handleUpvoteQuestion = (questionId) => {
     setQuestions(
       questions.map((q) =>
-        q.id === questionId ? { ...q, upvotes: q.upvotes + 1 } : q,
-      ),
+        q.id === questionId ? { ...q, upvotes: q.upvotes + 1 } : q
+      )
     );
   };
 
   // Handle marking a question as answered
-  const handleMarkAnswered = (questionId) => {
-    setQuestions(
-      questions.map((q) =>
-        q.id === questionId ? { ...q, answered: true } : q,
-      ),
-    );
+  const handleMarkAnswered = async (questionId) => {
+    try {
+      await api.patch(`/api/questions/${questionId}/answer`);
+      // Socket event will update all clients' state
+    } catch (err) {
+      console.error('Failed to mark question as answered:', err);
+      alert('Failed to mark question as answered');
+    }
   };
 
   // Handle kicking a participant (UI only, backend action not implemented here)
   const handleKickParticipant = (participantId) => {
     setParticipantsList(
       participantsList.map((p) =>
-        p._id === participantId ? { ...p, kicked: true } : p,
-      ),
+        p._id === participantId ? { ...p, kicked: true } : p
+      )
     );
   };
 
   const handleEndSession = async () => {
     if (!sessionData?.code) return;
     try {
-      const baseURL =
-        import.meta.env.VITE_BACKEND_BASE_URL || "http://localhost:5000";
-      const token = localStorage.getItem("accessToken");
-      const res = await fetch(
-        `${baseURL}/api/sessions/code/${sessionData.code}/close`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
-          },
-          credentials: "include",
-        },
-      );
-      if (!res.ok) throw new Error("Failed to close session");
+      const res = await api.post(`/api/sessions/code/${sessionData.code}/close`);
+      console.log("Close session response:", res);
+
+      if (res.status != 200) throw new Error("Failed to close session");
       // After successful close, emit socket event
       const socket = socketRef.current;
       if (socket) {
@@ -366,29 +439,11 @@ function SessionWorkspace() {
 
           {/* Main Content */}
           {activeView === "main" && (
-            <MainContent
-              sessionData={sessionData}
-              participants={participantsList}
-              questions={questions}
-              pastPolls={pastPolls}
-              activePoll={activePoll}
-              calculateDuration={calculateDuration}
-              onSetActiveView={setActiveView}
-              onShowPollForm={setShowPollForm}
-            />
+            <MainContent/>
           )}
 
           {/* Poll Manager */}
-          <PollManager
-            activePoll={activePoll}
-            pastPolls={pastPolls}
-            showPollForm={showPollForm}
-            setShowPollForm={setShowPollForm}
-            onCreatePoll={handleCreatePoll}
-            onEndPoll={handleEndPoll}
-            activeView={activeView}
-            setActiveView={setActiveView}
-          />
+          <PollManager/>
 
           {/* Q&A Manager */}
           <QAManager
@@ -417,7 +472,7 @@ function SessionWorkspace() {
           handleBroadcast={handleBroadcast}
         />
       </div>
-
+          
       {/* Confirm Close Session Modal */}
       {showConfirmClose && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
@@ -486,6 +541,6 @@ function SessionWorkspace() {
       )}
     </div>
   );
-}
+};
 
 export default SessionWorkspace;
