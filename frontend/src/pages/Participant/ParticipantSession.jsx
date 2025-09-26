@@ -49,18 +49,13 @@ const ParticipantSession = () => {
   const handleLeaveSession = async () => {
     if (!sessionData) return;
     try {
-      console.log("Attempting to leave session:", sessionData.joinCode);
-
       // * Update DB to remove participant from session
       await api.post(`/api/sessions/code/${sessionData.joinCode}/leave`, {
         participantId: sessionData.participantId,
       });
-      console.log("Left session in DB");
-
       // * After DB update, emit socket event
       const socket = socketRef.current;
       if (socket) {
-        console.log("Emitting leave-session via socket");
 
         // * Emit leave-session event
         socket.emit("leave-session", {
@@ -123,14 +118,14 @@ const ParticipantSession = () => {
     };
 
     const onNewPollReceived = (poll) => {
-      console.log("[Participant] New poll received:", poll);
+      
       setActivePoll(poll);
       setPollId(poll._id);
       sessionStorage.setItem("activePoll", JSON.stringify(poll));
     };
 
     const onPollClosed = ({ pollId }) => {
-      console.log("Poll closed:", pollId);
+      
       setActivePoll((prev) => {
         if (prev && prev._id === pollId) {
           sessionStorage.removeItem("activePoll");
@@ -145,22 +140,22 @@ const ParticipantSession = () => {
       setBroadcastMsg(
         `${data.message}${data.from ? ` (from ${data.from})` : ""}`
       );
-      console.log("[Participant] broadcast:message", data);
+      
     };
 
     const onRoomMembers = (members) => {
-      console.log("[Participant] room:members", members);
+      
     };
 
     const onParticipantsUpdate = (data) => {
-      console.log("[Participant] participants:update", data);
+      
       if (data.code === sessionData.joinCode) {
         setParticipantCount(data.count);
       }
     };
 
     const onSessionEnded = (payload) => {
-      console.log("[Participant] session:ended", payload);
+      
       alert("Session has ended by the host. You will be redirected.");
       clearSession();
       navigate("/participant/home");
@@ -169,7 +164,7 @@ const ParticipantSession = () => {
     // Q&A Handlers
     const onCreated = (payload) => {
       const q = payload.question;
-      console.log("[Participant] New question received:", q);
+
       const normalized = {
         authorId: q.authorId,
         id: q._id,
@@ -222,7 +217,7 @@ const ParticipantSession = () => {
     // ------------------- Socket Listeners -------------------
 
     socket.on("connect", () => {
-      console.log("[Participant] connected:", socket.id);
+      
       socket.emit("join-session", {
         code: sessionData.joinCode,
         participantId: sessionData.participantId,
@@ -306,7 +301,7 @@ const ParticipantSession = () => {
   // Post a new question
   const postQuestion = async ({ text, isAnonymous }) => {
     if (!sessionData?.session?._id) return;
-    console.log("Question Type : ",isAnonymous)
+
     try {
       // Send to server; rely on socket event to update UI (no local optimistic insert)
       await api.post(`/api/questions`, { sessionId: sessionData.session._id, text, isAnonymous });
@@ -317,10 +312,8 @@ const ParticipantSession = () => {
   };
 
   const upvoteQuestion = async (questionId) => {
-    try {
-      console.log("Upvoting question:", questionId);
+    try {     
       await api.post(`/api/questions/${questionId}/upvote`);
-      console.log("Upvote API call successful");
       // rely on socket event
     } catch (err) {
       console.error('Failed to upvote', err);

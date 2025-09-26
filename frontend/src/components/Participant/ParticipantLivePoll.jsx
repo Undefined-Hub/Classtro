@@ -38,7 +38,7 @@ const ParticipantLivePoll = () => {
     0
   );
   useEffect(() => {
-    console.log("Active Poll Updated:", activePoll);
+    
   }, [activePoll]);
 
   const handlePollSubmit = (optionId) => {
@@ -64,14 +64,6 @@ const ParticipantLivePoll = () => {
 
     // * set submitting state
     setPollSubmitting(true);
-
-    // * Debug log
-    console.log("Submitting vote for option index:", {
-      code: sessionData?.joinCode,
-      pollId: activePoll._id,
-      participantId: sessionData?.participantId,
-      optionIndex,
-    });
 
     // * Emit poll:vote event
     socketRef.current.emit(

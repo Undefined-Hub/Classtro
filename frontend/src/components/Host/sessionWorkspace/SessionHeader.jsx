@@ -6,7 +6,7 @@ const SessionHeader = ({
   onEndSession,
   sessionDuration,
 }) => {
-  // console.log("SessionHeader rendered with sessionData:", sessionData);
+  // 
   return (
     <header className="bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-md z-10 flex-shrink-0">
       <div className="container mx-auto px-4 py-2">

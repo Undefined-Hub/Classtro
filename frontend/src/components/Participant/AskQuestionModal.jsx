@@ -10,7 +10,7 @@ const AskQuestionModal = ({ open, onClose, onSubmit }) => {
     e.preventDefault();
     if (!text.trim()) return;
     const payload = { text: text.trim(), isAnonymous: anon };
-    console.log('[AskQuestionModal] submit', payload);
+    
     onSubmit(payload);
     setText('');
     onClose();
