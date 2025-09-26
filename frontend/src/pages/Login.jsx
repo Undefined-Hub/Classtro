@@ -59,7 +59,7 @@ function Login({ onLogin }) {
                   toastShown: true,
                 },
               });
-            }, 1500);
+            }, 1000);
           } else if (data.step === 2) {
             safeToast.success("Please complete your profile");
             setTimeout(() => {
