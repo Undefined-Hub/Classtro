@@ -414,7 +414,7 @@ const SessionWorkspace = () => {
         socket.emit("session:end", { code: sessionData.code });
       }
       resetHostSession();
-      navigate("/test/dashboard");
+      navigate("/dashboard");
     } catch (err) {
       alert("Failed to close session. Please try again.");
     }
