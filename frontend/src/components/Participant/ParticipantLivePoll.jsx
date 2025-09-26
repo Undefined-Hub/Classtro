@@ -16,6 +16,18 @@ const ParticipantLivePoll = () => {
 
   const [selectedOption, setSelectedOption] = useState();
 
+  // Restore previous selection for this poll from sessionStorage (per participant)
+  useEffect(() => {
+    if (!activePoll || !sessionData?.participantId) return;
+    try {
+      const key = `pollVote:${activePoll._id}:${sessionData.participantId}`;
+      const saved = sessionStorage.getItem(key);
+      if (saved) setSelectedOption(saved);
+    } catch (err) {
+      // ignore
+    }
+  }, [activePoll, sessionData?.participantId]);
+
   if (!activePoll) {
     alert("active poll yet nahi");
     return null;
@@ -38,16 +50,20 @@ const ParticipantLivePoll = () => {
       return;
     }
 
+    // * Find option index and validate
+    const optionIndex = activePoll.options.findIndex((opt) => opt._id === optionId);
+    if (optionIndex === -1) return;
+
     // Optimistically mark selected option so UI updates immediately
     setSelectedOption(optionId);
+    // persist the selection so it survives reloads
+    try {
+      const key = `pollVote:${activePoll._id}:${sessionData?.participantId}`;
+      sessionStorage.setItem(key, optionId);
+    } catch (err) {}
+
     // * set submitting state
     setPollSubmitting(true);
-
-    // * Find option index
-    const optionIndex = activePoll.options.findIndex(
-      (opt) => opt._id === optionId
-    );
-    if (optionIndex === -1) return;
 
     // * Debug log
     console.log("Submitting vote for option index:", {
