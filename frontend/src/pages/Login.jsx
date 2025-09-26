@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/UserContext.jsx";
 import safeToast from "../utils/toastUtils";
 import api from "../utils/api.js";
+import { useSubmitDebounce } from "../hooks/useDebounce.js";
 function Login({ onLogin }) {
   const navigate = useNavigate();
   const { login } = useAuth();
@@ -11,9 +12,8 @@ function Login({ onLogin }) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
 
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  // Debounced login submission to prevent spam
+  const { execute: debouncedLogin } = useSubmitDebounce(async () => {
     const pending = safeToast.loading("Signing in...");
     try {
       const res = await api.post('/api/auth/login', { email: username, password });
@@ -85,10 +85,15 @@ function Login({ onLogin }) {
         safeToast.error("Network error. Please try again.");
       }
     }
+  }, 500); // 500ms debounce for login
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    debouncedLogin();
   };
 
-
-  const handleGoogleLogin = () => {
+  // Debounced Google login to prevent multiple popup windows
+  const { execute: debouncedGoogleLogin } = useSubmitDebounce(() => {
     const popup = window.open(
       `${BACKEND_URL}/api/auth/google?prompt=select_account`,
       "google-oauth",
@@ -158,6 +163,10 @@ function Login({ onLogin }) {
         clearInterval(checkClosed);
       }
     }, 1000);
+  }, 1000); // 1s debounce for Google login to prevent multiple popups
+
+  const handleGoogleLogin = () => {
+    debouncedGoogleLogin();
   };
 
   // const handleClick = (e) => {

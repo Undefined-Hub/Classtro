@@ -6,6 +6,7 @@ import EmailVerificationStep from "../components/verification/EmailVerificationS
 import RoleSelectionStep from "../components/verification/RoleSelectionStep.jsx";
 import safeToast from "../utils/toastUtils";
 import api from "../utils/api.js";
+import { useSubmitDebounce } from "../hooks/useDebounce.js";
 export default function VerifyAndRole() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -49,9 +50,8 @@ export default function VerifyAndRole() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, [step]);
 
-  // ! Step 1: Email Verification
-  const handleVerifyEmail = async (e) => {
-    e.preventDefault();
+  // Debounced email verification to prevent spam
+  const { execute: debouncedVerifyEmail } = useSubmitDebounce(async () => {
     setOtpError("");
     setLoading(true);
     try {
@@ -61,18 +61,22 @@ export default function VerifyAndRole() {
         safeToast.success("Email verified successfully");
         setStep(2);
       } else {
-        // setOtpError(data.message || "Invalid OTP");
         safeToast.error(data.message || "Invalid OTP");
       }
     } catch (err) {
-      // setOtpError("Network error");
       safeToast.error("Network error while verifying OTP");
     }
     setLoading(false);
+  }, 500); // 500ms debounce for email verification
+
+  // ! Step 1: Email Verification
+  const handleVerifyEmail = async (e) => {
+    e.preventDefault();
+    debouncedVerifyEmail();
   };
 
-  //! Resend OTP functionality
-  const handleResendOTP = async () => {
+  // Debounced resend OTP to prevent spam
+  const { execute: debouncedResendOTP } = useSubmitDebounce(async () => {
     setResendLoading(true);
     setResendMessage("");
     setOtpError("");
@@ -89,18 +93,21 @@ export default function VerifyAndRole() {
           `New OTP sent (expires in ${data.expiresIn || "N/A"} mins)`
         );
       } else {
-        // setOtpError(data.message || "Failed to resend OTP");
         safeToast.error(data.message || "Failed to resend OTP");
       }
     } catch (err) {
-      // setOtpError("Network error while resending OTP");
       safeToast.error("Network error while resending OTP");
     }
     setResendLoading(false);
+  }, 2000); // 2s debounce for resend OTP to prevent excessive requests
+
+  //! Resend OTP functionality
+  const handleResendOTP = async () => {
+    debouncedResendOTP();
   };
 
-  // ! Step 2: Role Selection
-  const handleSelectRole = async () => {
+  // Debounced role selection to prevent spam
+  const { execute: debouncedSelectRole } = useSubmitDebounce(async () => {
     setRoleError("");
     if (!role) {
       setRoleError("Please select a role");
@@ -134,14 +141,17 @@ export default function VerifyAndRole() {
           navigate("/login");
         }
       } else {
-        // setRoleError(data.message || "Failed to set role");
         safeToast.error(data.message || "Failed to set role");
       }
     } catch (err) {
-      // setRoleError("Network error");
       safeToast.error("Network error while setting role");
     }
     setLoading(false);
+  }, 500); // 500ms debounce for role selection
+
+  // ! Step 2: Role Selection
+  const handleSelectRole = async () => {
+    debouncedSelectRole();
   };
 
   return (
