@@ -1,0 +1,139 @@
+/* FloatingBugButton animations and custom styles */
+
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-in {
+  from { 
+    opacity: 0; 
+  }
+  to { 
+    opacity: 1; 
+  }
+}
+
+@keyframes slide-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes gentle-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(59, 130, 246, 0);
+  }
+}
+
+.animate-slide-up {
+  animation: slide-up 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.animate-fade-in {
+  animation: fade-in 0.3s ease;
+}
+
+.animate-slide-in {
+  animation: slide-in 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .floating-bug-responsive {
+    bottom: 20px !important;
+    right: 20px !important;
+  }
+  
+  .floating-bug-responsive .w-12.h-12 {
+    width: 44px !important;
+    height: 44px !important;
+  }
+  
+  .floating-bug-options-mobile {
+    bottom: 52px !important;
+    right: -80px !important;
+    min-width: 160px !important;
+  }
+  
+  .floating-bug-modal-mobile {
+    margin: 12px !important;
+    max-height: 95vh !important;
+  }
+  
+  .floating-bug-form-mobile {
+    flex-direction: column-reverse !important;
+    gap: 12px !important;
+  }
+  
+  .floating-bug-form-mobile > * {
+    width: 100% !important;
+    justify-content: center !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .floating-bug-responsive {
+    bottom: 16px !important;
+    right: 16px !important;
+  }
+  
+  .floating-bug-responsive .w-12.h-12 {
+    width: 40px !important;
+    height: 40px !important;
+  }
+  
+  .floating-bug-options-mobile {
+    right: -90px !important;
+    min-width: 150px !important;
+    bottom: 48px !important;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .floating-bug-button {
+    border: 2px solid currentColor !important;
+  }
+  
+  .floating-bug-modal {
+    border: 1px solid #000 !important;
+  }
+}
+
+/* Hide scrollbars for textareas */
+.hide-scrollbar {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .animate-slide-up,
+  .animate-fade-in,
+  .animate-slide-in {
+    animation: none !important;
+  }
+  
+  .transition-all {
+    transition: none !important;
+  }
+}

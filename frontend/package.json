@@ -12,6 +12,9 @@
   "dependencies": {
     "@tailwindcss/vite": "^4.1.11",
     "axios": "^1.12.2",
+    "express-rate-limit": "^8.1.0",
+    "express-validator": "^7.2.1",
+    "lucide-react": "^0.544.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-hot-toast": "^2.6.0",

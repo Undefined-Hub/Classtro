@@ -3,6 +3,7 @@ import { HostSessionProvider } from "./context/HostSessionContext.jsx";
 import { Routes, Route, useNavigate, Navigate } from "react-router-dom";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import { useAuth } from "./context/UserContext.jsx";
+import FloatingBugButton from "./components/FloatingBugButton.jsx";
 
 
 const Landing = lazy(() => import("./pages/Landing"));
@@ -60,6 +61,9 @@ function App() {
         <Route path="/unauthorized" element={<Unauthorized />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
+      
+      {/* Floating Bug Report Button - appears on all pages */}
+      <FloatingBugButton />
     </>
   );
 }
