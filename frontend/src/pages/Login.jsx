@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/UserContext.jsx";
 import safeToast from "../utils/toastUtils";
 import api from "../utils/api.js";
+import { useSubmitDebounce } from "../hooks/useDebounce.js";
 function Login({ onLogin }) {
   const navigate = useNavigate();
   const { login } = useAuth();
@@ -10,85 +11,89 @@ function Login({ onLogin }) {
     import.meta.env.VITE_BACKEND_BASE_URL || "http://localhost:3000";
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
 
-
-const handleSubmit = async (e) => {
-  e.preventDefault();
-  setError("");
-  const pending = safeToast.loading("Signing in...");
-  try {
-    const res = await api.post('/api/auth/login', { email: username, password });
-    let data = res.data || {};
-    if (res.status == 200 && data.user && data.accessToken) {
-      login(data.user, data.accessToken);
-      safeToast.dismiss(pending);
-      safeToast.success("Logged in successfully");
-      if (data.user?.role === "TEACHER") {
-        navigate("/test/dashboard", { replace: true });
-      } else if (data.user?.role === "STUDENT") {
-        navigate("/participant/home", { replace: true });
-      } else {
-        navigate("/test/dashboard", { replace: true });
-      }
-    } else {
-      safeToast.dismiss(pending);
-      safeToast.error(
-        data.message ||
-          "Login failed. Please check your credentials and try again.",
-      );
-      setError(
-        data.message ||
-          "Login failed. Please check your credentials and try again.",
-      );
-    }
-  }   catch (err) {
-    safeToast.dismiss(pending);
-    if (err.response) {
-      const { status, data } = err.response;
-      // Handle 403 for verification steps
-      if (status === 403 && data?.requiresVerification) {
-        if (data.step === 1) {
-          safeToast.success("Please verify your email to continue");
-          navigate("/verify", {
-            replace: true,
-            state: {
-              step: 1,
-              email: username,
-              google: false,
-              oauth: false,
-              emailSent: data.emailSent,
-              expiresIn: data.expiresIn
-            },
-          });
-        } else if (data.step === 2) {
-          safeToast.success("Please complete your profile");
-          navigate("/verify", {
-            replace: true,
-            state: {
-              step: 2,
-              email: data.email,
-              google: false,
-              oauth: false
-            },
-          });
+  // Debounced login submission to prevent spam
+  const { execute: debouncedLogin } = useSubmitDebounce(async () => {
+    const pending = safeToast.loading("Signing in...");
+    try {
+      const res = await api.post('/api/auth/login', { email: username, password });
+      let data = res.data || {};
+      if (res.status === 200 && data.user && data.accessToken) {
+        login(data.user, data.accessToken);
+        safeToast.dismiss(pending);
+        safeToast.success("Logged in successfully");
+        if (data.user?.role === "TEACHER") {
+          navigate("/dashboard", { replace: true });
+        } else if (data.user?.role === "STUDENT") {
+          navigate("/participant/home", { replace: true });
+        } else {
+          navigate("/dashboard", { replace: true });
         }
-        setError(data.message);
       } else {
-        // Show backend error message for 404, 401, 500, etc.
-        safeToast.error(data?.message || "Login failed. Please try again.");
-        setError(data?.message || "Login failed. Please try again.");
+        // Ensure the loading toast is dismissed even on malformed 200 responses
+        safeToast.dismiss(pending);
+        safeToast.error(
+          data.message ||
+          "Login failed. Please check your credentials and try again.",
+        );
       }
-    } else {
-      // Network or unknown error
+    } catch (err) {
+      safeToast.dismiss(pending);
+      if (err.response) {
+        const { status, data } = err.response;
+        // Handle 403 for verification steps
+        if (status === 403 && data?.requiresVerification) {
+          // Show a success toast then delay navigation slightly so toast is visible
+          if (data.step === 1) {
+            safeToast.success("Please verify your email to continue");
+            setTimeout(() => {
+              navigate("/verify", {
+                replace: true,
+                state: {
+                  step: 1,
+                  email: username,
+                  google: false,
+                  oauth: false,
+                  emailSent: data.emailSent,
+                  expiresIn: data.expiresIn,
+                  toastShown: true,
+                },
+              });
+            }, 1000);
+          } else if (data.step === 2) {
+            safeToast.success("Please complete your profile");
+            setTimeout(() => {
+              navigate("/verify", {
+                replace: true,
+                state: {
+                  step: 2,
+                  email: data.email,
+                  google: false,
+                  oauth: false,
+                  toastShown: true,
+                },
+              });
+            }, 1500);
+          }
+          // Note: verification navigation intentionally delayed so the toast is visible
+        } else {
+          // Show backend error message for 404, 401, 500, etc.
+          safeToast.error(data?.message || "Login failed. Please try again.");
+        }
+      } else {
+        // Network or unknown error
         safeToast.error("Network error. Please try again.");
-        setError("Network error. Please try again.");
+      }
     }
-  }
-};
+  }, 500); // 500ms debounce for login
 
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    debouncedLogin();
+  };
 
-  const handleGoogleLogin = () => {
+  // Debounced Google login to prevent multiple popup windows
+  const { execute: debouncedGoogleLogin } = useSubmitDebounce(() => {
     const popup = window.open(
       `${BACKEND_URL}/api/auth/google?prompt=select_account`,
       "google-oauth",
@@ -100,8 +105,8 @@ const handleSubmit = async (e) => {
       // Only accept messages from our backend origin (the popup)
       try {
         const backendOrigin = new URL(BACKEND_URL).origin;
-        // console.log("Expected origin:", backendOrigin);
-        // console.log("Received message from origin:", event.origin);
+        // 
+        // 
         if (event.origin !== backendOrigin) return;
       } catch (err) {
         return;
@@ -116,7 +121,7 @@ const handleSubmit = async (e) => {
           login(user, accessToken);
           // Navigate to dashboard based on role
           if (user.role === "TEACHER") {
-            navigate("/test/dashboard", { replace: true });
+            navigate("/dashboard", { replace: true });
           } else if (user.role === "STUDENT") {
             navigate("/participant/home", { replace: true });
           }
@@ -136,27 +141,32 @@ const handleSubmit = async (e) => {
           });
         }
 
-        // Cleanup popup and listener
+        // Cleanup popup, listener and interval
         popup.close();
         window.removeEventListener("message", messageListener);
+        if (checkClosed) clearInterval(checkClosed);
       } else if (event.data.type === "OAUTH_ERROR") {
         const errorMessage = event.data.message || "OAuth login failed";
-        setError(errorMessage);
         safeToast.error(errorMessage);
         popup.close();
         window.removeEventListener("message", messageListener);
+        if (checkClosed) clearInterval(checkClosed);
       }
     };
 
     window.addEventListener("message", messageListener);
 
     // Handle popup being closed manually
-    const checkClosed = setInterval(() => {
+    let checkClosed = setInterval(() => {
       if (popup.closed) {
         window.removeEventListener("message", messageListener);
         clearInterval(checkClosed);
       }
     }, 1000);
+  }, 1000); // 1s debounce for Google login to prevent multiple popups
+
+  const handleGoogleLogin = () => {
+    debouncedGoogleLogin();
   };
 
   // const handleClick = (e) => {
@@ -204,24 +214,6 @@ const handleSubmit = async (e) => {
               <p className="text-gray-600 dark:text-gray-400">
                 Enter your credentials to access your account
               </p>
-              {error && (
-                <div className="mt-4 flex items-center justify-center rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800 dark:bg-red-900/30 dark:border-red-700 dark:text-red-200 shadow-sm">
-                  <svg
-                    className="w-5 h-5 mr-2 text-red-500"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 9v2m0 4h.01M21 12A9 9 0 113 12a9 9 0 0118 0z"
-                    />
-                  </svg>
-                  <span>{error}</span>
-                </div>
-              )}
             </div>
 
             <form className="space-y-6" onSubmit={handleSubmit}>

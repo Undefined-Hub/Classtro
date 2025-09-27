@@ -1,7 +1,16 @@
 import React from "react";
 
-const QuickActions = ({ questions, onSetActiveView }) => {
+const QuickActions = ({ questions, onSetActiveView, activeView }) => {
   const unansweredQuestions = questions.filter((q) => !q.answered).length;
+
+  const handleToggle = (view) => {
+    // If already active, close back to main; otherwise open requested view
+    if (activeView === view) {
+      onSetActiveView("main");
+    } else {
+      onSetActiveView(view);
+    }
+  };
 
   const handleFullscreen = () => {
     if (document.fullscreenElement) {
@@ -16,8 +25,9 @@ const QuickActions = ({ questions, onSetActiveView }) => {
       <div className="flex space-x-2">
         <div className="relative group">
           <button
-            onClick={() => onSetActiveView("polls")}
+            onClick={() => handleToggle("polls")}
             className="w-10 h-10 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-lg flex items-center justify-center transition-all duration-200 hover:scale-110"
+            aria-pressed={activeView === "polls"}
           >
             <svg
               className="w-5 h-5"
@@ -34,14 +44,15 @@ const QuickActions = ({ questions, onSetActiveView }) => {
             </svg>
           </button>
           <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap pointer-events-none">
-            Create Poll
+            Polls
           </div>
         </div>
 
         <div className="relative group">
           <button
-            onClick={() => onSetActiveView("qa")}
+            onClick={() => handleToggle("qa")}
             className="w-10 h-10 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-lg flex items-center justify-center transition-all duration-200 hover:scale-110"
+            aria-pressed={activeView === "qa"}
           >
             <svg
               className="w-5 h-5"

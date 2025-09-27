@@ -152,7 +152,7 @@ function DashboardPage() {
 
       // Check if response is ok
       if (res.status != 201) {
-        console.log("Error : ",res);
+        
         const errorData = res.error;
         throw new Error(errorData || "Failed to create room");
       }
@@ -169,7 +169,7 @@ function DashboardPage() {
       setRoomFormData({ name: "", description: "", defaultMaxStudents: 200 });
 
       // Show success message (you might want to add a toast notification here)
-      console.log("Room created successfully:", data);
+      
     } catch (error) {
       // Handle error
       setCreateRoomError(error.message || "Failed to create room");
@@ -211,7 +211,7 @@ function DashboardPage() {
       // Add to the beginning of the array to show it at the top of the list
       setSessions((prevSessions) => [sessionData, ...prevSessions]);
 
-      console.log("Session created successfully:", sessionData);
+      
 
       // Close the modal
       setShowCreateSessionModal(false);
@@ -245,7 +245,7 @@ function DashboardPage() {
 
   const handleSessionClick = (session) => {
     // Navigate to the session workspace with session data as state
-    console.log("Navigating to session:", session);
+    
     navigate("/test/sessionWorkspace", {
       state: {
         sessionId: session._id,

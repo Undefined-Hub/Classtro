@@ -20,6 +20,20 @@ function setupSockets(server) {
 
   const sessionNamespace = io.of("/sessions");
 
+  function emitRoomUpdate(namespace, code) {
+    const roomName = `session:${code}`;
+    const socketsInRoom = Array.from(
+      namespace.adapter.rooms.get(roomName) || []
+    );
+    const count = socketsInRoom.length;
+
+    console.log(`Room ${roomName} members:`, socketsInRoom);
+    console.log("Latest Room members count:", count);
+
+    namespace.to(roomName).emit("room:members", { sockets: socketsInRoom });
+    namespace.to(roomName).emit("participants:update", { code, count });
+  }
+
   sessionNamespace.on("connection", (socket) => {
     console.log("🔌 Socket connected:", socket.id);
     socket.on("poll:close", ({ code, pollId }) => {
@@ -69,32 +83,14 @@ function setupSockets(server) {
     socket.on("join-session", ({ code, participantId }) => {
       socket.join(`session:${code}`);
       console.log(`👤 Participant ${participantId} joined session ${code}`);
-
-      // Debug: List all socket IDs in this session room
-      const socketsInRoom = Array.from(
-        sessionNamespace.adapter.rooms.get(`session:${code}`) || []
-      );
-      console.log(`Room session:${code} members:`, socketsInRoom);
-      // Emit to all in room
-      sessionNamespace.to(`session:${code}`).emit("room:members", {
-        sockets: socketsInRoom,
-      });
-
-      sessionNamespace.to(`session:${code}`).emit("participants:update", {
-        code,
-        count: sessionNamespace.adapter.rooms.get(`session:${code}`)?.size || 0,
-      });
+      emitRoomUpdate(sessionNamespace, code);
     });
 
     // --- LEAVE SESSION ---
     socket.on("leave-session", ({ code, participantId }) => {
       socket.leave(`session:${code}`);
-      console.log(`👋 Participant ${participantId} left session ${code}`);
-
-      sessionNamespace.to(`session:${code}`).emit("participants:update", {
-        code,
-        count: sessionNamespace.adapter.rooms.get(`session:${code}`)?.size || 0,
-      });
+      console.log(`👤 Participant ${participantId} left session ${code}`);
+      setImmediate(() => emitRoomUpdate(sessionNamespace, code));
     });
 
     // --- TEACHER BROADCAST MESSAGE ---
@@ -109,6 +105,15 @@ function setupSockets(server) {
         message,
         code,
         time: new Date(),
+      });
+    });
+
+    socket.on("disconnecting", () => {
+      socket.rooms.forEach((roomName) => {
+        if (roomName.startsWith("session:")) {
+          const code = roomName.split(":")[1];
+          setImmediate(() => emitRoomUpdate(sessionNamespace, code));
+        }
       });
     });
 

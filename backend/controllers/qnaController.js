@@ -13,18 +13,52 @@ function emitToSession(sessionCode, event, payload) {
 // Create a question
 const createQuestion = async (req, res) => {
   try {
-    const { sessionId, text } = req.body;
+    const { sessionId, text, isAnonymous } = req.body;
     const authorId = req.user?.id;
     console.log('createQuestion called', { sessionId, text, authorId });
-    if (!sessionId || !text) return res.status(400).json({ message: 'sessionId and text are required' });
 
-    // Verify session exists and get code for socket room
+    if (!sessionId || !text) {
+      return res.status(400).json({ message: 'sessionId and text are required' });
+    }
+
+    // Verify session exists
     const session = await Session.findById(sessionId).lean();
-    if (!session) return res.status(404).json({ message: 'Session not found' });
+    if (!session) {
+      return res.status(404).json({ message: 'Session not found' });
+    }
 
-    const question = await Question.create({ sessionId, authorId, text });
+    // Create DB record (always store authorId + flag)
+    const questionDoc = await Question.create({
+      sessionId,
+      authorId,
+      text,
+      isAnonymous
+    });
 
-    // Emit real-time event with the new question
+    // Prepare response object
+    let authorName = null;
+    if (authorId && !isAnonymous) {
+      const user = await require('../models/User')
+        .findById(authorId, { name: 1 })
+        .lean();
+      authorName = user ? user.name : null;
+    }
+
+    // Shape the question object for frontend/socket
+    const question = {
+      
+      _id: questionDoc._id,
+      authorId: authorId,
+      sessionId: questionDoc.sessionId,
+      text: questionDoc.text,
+      isAnonymous: questionDoc.isAnonymous,
+      createdAt: questionDoc.createdAt,
+      authorName: isAnonymous ? "Anonymous" : authorName
+    };
+
+    console.log("Created Question:", question);
+    
+    // Emit real-time event
     emitToSession(session.code, 'qna:question:created', { question });
 
     res.status(201).json({ question });
@@ -33,6 +67,7 @@ const createQuestion = async (req, res) => {
     res.status(500).json({ message: 'Failed to create question', error: err.message });
   }
 };
+
 
 // Edit question
 const editQuestion = async (req, res) => {
@@ -163,7 +198,16 @@ const getQuestionsBySession = async (req, res) => {
 
     // Sort by upvotes desc then createdAt desc
     const questions = await Question.find(filters).sort({ upvotes: -1, createdAt: -1 }).lean();
-    res.status(200).json({ questions });
+
+    const userIds = questions.map(q => q.authorId).filter(Boolean);
+    const users = await require('../models/User').find({ _id: { $in: userIds } }, { name: 1 }).lean();
+    const userMap = {};
+    users.forEach(u => { userMap[u._id.toString()] = u.name; });
+    questions.forEach(q => {
+      q.authorName = q.authorId ? userMap[q.authorId.toString()] || null : null;
+    });
+    console.log("Fetched Questions from getQuestionsFromSession:", questions);
+    res.status(200).json({ questions});
   } catch (err) {
     console.error('getQuestionsBySession error', err);
     res.status(500).json({ message: 'Failed to load questions', error: err.message });

@@ -25,6 +25,8 @@ connectDB();
 
 // Define your base domains
 const allowedBaseDomains = [
+  "classtro.live",
+  "www.classtro.live",
   "classtro.vercel.app",
   "classtro-dev.vercel.app",
   "localhost",

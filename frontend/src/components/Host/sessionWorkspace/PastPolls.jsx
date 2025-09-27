@@ -26,7 +26,7 @@ const PastPolls = () => {
 
           return (
             <div
-              key={poll.id}
+              key={poll._id}
               className="bg-white dark:bg-gray-700 rounded-lg shadow-md overflow-hidden"
             >
               <div className="p-4 border-b border-gray-200 dark:border-gray-600">

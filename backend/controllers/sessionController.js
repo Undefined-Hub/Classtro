@@ -94,7 +94,7 @@ const getSessionByCode = async (req, res, next) => {
     const session = await Session.findOne({
       code: params.code,
       isActive: true,
-    }).select("title code roomId isActive startAt createdAt");
+    }).select("title code roomId participantCount isActive startAt createdAt");
 
     if (!session) {
       return res.status(404).json({ error: "Session not found or inactive" });
@@ -165,29 +165,29 @@ const closeSession = async (req, res, next) => {
 
     const session = await Session.findOneAndUpdate(
       { code: params.code, teacherId: req.user.id },
-      { $set: { isActive: false, endAt: new Date() } },
+      { $set: { isActive: false, endAt: new Date(), participantCount: 0 } }, // reset concurrent count
       { new: true },
     );
-
-    const polls = await Poll.updateMany(
-      { sessionId: session._id, isActive: true },
-      { $set: { isActive: false, closedAt: new Date() } },
-    );
-    console.log("Closed polls:", polls.modifiedCount);
-
-    console.log("Close session result:", session._id);
-    // Mark all active participants in this session as inactive and set leftAt
-    const participants = await Participant.updateMany(
-      { sessionId: session._id, isActive: true, leftAt: { $exists: false } },
-      { $set: { leftAt: new Date(), isActive: false } },
-    );
-    console.log("Marked participants as left:", participants.modifiedCount);
 
     if (!session) {
       return res
         .status(404)
         .json({ error: "Session not found or not owned by you" });
     }
+
+    // Close all active polls
+    const polls = await Poll.updateMany(
+      { sessionId: session._id, isActive: true },
+      { $set: { isActive: false, closedAt: new Date() } },
+    );
+    console.log("Closed polls:", polls.modifiedCount);
+
+    // Mark all active participants as left
+    const participants = await Participant.updateMany(
+      { sessionId: session._id, isActive: true, leftAt: { $exists: false } },
+      { $set: { leftAt: new Date(), isActive: false } },
+    );
+    console.log("Marked participants as left:", participants.modifiedCount);
 
     res.json({ message: "Session closed successfully", session });
   } catch (err) {
@@ -230,7 +230,7 @@ const joinSession = async (req, res, next) => {
   try {
     const params = validateInput(sessionCodeParamSchema, req.params);
     const data = validateInput(joinSessionSchema, req.body);
-    console.log("Join request data:", data);
+
     const session = await Session.findOne({
       code: params.code,
       isActive: true,
@@ -241,33 +241,46 @@ const joinSession = async (req, res, next) => {
     }
 
     // enforce max student count
-    const currentCount = await Participant.countDocuments({
-      sessionId: session._id,
-      leftAt: { $exists: false },
-    });
-
-    if (currentCount >= session.maxStudents) {
+    if (session.participantCount >= session.maxStudents) {
       return res.status(403).json({ error: "Session is full" });
     }
 
-    // Prevent duplicate participant records for same user in a session
     const userId = data.userId || (req.user ? req.user.id : null);
     let participant = null;
+    let isNewParticipant = false;
+
     if (userId) {
       participant = await Participant.findOne({
         sessionId: session._id,
         userId: userId,
       });
+
       if (participant) {
-        // If participant had left, rejoin (clear leftAt, update joinAt)
         if (participant.leftAt) {
+          // Rejoin flow
           participant.leftAt = undefined;
           participant.joinedAt = new Date();
           participant.isActive = true;
           await participant.save();
+
+          // Increment only concurrent count
+          await Session.findByIdAndUpdate(session._id, {
+            $inc: { participantCount: 1 },
+          });
+
+          const populatedSession = await Session.findById(session._id)
+            .select("_id title code")
+            .populate("teacherId", "_id name");
+
+          return res.status(200).json({
+            message: "Rejoined session",
+            participantId: participant._id,
+            participantJoinedAt: participant.joinedAt,
+            session: populatedSession,
+          });
         }
 
-        // Get teacher data for the session
+        // Already active
         const populatedSession = await Session.findById(session._id)
           .select("_id title code")
           .populate("teacherId", "_id name");
@@ -281,24 +294,31 @@ const joinSession = async (req, res, next) => {
       }
     }
 
-    // No existing participant, create new
-    console.log("Creating participant record for:", req.user);
+    // No existing participant → new one
+    isNewParticipant = true;
     participant = await Participant.create({
       roomId: session.roomId || null,
       sessionId: session._id,
       name: data.name,
-      userId: userId,
+      userId,
       joinAt: new Date(),
       ip: req.ip,
       deviceInfo: req.headers["user-agent"],
+      isActive: true,
     });
 
-    // Get teacher data for the session
+    // Update both counts
+    await Session.findByIdAndUpdate(session._id, {
+      $inc: {
+        participantCount: 1,
+        ...(isNewParticipant ? { totalParticipants: 1 } : {}),
+      },
+    });
+
     const populatedSession = await Session.findById(session._id)
       .select("_id title code")
       .populate("teacherId", "_id name");
 
-    // Later: issue short-lived join token for sockets
     res.status(201).json({
       message: "Joined successfully",
       participantId: participant._id,
@@ -309,7 +329,6 @@ const joinSession = async (req, res, next) => {
     next(err);
   }
 };
-
 /**
  * Student leaves a session
  * POST /api/sessions/:code/leave
@@ -324,14 +343,22 @@ const leaveSession = async (req, res, next) => {
       return res.status(404).json({ error: "Session not found" });
     }
 
-    await Participant.findOneAndUpdate(
+    const participant = await Participant.findOneAndUpdate(
       {
         _id: data.participantId,
         sessionId: session._id,
         leftAt: { $exists: false },
+        isActive: true,
       },
       { $set: { leftAt: new Date(), isActive: false } },
     );
+
+    if (participant) {
+      // Decrement concurrent count only
+      await Session.findByIdAndUpdate(session._id, {
+        $inc: { participantCount: -1 },
+      });
+    }
 
     res.json({ message: "Left session" });
   } catch (err) {

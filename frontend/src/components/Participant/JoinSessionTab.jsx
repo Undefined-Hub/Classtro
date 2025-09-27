@@ -35,7 +35,7 @@ const JoinSessionTab = () => {
       }
 
       const sessionData = res.data || {};
-      console.log("✅ Successfully joined session:", sessionData);
+      
 
       // 🔹 2. Save to storage (preempt hydrate) and context, then navigate
       const fullData = { ...sessionData, joinCode };
