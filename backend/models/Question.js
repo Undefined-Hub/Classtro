@@ -16,6 +16,7 @@ const QuestionSchema = new mongoose.Schema(
     upvotes: { type: Number, default: 0 },
     isAnswered: { type: Boolean, default: false },
     isDeleted: { type: Boolean, default: false },
+    isAnonymous: { type: Boolean, default: true },
   },
   { timestamps: true }
 );

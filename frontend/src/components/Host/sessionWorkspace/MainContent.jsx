@@ -1,26 +1,31 @@
-import React from "react";
+import React,{useEffect} from "react";
 import SessionStats from "./SessionStats";
 import { useHostSession } from "../../../context/HostSessionContext";
 
 const MainContent = () => {
   // * Context
   const {
-    sessionData, 
+    sessionData,
     participantsList,
     questions,
     pastPolls,
     activePoll,
     setActiveView,
     setShowPollForm,
-    setActiveParticipantsCount
-    
+    setActiveParticipantsCount,
   } = useHostSession();
 
   // * Active Participants Count
-  const activeParticipantsCount = participantsList.filter((p) => p.isActive).length;
-  // * Setting active participants count in context to be used in other components
-  setActiveParticipantsCount(activeParticipantsCount);
-  
+  const activeParticipantsCount = participantsList.filter(
+    (p) => p.isActive
+  ).length;
+
+  // ✅ FIX: Use useEffect to update context after render
+  useEffect(() => {
+    // * Setting active participants count in context to be used in other components
+    setActiveParticipantsCount(activeParticipantsCount);
+  }, [activeParticipantsCount, setActiveParticipantsCount]);
+
   return (
     <div className="p-4 h-full flex flex-col items-center justify-center text-center">
       <div className="max-w-xl mx-auto">
