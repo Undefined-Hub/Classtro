@@ -2,6 +2,70 @@ import React, { useEffect, useState, useRef } from "react";
 import { useParticipantSession } from "../../context/ParticipantSessionContext";
 import { useAuth } from "../../context/UserContext";
 
+// Module-level AskPanel to keep its state stable across parent re-renders
+const AskPanel = ({ onSubmit: handleSubmit }) => {
+  const [text, setText] = useState("");
+  const [isAnonymous, setIsAnonymous] = useState(false);
+  const CHAR_LIMIT = 300;
+
+  const submit = async () => {
+    if (!text.trim()) return;
+    if (handleSubmit) await handleSubmit({ text: text.trim(), isAnonymous });
+    setText("");
+  };
+
+  return (
+    <div>
+      <div className="relative">
+        <textarea
+          value={text}
+          onChange={(e) => setText(e.target.value.slice(0, CHAR_LIMIT))}
+          rows={6}
+          className="w-full p-3 border rounded-md bg-white dark:bg-gray-800 dark:border-gray-700 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-400 resize-none"
+          placeholder="Type your question here..."
+        />
+
+        <div className="text-xs text-gray-600 dark:text-gray-300 absolute bottom-3 right-3 select-none">
+          {text.length}/{CHAR_LIMIT}
+        </div>
+      </div>
+
+      <div className="flex flex-col justify-center items-center gap-2 mt-3">
+        <label className="inline-flex items-center cursor-pointer">
+          <div className="relative">
+            <input
+              type="checkbox"
+              checked={isAnonymous}
+              onChange={(e) => setIsAnonymous(e.target.checked)}
+              className="sr-only"
+            />
+            <div
+              className={`w-11 h-6 rounded-full transition-colors duration-300 ${
+                isAnonymous ? "bg-blue-600" : "bg-gray-300 dark:bg-gray-600"
+              }`}
+            ></div>
+            <div
+              className={`absolute left-1 top-1 w-4 h-4 bg-white rounded-full shadow-md transform transition-transform duration-300 ${
+                isAnonymous ? "translate-x-5" : ""
+              }`}
+            ></div>
+          </div>
+          <span className="ml-3 text-sm text-gray-700 dark:text-gray-400">
+            Ask anonymously
+          </span>
+        </label>
+
+        <button
+          onClick={submit}
+          className="w-3/4 py-3 sm:py-4 px-3 sm:px-6 bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700 text-white font-medium rounded-lg transition-colors text-sm sm:text-base shadow-lg mt-2 "
+        >
+          Submit
+        </button>
+      </div>
+    </div>
+  );
+};
+
 const ParticipantQnA = ({
   questions,
   onUpvote,
@@ -61,70 +125,7 @@ const ParticipantQnA = ({
   }, [askOpen]);
 
   // Inline ask panel component
-  const AskPanel = ({ onSubmit: handleSubmit }) => {
-    const [text, setText] = useState("");
-    const [isAnonymous, setIsAnonymous] = useState(false);
-    const CHAR_LIMIT = 300;
-
-    const submit = async () => {
-      if (!text.trim()) return;
-      if (handleSubmit) await handleSubmit({ text: text.trim(), isAnonymous });
-      setText("");
-    };
-
-    return (
-      <div>
-        <div className="relative">
-          <textarea
-            value={text}
-            onChange={(e) => setText(e.target.value.slice(0, CHAR_LIMIT))}
-            rows={6}
-            className="w-full p-3 border rounded-md bg-white dark:bg-gray-800 dark:border-gray-700 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-400 resize-none"
-            placeholder="Type your question here..."
-          />
-
-          <div className="text-xs text-gray-600 dark:text-gray-300 absolute bottom-3 right-3 select-none">
-            {text.length}/{CHAR_LIMIT}
-          </div>
-        </div>
-
-        <div className="flex flex-col justify-center items-center gap-2 mt-3">
-          <label className="inline-flex items-center cursor-pointer">
-            
-            <div className="relative">
-              <input
-                type="checkbox"
-                checked={isAnonymous}
-                onChange={(e) => setIsAnonymous(e.target.checked)}
-                className="sr-only"
-              />
-              <div
-                className={`w-11 h-6 rounded-full transition-colors duration-300 ${
-                  isAnonymous ? "bg-blue-600" : "bg-gray-300 dark:bg-gray-600"
-                }`}
-              ></div>
-              <div
-                className={`absolute left-1 top-1 w-4 h-4 bg-white rounded-full shadow-md transform transition-transform duration-300 ${
-                  isAnonymous ? "translate-x-5" : ""
-                }`}
-              ></div>
-            </div>
-            <span className="ml-3 text-sm text-gray-700 dark:text-gray-400">
-              Ask anonymously
-            </span>
-          </label>
-
-          <button
-            onClick={submit}
-            // className="px-4 self-center py-2 rounded-md bg-blue-600 hover:bg-blue-700 text-white text-sm shadow-sm "
-            className="w-3/4 py-3 sm:py-4 px-3 sm:px-6 bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700 text-white font-medium rounded-lg transition-colors text-sm sm:text-base shadow-lg mt-2 "
-          >
-            Submit
-          </button>
-        </div>
-      </div>
-    );
-  };
+  
   return (
     <div className="max-w-xs sm:max-w-md lg:max-w-lg mx-auto px-1 sm:px-0">
       {/* Make the QnA container visually blend with the page background by removing
