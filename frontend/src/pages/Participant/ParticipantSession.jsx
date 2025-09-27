@@ -1,7 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { io } from "socket.io-client";
-import ParticipantLivePoll from "../../components/Participant/ParticipantLivePoll.jsx";
 import { useParticipantSession } from "../../context/ParticipantSessionContext.jsx";
 import { STORAGE_KEY } from "../../context/ParticipantSessionContext.jsx";
 import SessionHeader from "../../components/Participant/SessionHeader.jsx";
@@ -9,7 +7,6 @@ import WelcomeContent from "../../components/Participant/WelcomeContent.jsx";
 import ParticipantQnA from "../../components/Participant/ParticipantQnA.jsx";
 // AskQuestionModal was replaced by an inline ask panel inside ParticipantQnA
 import api from "../../utils/api.js";
-const SOCKET_URL = (import.meta.env?.VITE_BACKEND_BASE_URL || "http://localhost:3000") + "/sessions";
 
 const ParticipantSession = () => {
   const navigate = useNavigate();
@@ -20,11 +17,11 @@ const ParticipantSession = () => {
 
     clearSession,
     socketRef,
+    socketReady,
 
     activePoll,
     setActivePoll,
 
-    setSelectedOption,
     setPollSubmitting,
     setPollSubmitted,
 
@@ -38,7 +35,7 @@ const ParticipantSession = () => {
   const [askOpen, setAskOpen] = useState(false);
   const [qnaOpen, setQnaOpen] = useState(false);
 
-  // Fetch session data and participant count
+  // * Fetch session data and participant count
   const fetchSessionData = async (sessionCode) => {
     try {
       const res = await api.get(`/api/sessions/code/${sessionCode}`);
@@ -50,9 +47,6 @@ const ParticipantSession = () => {
       console.error("Failed to fetch session data:", err);
     }
   };
-
-  // * Handle Vote Submission
-  
 
   // * Handle Leave Session Handler
   const handleLeaveSession = async () => {
@@ -80,7 +74,7 @@ const ParticipantSession = () => {
     }
   };
 
-  // If no session in context (e.g., on fast route change), attempt hydrate from storage before redirect
+  // * If no session in context (e.g., on fast route change), attempt hydrate from storage before redirect
   useEffect(() => {
     if (!sessionData) {
       try {
@@ -95,28 +89,21 @@ const ParticipantSession = () => {
     }
   }, [sessionData, setSessionData, navigate]);
 
-  // Fetch session data and participant count on initial load
+  // * Fetch session data and participant count on initial load
   useEffect(() => {
     if (sessionData?.joinCode) {
       fetchSessionData(sessionData.joinCode);
     }
   }, [sessionData?.joinCode]);
 
-  // Initialize socket on mount and join session room
-  // Initialize socket on mount and join session room
+  // * Register socket listeners using context-managed socket
   useEffect(() => {
-    if (!sessionData || socketRef.current) return;
+    const socket = socketRef.current;
+    if (!sessionData || !socket) return;
 
-    const token = localStorage.getItem("accessToken");
-    const socket = io(SOCKET_URL, {
-      withCredentials: true,
-      extraHeaders: token ? { Authorization: `Bearer ${token}` } : undefined,
-    });
-    socketRef.current = socket;
+    // * ------------------- Handlers -------------------
 
-    // ------------------- Handlers -------------------
-
-    // Poll Handlers
+    // * Poll Handlers 
     const onVoteUpdateReceived = ({ pollId, counts }) => {
       setPollSubmitting(false);
       setPollSubmitted(false);
@@ -134,14 +121,12 @@ const ParticipantSession = () => {
     };
 
     const onNewPollReceived = (poll) => {
-      
       setActivePoll(poll);
       setPollId(poll._id);
       sessionStorage.setItem("activePoll", JSON.stringify(poll));
     };
 
     const onPollClosed = ({ pollId }) => {
-      
       setActivePoll((prev) => {
         if (prev && prev._id === pollId) {
           sessionStorage.removeItem("activePoll");
@@ -151,20 +136,14 @@ const ParticipantSession = () => {
       });
     };
 
-    // Session Handlers
+    // * Session Handlers
     const onBroadcast = (data) => {
       setBroadcastMsg(
         `${data.message}${data.from ? ` (from ${data.from})` : ""}`
       );
-      
-    };
-
-    const onRoomMembers = (members) => {
-      
     };
 
     const onParticipantsUpdate = (data) => {
-      
       if (data.code === sessionData.joinCode) {
         // Fetch reliable count from API instead of using socket data
         fetchSessionData(sessionData.joinCode);
@@ -172,13 +151,12 @@ const ParticipantSession = () => {
     };
 
     const onSessionEnded = (payload) => {
-      
       alert("Session has ended by the host. You will be redirected.");
       clearSession();
       navigate("/participant/home");
     };
 
-    // Q&A Handlers
+    // * Q&A Handlers
     const onCreated = (payload) => {
       const q = payload.question;
 
@@ -231,50 +209,32 @@ const ParticipantSession = () => {
       );
     };
 
-    // ------------------- Socket Listeners -------------------
+    // * ------------------- Socket Listeners -------------------
+    try {
+      socket.on("polls:new-poll", onNewPollReceived);
+      socket.on("poll:update", onVoteUpdateReceived);
+      socket.on("poll:closed", onPollClosed);
 
-    socket.on("connect", () => {
-      
-      socket.emit("join-session", {
-        code: sessionData.joinCode,
-        participantId: sessionData.participantId,
-        role: "student",
-      });
-    });
+      socket.on("broadcast:message", onBroadcast);
+      socket.on("participants:update", onParticipantsUpdate);
+      socket.on("session:ended", onSessionEnded);
 
-    // Poll listeners
-    socket.on("polls:new-poll", onNewPollReceived);
-    socket.on("poll:update", onVoteUpdateReceived);
-    socket.on("poll:closed", onPollClosed);
+      socket.on("qna:question:created", onCreated);
+      socket.on("qna:question:updated", onUpdated);
+      socket.on("qna:question:deleted", onDeleted);
+      socket.on("qna:question:upvoted", onUpvoted);
+      socket.on("qna:question:answered", onAnswered);
+    } catch (err) {
+      console.error("Failed to register socket listeners", err);
+    }
 
-    // Session listeners
-    socket.on("broadcast:message", onBroadcast);
-    socket.on("room:members", onRoomMembers);
-    socket.on("participants:update", onParticipantsUpdate);
-    socket.on("session:ended", onSessionEnded);
-
-    // Q&A listeners
-    socket.on("qna:question:created", onCreated);
-    socket.on("qna:question:updated", onUpdated);
-    socket.on("qna:question:deleted", onDeleted);
-    socket.on("qna:question:upvoted", onUpvoted);
-    socket.on("qna:question:answered", onAnswered);
-
-    // ------------------- Cleanup -------------------
     return () => {
-      if (socketRef.current) {
-        try {
-          socket.emit("leave-session", {
-            code: sessionData.joinCode,
-            participantId: sessionData.participantId,
-          });
-        } catch {}
-
+      try {
         socket.off("polls:new-poll", onNewPollReceived);
         socket.off("poll:update", onVoteUpdateReceived);
         socket.off("poll:closed", onPollClosed);
+
         socket.off("broadcast:message", onBroadcast);
-        socket.off("room:members", onRoomMembers);
         socket.off("participants:update", onParticipantsUpdate);
         socket.off("session:ended", onSessionEnded);
 
@@ -283,14 +243,15 @@ const ParticipantSession = () => {
         socket.off("qna:question:deleted", onDeleted);
         socket.off("qna:question:upvoted", onUpvoted);
         socket.off("qna:question:answered", onAnswered);
-
-        socket.disconnect();
-        socketRef.current = null;
+      } catch (err) {
+        /* ignore */
       }
     };
-  }, [sessionData, clearSession, navigate]);
+  //! Only re-register when socket instance or sessionData changes. We intentionally omit clearSession and navigate from deps to avoid identity changes triggering cleanup.
+  //! eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionData, socketReady]);
 
-  // Fetch initial questions for participant
+  // * Fetch initial questions for participant
   useEffect(() => {
     if (!sessionData?.session?._id) return;
     const fetchQuestions = async () => {
