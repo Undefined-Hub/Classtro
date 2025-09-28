@@ -118,11 +118,33 @@ function setupSockets(server) {
     });
 
     // --- SESSION END ---
-    socket.on("session:end", ({ code }) => {
-      console.log(`⏹️ Session ${code} ended`);
-      sessionNamespace.to(`session:${code}`).emit("session:ended");
-      sessionNamespace.in(`session:${code}`).socketsLeave(`session:${code}`);
-      console.log(`⏹️ Session ${code} cleanup done.`)
+    socket.on("session:end", ({ code }, callback) => {
+      console.log(`⏹️ Session ${code} end request received from ${socket.id}`);
+      
+      try {
+        // Emit to all participants that session has ended
+        sessionNamespace.to(`session:${code}`).emit("session:ended");
+        console.log(`📢 Session ended notification sent to all participants in ${code}`);
+        
+        // Remove all sockets from the session room
+        sessionNamespace.in(`session:${code}`).socketsLeave(`session:${code}`);
+        console.log(`🧹 All sockets removed from session:${code}`);
+        
+        // Send acknowledgment to confirm successful processing
+        if (callback && typeof callback === 'function') {
+          callback({ success: true, message: 'Session ended successfully' });
+          console.log(`✅ Acknowledgment sent for session ${code}`);
+        }
+        
+        console.log(`⏹️ Session ${code} cleanup completed successfully`);
+      } catch (error) {
+        console.error(`❌ Error ending session ${code}:`, error);
+        
+        // Send error acknowledgment
+        if (callback && typeof callback === 'function') {
+          callback({ success: false, error: error.message });
+        }
+      }
     });
 
     socket.on("disconnect", () => {

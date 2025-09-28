@@ -207,15 +207,21 @@ const SessionWorkspace = () => {
       });
     }
     const socket = socketRef.current;
-    // Log teacher socket ID
+    // Log teacher socket ID and connection status
     socket.on("connect", () => {
-      
+      console.log("🔌 Socket connected with ID:", socket.id);
     });
     socket.on("connect_error", (err) => {
-      console.error("[Teacher] connect_error:", err.message);
+      console.error("❌ Socket connect_error:", err.message);
     });
     socket.on("disconnect", (reason) => {
-      
+      console.warn("🔌 Socket disconnected:", reason);
+    });
+    socket.on("reconnect", (attemptNumber) => {
+      console.log("🔄 Socket reconnected after", attemptNumber, "attempts");
+    });
+    socket.on("reconnect_error", (error) => {
+      console.error("❌ Socket reconnect failed:", error);
     });
     // Teacher joins session for presence
     socket.emit("join-session", {
@@ -402,29 +408,95 @@ const SessionWorkspace = () => {
   };
 
   const handleEndSession = async () => {
-    console.log("Ending session...");
-    if (!sessionData?.code) return;
-    try {
-      const res = await api.post(`/api/sessions/code/${sessionData.code}/close`);
-      console.log("Closed CRUD...");
-      
+    console.log("🔄 Starting session end process...");
+    if (!sessionData?.code) {
+      console.error("❌ No session code available");
+      return;
+    }
 
-      if (res.status != 200) throw new Error("Failed to close session");
-      // After successful close, emit socket event
-      const socket = socketRef.current;
-      if (socket) {
-        console.log("Starting Ending session, socket emitted");
-        socket.emit("session:end", { code: sessionData.code });
-        console.log("Ending session, socket emitted");
-      }else{
-        console.log("Socket is null");
+    try {
+      // Step 1: Close session in database
+      console.log("📡 Closing session in database...");
+      const res = await api.post(`/api/sessions/code/${sessionData.code}/close`);
+      console.log("✅ Database session closed successfully");
+
+      if (res.status !== 200) {
+        throw new Error("Failed to close session in database");
       }
+
+      // Step 2: Emit socket event with robust handling
+      await handleSocketEndSession(sessionData.code);
+
+      // Step 3: Cleanup and navigate
+      console.log("🧹 Cleaning up session state...");
       resetHostSession();
-      console.log("Resetting session...");
+      console.log("🏠 Navigating to dashboard...");
       navigate("/dashboard");
+      
     } catch (err) {
+      console.error("❌ Session end failed:", err);
       alert("Failed to close session. Please try again.");
     }
+  };
+
+  // Robust socket emission with retry logic and acknowledgment
+  const handleSocketEndSession = (sessionCode) => {
+    return new Promise((resolve, reject) => {
+      const socket = socketRef.current;
+      
+      // Check if socket exists and is connected
+      if (!socket) {
+        console.warn("⚠️ Socket is null - session ended via API only");
+        return resolve(); // Don't fail the entire process
+      }
+
+      if (!socket.connected) {
+        console.warn("⚠️ Socket is disconnected - session ended via API only");
+        return resolve(); // Don't fail the entire process
+      }
+
+      console.log("🔌 Socket is connected, attempting to emit session:end");
+      
+      let retryCount = 0;
+      const maxRetries = 3;
+      const retryDelay = 1000; // 1 second
+
+      const attemptEmit = () => {
+        console.log(`📡 Attempt ${retryCount + 1}/${maxRetries} - Emitting session:end`);
+        
+        // Use acknowledgment to confirm server received the message
+        const timeout = setTimeout(() => {
+          console.warn(`⏱️ Attempt ${retryCount + 1} timed out (5s)`);
+          retryOrResolve();
+        }, 5000);
+
+        socket.emit("session:end", { code: sessionCode }, (acknowledgment) => {
+          clearTimeout(timeout);
+          
+          if (acknowledgment?.success) {
+            console.log("✅ Session end confirmed by server");
+            resolve();
+          } else {
+            console.warn("⚠️ Server acknowledged but reported error:", acknowledgment);
+            retryOrResolve();
+          }
+        });
+      };
+
+      const retryOrResolve = () => {
+        retryCount++;
+        if (retryCount < maxRetries) {
+          console.log(`🔄 Retrying in ${retryDelay}ms...`);
+          setTimeout(attemptEmit, retryDelay);
+        } else {
+          console.warn("⚠️ Max retry attempts reached - proceeding anyway");
+          resolve(); // Don't fail the entire process
+        }
+      };
+
+      // Start the first attempt
+      attemptEmit();
+    });
   };
 
   const sessionDuration = calculateDuration();
