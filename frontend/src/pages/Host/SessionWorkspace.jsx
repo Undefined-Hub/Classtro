@@ -458,7 +458,7 @@ const SessionWorkspace = () => {
       console.log("🔌 Socket is connected, attempting to emit session:end");
       
       let retryCount = 0;
-      const maxRetries = 3;
+      const maxRetries = 5;
       const retryDelay = 1000; // 1 second
 
       const attemptEmit = () => {
