@@ -7,6 +7,7 @@ import WelcomeContent from "../../components/Participant/WelcomeContent.jsx";
 import ParticipantQnA from "../../components/Participant/ParticipantQnA.jsx";
 // AskQuestionModal was replaced by an inline ask panel inside ParticipantQnA
 import api from "../../utils/api.js";
+import { useSubmitDebounce } from "../../hooks/useDebounce.js";
 
 const ParticipantSession = () => {
   const navigate = useNavigate();
@@ -277,7 +278,7 @@ const ParticipantSession = () => {
   }, [sessionData]);
 
   // Post a new question
-  const postQuestion = async ({ text, isAnonymous }) => {
+  const postQuestionHandler = async ({ text, isAnonymous }) => {
     if (!sessionData?.session?._id) return;
 
     try {
@@ -288,6 +289,11 @@ const ParticipantSession = () => {
       alert("Failed to post question");
     }
   };
+
+  const { execute: postQuestion, isLoading: isPostingQuestion } = useSubmitDebounce(
+    postQuestionHandler,
+    500 // ? 500ms debounce delay
+  );
 
   const upvoteQuestion = async (questionId) => {
     try {     
@@ -332,6 +338,7 @@ const ParticipantSession = () => {
               setAskOpen={setAskOpen}
               onBack={() => setQnaOpen(false)}
               onSubmit={postQuestion}
+              isSubmitting={isPostingQuestion()}
             />
         )}
       </div>
