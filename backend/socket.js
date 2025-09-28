@@ -122,6 +122,7 @@ function setupSockets(server) {
       console.log(`⏹️ Session ${code} ended`);
       sessionNamespace.to(`session:${code}`).emit("session:ended");
       sessionNamespace.in(`session:${code}`).socketsLeave(`session:${code}`);
+      console.log(`⏹️ Session ${code} cleanup done.`)
     });
 
     socket.on("disconnect", () => {

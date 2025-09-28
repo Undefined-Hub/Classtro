@@ -402,18 +402,25 @@ const SessionWorkspace = () => {
   };
 
   const handleEndSession = async () => {
+    console.log("Ending session...");
     if (!sessionData?.code) return;
     try {
       const res = await api.post(`/api/sessions/code/${sessionData.code}/close`);
+      console.log("Closed CRUD...");
       
 
       if (res.status != 200) throw new Error("Failed to close session");
       // After successful close, emit socket event
       const socket = socketRef.current;
       if (socket) {
+        console.log("Starting Ending session, socket emitted");
         socket.emit("session:end", { code: sessionData.code });
+        console.log("Ending session, socket emitted");
+      }else{
+        console.log("Socket is null");
       }
       resetHostSession();
+      console.log("Resetting session...");
       navigate("/dashboard");
     } catch (err) {
       alert("Failed to close session. Please try again.");
