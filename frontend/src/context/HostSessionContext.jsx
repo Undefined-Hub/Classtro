@@ -40,6 +40,7 @@ export const HostSessionProvider = ({ children }) => {
   
 
   const resetHostSession = () => {
+    console.log("Resetting host session context...");
     setSessionData({});
     setActiveView("main");
     setParticipantsList([]);
@@ -54,6 +55,7 @@ export const HostSessionProvider = ({ children }) => {
     setActiveParticipantsCount(0);
     if (socketRef.current) {
       socketRef.current.disconnect();
+      console.log("Socket disconnected from resetHostSession");
       socketRef.current = null;
     }
   };

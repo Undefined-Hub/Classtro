@@ -4,7 +4,7 @@ const ProfileImageOrInitials = ({
   src, 
   alt, 
   initials, 
-  className = "w-8 h-8 rounded-full", 
+  className = "w-10 h-10 rounded-full", 
   avatarColorClass,
   textColorClass = "text-white" 
 }) => {
