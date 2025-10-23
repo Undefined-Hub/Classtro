@@ -9,6 +9,10 @@ import FloatingBugButton from "./components/FloatingBugButton.jsx";
 const Landing = lazy(() => import("./pages/Landing"));
 const Login = lazy(() => import("./pages/Login"));
 const DashboardPage = lazy(() => import("./pages/Host/DashboardPage.jsx"));
+const DashboardLayout = lazy(() => import("./components/DashboardLayout.jsx"));
+const RoomsPage = lazy(() => import("./pages/Host/RoomsPage.jsx"));
+const SessionsPage = lazy(() => import("./pages/Host/SessionsPage.jsx"));
+const RoomDetailPage = lazy(() => import("./pages/Host/RoomDetailPage.jsx"));
 const SessionWorkspace = lazy(() => import("./pages/Host/SessionWorkspace.jsx"));
 const ParticipantHome = lazy(() => import("./pages/Participant/ParticipantHome"));
 const ParticipantSession = lazy(() => import("./pages/Participant/ParticipantSession"));
@@ -31,11 +35,11 @@ function App() {
     // For components still passing onLogin prop; delegate to context
     login(userObj, localStorage.getItem("accessToken"));
     if (userObj.role === "TEACHER") {
-      navigate("/dashboard");
+      navigate("/dashboard/rooms");
     } else if (userObj.role === "STUDENT") {
       navigate("/participant/home");
     } else {
-      navigate("/dashboard");
+      navigate("/dashboard/rooms");
     }
   };
 
@@ -49,7 +53,16 @@ function App() {
         <Route path="/auth/callback" element={<OAuthCallback onLogin={handleLogin} />} />
         {/* Protected routes group */}
         <Route element={<ProtectedRoute roles={["TEACHER"]} />}>
-          <Route path="/dashboard" element={<DashboardPage />} />
+          {/* Redirect /dashboard to /dashboard/rooms */}
+          <Route path="/dashboard" element={<Navigate to="/dashboard/rooms" replace />} />
+          
+          {/* Dashboard with nested routes */}
+          <Route path="/dashboard" element={<DashboardLayout />}>
+            <Route path="rooms" element={<RoomsPage />} />
+            <Route path="rooms/:roomId" element={<RoomDetailPage />} />
+            <Route path="sessions" element={<SessionsPage />} />
+          </Route>
+          
           <Route
             path="/test/sessionWorkspace"
             element={<SessionWorkspace />}/>
