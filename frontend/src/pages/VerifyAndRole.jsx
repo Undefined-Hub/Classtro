@@ -85,12 +85,13 @@ export default function VerifyAndRole() {
       const data = res.data || {};
       if (res.status == 200) {
         setResendMessage(
-          `New OTP sent successfully!${data.expiresIn ? ` (Expires in ${data.expiresIn} minutes)` : ""
-          }`
+          `New OTP sent successfully!${
+            data.expiresIn ? ` (Expires in ${data.expiresIn} minutes)` : ""
+          }`,
         );
         setOtp("");
         safeToast.success(
-          `New OTP sent (expires in ${data.expiresIn || "N/A"} mins)`
+          `New OTP sent (expires in ${data.expiresIn || "N/A"} mins)`,
         );
       } else {
         safeToast.error(data.message || "Failed to resend OTP");

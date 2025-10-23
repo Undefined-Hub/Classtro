@@ -1,6 +1,6 @@
 import React from "react";
 import { useAuth } from "../../context/UserContext.jsx";
-import ProfileImageOrInitials from "../ProfileImageOrInitials.jsx"
+import ProfileImageOrInitials from "../ProfileImageOrInitials.jsx";
 
 const Header = ({ onLogout }) => {
   const { user } = useAuth();
@@ -28,7 +28,7 @@ const Header = ({ onLogout }) => {
               Ready to join a learning session?
             </p>
           </div>
-          
+
           <div className="flex items-center justify-between sm:justify-end space-x-3 sm:space-x-4">
             {/* User Info - Hidden on mobile, shown on larger screens */}
             <div className="hidden sm:block text-right">
@@ -37,27 +37,27 @@ const Header = ({ onLogout }) => {
                 {user?.username || user?.email?.split("@")[0] || "N/A"}
               </p>
             </div>
-            
+
             {/* Profile Avatar */}
             <div className="flex-shrink-0 flex items-center gap-2">
-            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-blue-500 rounded-full flex items-center justify-center overflow-hidden flex-shrink-0">
-              {user?.profilePicture ? (
-                <ProfileImageOrInitials
-                  src={user.profilePicture}
-                  alt="Profile"
-                  initials={getInitials(user?.name)}
-                />
-              ) : (
-                <span className="text-sm sm:text-lg font-bold">
-                  {getInitials(user?.name)}
-                </span>
-              )}
-            </div>
-            <div className="flex-shrink-0 sm:hidden">
-              <p className="text-xs text-blue-100">Student ID</p>
-              <p className="font-medium  text-sm">
-                {user?.username || user?.email?.split("@")[0] || "N/A"}
-              </p>
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-blue-500 rounded-full flex items-center justify-center overflow-hidden flex-shrink-0">
+                {user?.profilePicture ? (
+                  <ProfileImageOrInitials
+                    src={user.profilePicture}
+                    alt="Profile"
+                    initials={getInitials(user?.name)}
+                  />
+                ) : (
+                  <span className="text-sm sm:text-lg font-bold">
+                    {getInitials(user?.name)}
+                  </span>
+                )}
+              </div>
+              <div className="flex-shrink-0 sm:hidden">
+                <p className="text-xs text-blue-100">Student ID</p>
+                <p className="font-medium  text-sm">
+                  {user?.username || user?.email?.split("@")[0] || "N/A"}
+                </p>
               </div>
             </div>
             {/* Logout Button */}
@@ -82,7 +82,7 @@ const Header = ({ onLogout }) => {
             </button>
           </div>
         </div>
-        
+
         {/* Mobile-only user info */}
         {/* <div className="sm:hidden mt-3 pt-3 border-t border-blue-500/30">
           <p className="text-xs text-blue-200">

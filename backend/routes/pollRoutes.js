@@ -1,5 +1,9 @@
 const express = require("express");
-const { deletePoll, getPollResults, endPoll } = require("../controllers/pollController");
+const {
+  deletePoll,
+  getPollResults,
+  endPoll,
+} = require("../controllers/pollController");
 const authenticateJWT = require("../middlewares/authenticateJWT");
 
 const router = express.Router();

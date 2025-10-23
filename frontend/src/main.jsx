@@ -13,10 +13,10 @@ createRoot(document.getElementById("root")).render(
     <BrowserRouter>
       <AuthProvider>
         <HostSessionProvider>
-        <ParticipantSessionProvider>
-          <App />
-          <Toaster position="top-right" />
-        </ParticipantSessionProvider>
+          <ParticipantSessionProvider>
+            <App />
+            <Toaster position="top-right" />
+          </ParticipantSessionProvider>
         </HostSessionProvider>
       </AuthProvider>
     </BrowserRouter>

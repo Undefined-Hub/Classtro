@@ -449,10 +449,10 @@ function Details() {
                                         student.rank === 1
                                           ? "bg-yellow-500"
                                           : student.rank === 2
-                                          ? "bg-gray-400"
-                                          : student.rank === 3
-                                          ? "bg-amber-700"
-                                          : "bg-blue-500"
+                                            ? "bg-gray-400"
+                                            : student.rank === 3
+                                              ? "bg-amber-700"
+                                              : "bg-blue-500"
                                       } mr-2.5`}
                                     >
                                       {student.rank}

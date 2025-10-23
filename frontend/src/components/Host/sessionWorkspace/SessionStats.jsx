@@ -4,11 +4,12 @@ import { useHostSession } from "../../../context/HostSessionContext";
 const SessionStats = () => {
   // * Context
   const {
-    calculateDuration, 
+    calculateDuration,
     activeParticipantsCount,
     questions,
     pastPolls,
-    activePoll} = useHostSession();
+    activePoll,
+  } = useHostSession();
 
   return (
     <div className="bg-white dark:bg-gray-700 rounded-lg shadow-md p-4">

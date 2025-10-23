@@ -18,7 +18,7 @@ const QuestionSchema = new mongoose.Schema(
     isDeleted: { type: Boolean, default: false },
     isAnonymous: { type: Boolean, default: true },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 // composite index to support typical queries: unanswered + sort by upvotes/createdAt

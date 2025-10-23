@@ -25,26 +25,29 @@ passport.use(
         const user = await User.findOne({ email });
         // console.log("Found user: ", user);
 
-        if (!user) return done(null, false, { message: "Invalid credentials." });
+        if (!user)
+          return done(null, false, { message: "Invalid credentials." });
 
-     if (user.authProvider !== "LOCAL") {
-        console.warn(`Auth attempt with wrong provider for user: ${user.email}`);
-        return done(null, false, {
-          message: "Invalid login method.",
-        });
-      }
-
+        if (user.authProvider !== "LOCAL") {
+          console.warn(
+            `Auth attempt with wrong provider for user: ${user.email}`,
+          );
+          return done(null, false, {
+            message: "Invalid login method.",
+          });
+        }
 
         const isMatch = await bcrypt.compare(password, user.password);
 
-        if (!isMatch) return done(null, false, { message: "Invalid password." });
+        if (!isMatch)
+          return done(null, false, { message: "Invalid password." });
 
         return done(null, user);
       } catch (err) {
         return done(err);
       }
-    }
-  )
+    },
+  ),
 );
 
 // ? Google Strategy - OAuth, code given by ChatGPT
@@ -78,10 +81,12 @@ passport.use(
         }
         // console.log("Authenticated Google user:", user);
         if (user.authProvider !== "GOOGLE") {
-           console.warn(`Auth attempt with wrong provider for user: ${user.email}`);
-            return done(null, false, {
-              message: "Invalid login method.",
-            });
+          console.warn(
+            `Auth attempt with wrong provider for user: ${user.email}`,
+          );
+          return done(null, false, {
+            message: "Invalid login method.",
+          });
         }
 
         // Add isNewUser flag to user object for use in callback
@@ -90,8 +95,8 @@ passport.use(
       } catch (err) {
         done(err, null);
       }
-    }
-  )
+    },
+  ),
 );
 
 // ? JWT Strategy - Token based authentication
@@ -99,13 +104,13 @@ passport.use(
   new JwtStrategy(jwtOptions, async (payload, done) => {
     try {
       const user = await User.findById(payload.user.id).select(
-        "-password -__v -updatedAt"
+        "-password -__v -updatedAt",
       );
       // console.log("User authenticated via JWT: ", payload);
       if (!user) return done(null, false);
       return done(null, user);
     } catch (err) {
-      return done(err, false);  
+      return done(err, false);
     }
-  })
+  }),
 );

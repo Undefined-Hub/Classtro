@@ -1,4 +1,4 @@
-import React,{useEffect} from "react";
+import React, { useEffect } from "react";
 import SessionStats from "./SessionStats";
 import { useHostSession } from "../../../context/HostSessionContext";
 
@@ -17,7 +17,7 @@ const MainContent = () => {
 
   // * Active Participants Count
   const activeParticipantsCount = participantsList.filter(
-    (p) => p.isActive
+    (p) => p.isActive,
   ).length;
 
   // ✅ FIX: Use useEffect to update context after render

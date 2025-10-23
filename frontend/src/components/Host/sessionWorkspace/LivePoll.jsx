@@ -1,13 +1,13 @@
 // LivePoll.jsx
 import React, { use } from "react";
 import { useHostSession } from "../../../context/HostSessionContext";
-const LivePoll = ({onPollSubmit}) => {
+const LivePoll = ({ onPollSubmit }) => {
   const { activePoll } = useHostSession();
   if (!activePoll) return null;
   const totalVotes = activePoll.options.reduce(
     (sum, opt) => sum + opt.votes,
-    0
-  );  
+    0,
+  );
 
   return (
     <div className="bg-white dark:bg-gray-700 rounded-lg shadow-lg mb-8 overflow-hidden">

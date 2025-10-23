@@ -2,7 +2,7 @@
 import React from "react";
 import { useHostSession } from "../../../context/HostSessionContext";
 const PastPolls = () => {
-    const {pastPolls} = useHostSession();
+  const { pastPolls } = useHostSession();
   if (!pastPolls || pastPolls.length === 0) return null;
 
   return (
@@ -14,10 +14,10 @@ const PastPolls = () => {
         {pastPolls.map((poll) => {
           const totalVotes = poll.options.reduce(
             (sum, opt) => sum + opt.votes,
-            0
+            0,
           );
           const winningOption = [...poll.options].sort(
-            (a, b) => b.votes - a.votes
+            (a, b) => b.votes - a.votes,
           )[0];
           const winningPercentage =
             totalVotes > 0

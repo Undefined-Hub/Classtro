@@ -42,7 +42,10 @@ const ParticipantSession = () => {
       const res = await api.get(`/api/sessions/code/${sessionCode}`);
       if (res.data && res.data.participantCount) {
         setParticipantCount(res.data.participantCount);
-        console.log("[Participant] Session data fetched, participant count:", res.data.participantCount);
+        console.log(
+          "[Participant] Session data fetched, participant count:",
+          res.data.participantCount,
+        );
       }
     } catch (err) {
       console.error("Failed to fetch session data:", err);
@@ -60,7 +63,6 @@ const ParticipantSession = () => {
       // * After DB update, emit socket event
       const socket = socketRef.current;
       if (socket) {
-
         // * Emit leave-session event
         socket.emit("leave-session", {
           code: sessionData.joinCode,
@@ -104,7 +106,7 @@ const ParticipantSession = () => {
 
     // * ------------------- Handlers -------------------
 
-    // * Poll Handlers 
+    // * Poll Handlers
     const onVoteUpdateReceived = ({ pollId, counts }) => {
       setPollSubmitting(false);
       setPollSubmitted(false);
@@ -140,7 +142,7 @@ const ParticipantSession = () => {
     // * Session Handlers
     const onBroadcast = (data) => {
       setBroadcastMsg(
-        `${data.message}${data.from ? ` (from ${data.from})` : ""}`
+        `${data.message}${data.from ? ` (from ${data.from})` : ""}`,
       );
     };
 
@@ -180,8 +182,8 @@ const ParticipantSession = () => {
         prev.map((item) =>
           item.id === q._id
             ? { ...item, text: q.text || item.text, answered: !!q.isAnswered }
-            : item
-        )
+            : item,
+        ),
       );
     };
 
@@ -196,8 +198,8 @@ const ParticipantSession = () => {
         prev.map((item) =>
           item.id === questionId
             ? { ...item, upvotes: (item.upvotes || 0) + delta }
-            : item
-        )
+            : item,
+        ),
       );
     };
 
@@ -205,8 +207,8 @@ const ParticipantSession = () => {
       const { questionId } = payload;
       setQuestions((prev) =>
         prev.map((item) =>
-          item.id === questionId ? { ...item, answered: true } : item
-        )
+          item.id === questionId ? { ...item, answered: true } : item,
+        ),
       );
     };
 
@@ -248,8 +250,8 @@ const ParticipantSession = () => {
         /* ignore */
       }
     };
-  //! Only re-register when socket instance or sessionData changes. We intentionally omit clearSession and navigate from deps to avoid identity changes triggering cleanup.
-  //! eslint-disable-next-line react-hooks/exhaustive-deps
+    //! Only re-register when socket instance or sessionData changes. We intentionally omit clearSession and navigate from deps to avoid identity changes triggering cleanup.
+    //! eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionData, socketReady]);
 
   // * Fetch initial questions for participant
@@ -257,7 +259,9 @@ const ParticipantSession = () => {
     if (!sessionData?.session?._id) return;
     const fetchQuestions = async () => {
       try {
-        const res = await api.get(`/api/questions/session/${sessionData.session._id}`);
+        const res = await api.get(
+          `/api/questions/session/${sessionData.session._id}`,
+        );
         const normalized = (res.data.questions || []).map((q) => ({
           authorId: q.authorId,
           id: q._id,
@@ -265,12 +269,12 @@ const ParticipantSession = () => {
           upvotes: q.upvotes || 0,
           answered: !!q.isAnswered,
           isAnonymous: !!q.isAnonymous,
-          studentName: q.studentName || (q.authorName || ''),
+          studentName: q.studentName || q.authorName || "",
           timestamp: q.createdAt,
         }));
         setQuestions(normalized);
       } catch (err) {
-        console.error('Failed to load questions for participant', err);
+        console.error("Failed to load questions for participant", err);
         setQuestions([]);
       }
     };
@@ -283,28 +287,32 @@ const ParticipantSession = () => {
 
     try {
       // Send to server; rely on socket event to update UI (no local optimistic insert)
-      await api.post(`/api/questions`, { sessionId: sessionData.session._id, text, isAnonymous });
+      await api.post(`/api/questions`, {
+        sessionId: sessionData.session._id,
+        text,
+        isAnonymous,
+      });
     } catch (err) {
       console.error("Failed to post question", err);
       alert("Failed to post question");
     }
   };
 
-  const { execute: postQuestion, isLoading: isPostingQuestion } = useSubmitDebounce(
-    postQuestionHandler,
-    500 // ? 500ms debounce delay
-  );
+  const { execute: postQuestion, isLoading: isPostingQuestion } =
+    useSubmitDebounce(
+      postQuestionHandler,
+      500, // ? 500ms debounce delay
+    );
 
   const upvoteQuestion = async (questionId) => {
-    try {     
+    try {
       await api.post(`/api/questions/${questionId}/upvote`);
       // rely on socket event
     } catch (err) {
-      console.error('Failed to upvote', err);
+      console.error("Failed to upvote", err);
     }
   };
 
-  
   // * Persist activePoll in sessionStorage to survive page reloads
   useEffect(() => {
     if (activePoll) {
@@ -316,10 +324,7 @@ const ParticipantSession = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <SessionHeader
-        sessionData={sessionData}
-        onLeave={handleLeaveSession}
-      />
+      <SessionHeader sessionData={sessionData} onLeave={handleLeaveSession} />
 
       <div className="pt-6 sm:pt-8 lg:pt-12">
         {!qnaOpen ? (
@@ -332,17 +337,16 @@ const ParticipantSession = () => {
           />
         ) : (
           <ParticipantQnA
-              questions={questions}
-              onUpvote={upvoteQuestion}
-              askOpen={askOpen}
-              setAskOpen={setAskOpen}
-              onBack={() => setQnaOpen(false)}
-              onSubmit={postQuestion}
-              isSubmitting={isPostingQuestion()}
-            />
+            questions={questions}
+            onUpvote={upvoteQuestion}
+            askOpen={askOpen}
+            setAskOpen={setAskOpen}
+            onBack={() => setQnaOpen(false)}
+            onSubmit={postQuestion}
+            isSubmitting={isPostingQuestion()}
+          />
         )}
       </div>
-
     </div>
   );
 };

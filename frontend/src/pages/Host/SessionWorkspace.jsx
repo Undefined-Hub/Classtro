@@ -15,7 +15,7 @@ import axios from "axios";
 import api from "../../utils/api.js";
 
 const BACKEND_BASE_URL =
-import.meta.env.VITE_BACKEND_BASE_URL || "http://localhost:5000";
+  import.meta.env.VITE_BACKEND_BASE_URL || "http://localhost:5000";
 
 const SOCKET_URL = BACKEND_BASE_URL + "/sessions";
 
@@ -59,7 +59,6 @@ const MOCK_SESSION_DATA = {
 
 // * Main Session Workspace Component
 const SessionWorkspace = () => {
-
   // * Router hooks
   const navigate = useNavigate();
   const location = useLocation();
@@ -113,8 +112,7 @@ const SessionWorkspace = () => {
       const passedroomName = location.state.roomName;
 
       // * Debug log
-      
-      
+
       // * RoomId and RoomName handling
       const roomId = passedSessionData.roomId;
       const roomName = passedroomName ? passedroomName : "Unknown Room";
@@ -125,21 +123,17 @@ const SessionWorkspace = () => {
         roomName: roomName,
       };
 
-      // * Set session data in context 
+      // * Set session data in context
       setSessionData(newSessionData);
       // * Set Questions in context (mock data for now)
       setQuestions(MOCK_QUESTIONS);
     } else {
       // * Use mock data as fallback
-      
     }
-    
   }, [location]);
 
   // * Debug log session data changes
-  useEffect(() => {
-    
-  }, [sessionData]);
+  useEffect(() => {}, [sessionData]);
 
   // Fetch participants from backend with debouncing
   const fetchTimeoutRef = useRef(null);
@@ -154,11 +148,13 @@ const SessionWorkspace = () => {
       // Set a new timeout (300ms debounce)
       fetchTimeoutRef.current = setTimeout(async () => {
         try {
-          
           const res = await api.get(
-            `/api/sessions/code/${sessionCode}/participants`,{headers: {
-              'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
-            }}
+            `/api/sessions/code/${sessionCode}/participants`,
+            {
+              headers: {
+                Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+              },
+            },
           );
           setParticipantsList(res.data);
         } catch (err) {
@@ -167,7 +163,7 @@ const SessionWorkspace = () => {
         }
       }, 300); // 300ms debounce time
     },
-    [BACKEND_BASE_URL, setParticipantsList]
+    [BACKEND_BASE_URL, setParticipantsList],
   );
 
   // Connect to socket.io backend on mount
@@ -179,7 +175,7 @@ const SessionWorkspace = () => {
     const fetchQuestions = async () => {
       try {
         const res = await api.get(`/api/questions/session/${sessionData._id}`);
-       
+
         // Normalize backend question shape to frontend expected fields
         const normalized = (res.data.questions || []).map((q) => ({
           id: q._id,
@@ -192,7 +188,7 @@ const SessionWorkspace = () => {
         }));
         setQuestions(normalized);
       } catch (err) {
-        console.error('Failed to fetch questions:', err);
+        console.error("Failed to fetch questions:", err);
         setQuestions([]);
       }
     };
@@ -248,10 +244,10 @@ const SessionWorkspace = () => {
         prev.map((item) =>
           item.id === q._id
             ? {
-              ...item,
-              text: q.text || item.text,
-              answered: !!q.isAnswered,
-            }
+                ...item,
+                text: q.text || item.text,
+                answered: !!q.isAnswered,
+              }
             : item,
         ),
       );
@@ -264,27 +260,30 @@ const SessionWorkspace = () => {
       const { questionId, delta } = payload;
       setQuestions((prev) =>
         prev.map((item) =>
-          item.id === questionId ? { ...item, upvotes: (item.upvotes || 0) + delta } : item,
+          item.id === questionId
+            ? { ...item, upvotes: (item.upvotes || 0) + delta }
+            : item,
         ),
       );
     };
     const onAnswered = (payload) => {
       const { questionId } = payload;
-      setQuestions((prev) => prev.map((item) => (item.id === questionId ? { ...item, answered: true } : item)));
+      setQuestions((prev) =>
+        prev.map((item) =>
+          item.id === questionId ? { ...item, answered: true } : item,
+        ),
+      );
     };
 
-    socket.on('qna:question:created', onCreated);
-    socket.on('qna:question:updated', onUpdated);
-    socket.on('qna:question:deleted', onDeleted);
-    socket.on('qna:question:upvoted', onUpvoted);
-    socket.on('qna:question:answered', onAnswered);
+    socket.on("qna:question:created", onCreated);
+    socket.on("qna:question:updated", onUpdated);
+    socket.on("qna:question:deleted", onDeleted);
+    socket.on("qna:question:upvoted", onUpvoted);
+    socket.on("qna:question:answered", onAnswered);
     // Listen for room members
-    socket.on("room:members", (data) => {
-      
-    });
+    socket.on("room:members", (data) => {});
     // Listen for participant count updates
     socket.on("participants:update", (data) => {
-      
       // Refetch participants list whenever count changes
       fetchParticipants(sessionData.code);
     });
@@ -292,7 +291,6 @@ const SessionWorkspace = () => {
     socket.on("broadcast:message", (payload) => {
       // You can handle incoming broadcast messages here if needed
       // e.g., show a notification or update a chat
-      
     });
     return () => {
       try {
@@ -300,15 +298,15 @@ const SessionWorkspace = () => {
           code: sessionData.code,
           participantId: "teacher1",
         });
-      } catch { }
+      } catch {}
       socket.off("room:members");
       socket.off("participants:update");
       socket.off("broadcast:message");
-      socket.off('qna:question:created', onCreated);
-      socket.off('qna:question:updated', onUpdated);
-      socket.off('qna:question:deleted', onDeleted);
-      socket.off('qna:question:upvoted', onUpvoted);
-      socket.off('qna:question:answered', onAnswered);
+      socket.off("qna:question:created", onCreated);
+      socket.off("qna:question:updated", onUpdated);
+      socket.off("qna:question:deleted", onDeleted);
+      socket.off("qna:question:upvoted", onUpvoted);
+      socket.off("qna:question:answered", onAnswered);
       socket.off("connect");
       socket.off("connect_error");
       socket.off("disconnect");
@@ -382,8 +380,8 @@ const SessionWorkspace = () => {
   const handleUpvoteQuestion = (questionId) => {
     setQuestions(
       questions.map((q) =>
-        q.id === questionId ? { ...q, upvotes: q.upvotes + 1 } : q
-      )
+        q.id === questionId ? { ...q, upvotes: q.upvotes + 1 } : q,
+      ),
     );
   };
 
@@ -393,8 +391,8 @@ const SessionWorkspace = () => {
       await api.patch(`/api/questions/${questionId}/answer`);
       // Socket event will update all clients' state
     } catch (err) {
-      console.error('Failed to mark question as answered:', err);
-      alert('Failed to mark question as answered');
+      console.error("Failed to mark question as answered:", err);
+      alert("Failed to mark question as answered");
     }
   };
 
@@ -402,8 +400,8 @@ const SessionWorkspace = () => {
   const handleKickParticipant = (participantId) => {
     setParticipantsList(
       participantsList.map((p) =>
-        p._id === participantId ? { ...p, kicked: true } : p
-      )
+        p._id === participantId ? { ...p, kicked: true } : p,
+      ),
     );
   };
 
@@ -417,7 +415,9 @@ const SessionWorkspace = () => {
     try {
       // Step 1: Close session in database
       console.log("📡 Closing session in database...");
-      const res = await api.post(`/api/sessions/code/${sessionData.code}/close`);
+      const res = await api.post(
+        `/api/sessions/code/${sessionData.code}/close`,
+      );
       console.log("✅ Database session closed successfully");
 
       if (res.status !== 200) {
@@ -432,7 +432,6 @@ const SessionWorkspace = () => {
       resetHostSession();
       console.log("🏠 Navigating to dashboard...");
       navigate("/dashboard");
-      
     } catch (err) {
       console.error("❌ Session end failed:", err);
       alert("Failed to close session. Please try again.");
@@ -443,7 +442,7 @@ const SessionWorkspace = () => {
   const handleSocketEndSession = (sessionCode) => {
     return new Promise((resolve, reject) => {
       const socket = socketRef.current;
-      
+
       // Check if socket exists and is connected
       if (!socket) {
         console.warn("⚠️ Socket is null - session ended via API only");
@@ -456,14 +455,16 @@ const SessionWorkspace = () => {
       }
 
       console.log("🔌 Socket is connected, attempting to emit session:end");
-      
+
       let retryCount = 0;
       const maxRetries = 5;
       const retryDelay = 1000; // 1 second
 
       const attemptEmit = () => {
-        console.log(`📡 Attempt ${retryCount + 1}/${maxRetries} - Emitting session:end`);
-        
+        console.log(
+          `📡 Attempt ${retryCount + 1}/${maxRetries} - Emitting session:end`,
+        );
+
         // Use acknowledgment to confirm server received the message
         const timeout = setTimeout(() => {
           console.warn(`⏱️ Attempt ${retryCount + 1} timed out (5s)`);
@@ -472,12 +473,15 @@ const SessionWorkspace = () => {
 
         socket.emit("session:end", { code: sessionCode }, (acknowledgment) => {
           clearTimeout(timeout);
-          
+
           if (acknowledgment?.success) {
             console.log("✅ Session end confirmed by server");
             resolve();
           } else {
-            console.warn("⚠️ Server acknowledged but reported error:", acknowledgment);
+            console.warn(
+              "⚠️ Server acknowledged but reported error:",
+              acknowledgment,
+            );
             retryOrResolve();
           }
         });
@@ -515,15 +519,17 @@ const SessionWorkspace = () => {
         {/* Main content area (2/3) */}
         <div className="flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-800 relative">
           {/* Floating Quick Actions Menu */}
-          <QuickActions questions={questions} onSetActiveView={setActiveView} activeView={activeView} />
+          <QuickActions
+            questions={questions}
+            onSetActiveView={setActiveView}
+            activeView={activeView}
+          />
 
           {/* Main Content */}
-          {activeView === "main" && (
-            <MainContent/>
-          )}
+          {activeView === "main" && <MainContent />}
 
           {/* Poll Manager */}
-          <PollManager/>
+          <PollManager />
 
           {/* Q&A Manager */}
           <QAManager
@@ -552,7 +558,7 @@ const SessionWorkspace = () => {
           handleBroadcast={handleBroadcast}
         />
       </div>
-          
+
       {/* Confirm Close Session Modal */}
       {showConfirmClose && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">

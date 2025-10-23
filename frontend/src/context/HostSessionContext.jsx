@@ -37,8 +37,6 @@ export const HostSessionProvider = ({ children }) => {
     return hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
   };
 
-  
-
   const resetHostSession = () => {
     console.log("Resetting host session context...");
     setSessionData({});
@@ -95,7 +93,7 @@ export const HostSessionProvider = ({ children }) => {
       showBroadcastForm,
       setShowBroadcastForm,
 
-      activeParticipantsCount, 
+      activeParticipantsCount,
       setActiveParticipantsCount,
 
       socketRef,
