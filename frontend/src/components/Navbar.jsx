@@ -1,17 +1,54 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useAuth } from '../context/UserContext.jsx'
 import classtroLogo from '../assets/classtro.png'
 function Navbar() {
   const navigate = useNavigate();
+  const { user, isAuthenticated, logout } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
   
   const handleLoginClick = () => {
     navigate('/login');
   };
   
+  const handleDashboardClick = () => {
+    if (user?.role === 'TEACHER') {
+      navigate('/dashboard');
+    } else if (user?.role === 'STUDENT') {
+      navigate('/participant/home');
+    } else {
+      navigate('/dashboard');
+    }
+  };
+  
+  const handleLogout = () => {
+    logout();
+    setIsProfileDropdownOpen(false);
+    navigate('/');
+  };
+  
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
   };
+  
+  const toggleProfileDropdown = () => {
+    setIsProfileDropdownOpen(!isProfileDropdownOpen);
+  };
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (isProfileDropdownOpen && !event.target.closest('#user-menu-button') && !event.target.closest('.user-dropdown')) {
+        setIsProfileDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isProfileDropdownOpen]);
   
   return (
     <div>
@@ -22,14 +59,73 @@ function Navbar() {
             <span className="self-center text-2xl font-semibold whitespace-nowrap dark:text-white">Classtro</span>
           </a>
           
-          <div className="flex md:order-2 space-x-3 md:space-x-4 rtl:space-x-reverse">
-            <button 
-              onClick={handleLoginClick} 
-              type="button" 
-              className="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
-            >
-              Login
-            </button>
+          <div className="flex md:order-2 space-x-3 md:space-x-4 rtl:space-x-reverse items-center">
+            {isAuthenticated ? (
+              /* Profile Section for Authenticated Users */
+              <div className="relative">
+                <button 
+                  onClick={toggleProfileDropdown}
+                  className="flex items-center space-x-2 text-sm bg-gray-800 rounded-full focus:ring-4 focus:ring-gray-300 dark:focus:ring-gray-600 px-2 py-1.5 h-10"
+                  id="user-menu-button"
+                  aria-expanded={isProfileDropdownOpen}
+                  data-dropdown-toggle="user-dropdown"
+                  data-dropdown-placement="bottom"
+                >
+                  <span className="sr-only">Open user menu</span>
+                  {user?.profilePicture ? (
+                    <img 
+                      className="w-8 h-8 rounded-full shrink-0" 
+                      src={user.profilePicture} 
+                      alt="User photo"
+                    />
+                  ) : (
+                    <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white text-sm font-medium shrink-0">
+                      {user?.name?.charAt(0)?.toUpperCase() || 'U'}
+                    </div>
+                  )}
+                  <span className="hidden md:inline text-gray-900 dark:text-white font-medium max-w-[100px] truncate">
+                    {user?.name || 'User'}
+                  </span>
+                </button>
+                
+                {/* Dropdown menu */}
+                {isProfileDropdownOpen && (
+                  <div className="user-dropdown absolute right-0 z-50 mt-2 w-48 bg-white divide-y divide-gray-100 rounded-lg shadow dark:bg-gray-700 dark:divide-gray-600">
+                    <div className="px-4 py-3">
+                      <span className="block text-sm text-gray-900 dark:text-white font-medium">{user?.name}</span>
+                      <span className="block text-sm text-gray-500 dark:text-gray-400 truncate">{user?.email}</span>
+                    </div>
+                    <ul className="py-2">
+                      <li>
+                        <button
+                          onClick={handleDashboardClick}
+                          className="w-full text-left px-4 py-2 text-sm hover:cursor-pointer text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 dark:text-gray-200 dark:hover:text-white"
+                        >
+                          Dashboard
+                        </button>
+                      </li>
+                      <li>
+                        <button
+                          onClick={handleLogout}
+                          className="w-full text-left px-4 py-2 text-sm hover:cursor-pointer text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 dark:text-gray-200 dark:hover:text-white"
+                        >
+                          Sign out
+                        </button>
+                      </li>
+                    </ul>
+                  </div>
+                )}
+              </div>
+            ) : (
+              /* Login Button for Unauthenticated Users */
+              <button 
+                onClick={handleLoginClick} 
+                type="button" 
+                className="text-white hover:cursor-pointer bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 h-10"
+              >
+                Login
+              </button>
+            )}
             <button 
               onClick={toggleMenu}
               type="button" 
