@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useAnalyticsData } from '../../context/AnalyticsContext';
+import React, { useState } from "react";
+import { useAnalyticsData } from "../../context/AnalyticsContext";
 
 const FeedbackSection = () => {
   const { analyticsData, loading } = useAnalyticsData();
@@ -18,7 +18,10 @@ const FeedbackSection = () => {
             </div>
             <div className="space-y-3">
               {[...Array(3)].map((_, i) => (
-                <div key={i} className="h-16 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                <div
+                  key={i}
+                  className="h-16 bg-gray-200 dark:bg-gray-700 rounded"
+                ></div>
               ))}
             </div>
           </div>
@@ -33,12 +36,16 @@ const FeedbackSection = () => {
     return Array.from({ length: 5 }, (_, index) => {
       const filled = index < Math.floor(rating);
       const partial = index === Math.floor(rating) && rating % 1 !== 0;
-      
+
       return (
         <svg
           key={index}
           className={`w-6 h-6 ${
-            filled ? 'text-yellow-400' : partial ? 'text-yellow-200' : 'text-gray-300 dark:text-gray-600'
+            filled
+              ? "text-yellow-400"
+              : partial
+                ? "text-yellow-200"
+                : "text-gray-300 dark:text-gray-600"
           }`}
           fill="currentColor"
           viewBox="0 0 20 20"
@@ -51,40 +58,54 @@ const FeedbackSection = () => {
 
   const getSentimentColor = (sentiment) => {
     switch (sentiment) {
-      case 'positive':
-        return 'text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-900/30';
-      case 'negative':
-        return 'text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-900/30';
+      case "positive":
+        return "text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-900/30";
+      case "negative":
+        return "text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-900/30";
       default:
-        return 'text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-900/30';
+        return "text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-900/30";
     }
   };
 
   const getSentimentIcon = (sentiment) => {
     switch (sentiment) {
-      case 'positive':
-        return '😊';
-      case 'negative':
-        return '😞';
+      case "positive":
+        return "😊";
+      case "negative":
+        return "😞";
       default:
-        return '😐';
+        return "😐";
     }
   };
 
   const CommentCard = ({ comment, index, isInModal = false }) => (
-    <div className={`border border-gray-200 dark:border-gray-700 rounded-lg ${
-      isInModal ? 'p-4' : 'p-4'
-    } bg-gray-50 dark:bg-gray-700/50`}>
+    <div
+      className={`border border-gray-200 dark:border-gray-700 rounded-lg ${
+        isInModal ? "p-4" : "p-4"
+      } bg-gray-50 dark:bg-gray-700/50`}
+    >
       <div className="flex items-start">
         <div className="flex-shrink-0">
           <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
-            <svg className="w-4 h-4 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            <svg
+              className="w-4 h-4 text-blue-600 dark:text-blue-400"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+              />
             </svg>
           </div>
         </div>
         <div className="ml-3 flex-1">
-          <p className={`${isInModal ? 'text-base' : 'text-sm'} text-gray-700 dark:text-gray-300`}>
+          <p
+            className={`${isInModal ? "text-base" : "text-sm"} text-gray-700 dark:text-gray-300`}
+          >
             "{comment}"
           </p>
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
@@ -111,16 +132,31 @@ const FeedbackSection = () => {
             onClick={() => setIsModalOpen(false)}
             className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
           >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            <svg
+              className="w-6 h-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M6 18L18 6M6 6l12 12"
+              />
             </svg>
           </button>
         </div>
-        
+
         <div className="p-4 sm:p-6 overflow-y-auto max-h-[calc(90vh-120px)] hide-scrollbar">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {feedback.comments.map((comment, index) => (
-              <CommentCard key={index} comment={comment} index={index} isInModal={true} />
+              <CommentCard
+                key={index}
+                comment={comment}
+                index={index}
+                isInModal={true}
+              />
             ))}
           </div>
         </div>
@@ -147,11 +183,15 @@ const FeedbackSection = () => {
                 Overall Rating
               </h4>
               <div className="flex items-center space-x-3">
-                <div className="flex">{renderStars(feedback.averageRating)}</div>
+                <div className="flex">
+                  {renderStars(feedback.averageRating)}
+                </div>
                 <span className="text-2xl font-bold text-gray-900 dark:text-white">
                   {feedback.averageRating}
                 </span>
-                <span className="text-sm text-gray-500 dark:text-gray-400">/ 5.0</span>
+                <span className="text-sm text-gray-500 dark:text-gray-400">
+                  / 5.0
+                </span>
               </div>
               <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
                 Based on {feedback.comments.length} responses
@@ -162,16 +202,30 @@ const FeedbackSection = () => {
               <h4 className="text-base font-medium text-gray-900 dark:text-white mb-3">
                 Sentiment Analysis
               </h4>
-              <div className={`inline-flex items-center px-4 py-2 rounded-full text-sm font-medium ${getSentimentColor(feedback.sentiment)}`}>
-                <span className="mr-2 text-lg">{getSentimentIcon(feedback.sentiment)}</span>
+              <div
+                className={`inline-flex items-center px-4 py-2 rounded-full text-sm font-medium ${getSentimentColor(feedback.sentiment)}`}
+              >
+                <span className="mr-2 text-lg">
+                  {getSentimentIcon(feedback.sentiment)}
+                </span>
                 Overall {feedback.sentiment} feedback
               </div>
             </div>
 
             {/* Future placeholder for word cloud */}
             <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-6 text-center">
-              <svg className="w-12 h-12 text-gray-400 dark:text-gray-500 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+              <svg
+                className="w-12 h-12 text-gray-400 dark:text-gray-500 mx-auto mb-3"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"
+                />
               </svg>
               <h5 className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">
                 Word Cloud
@@ -186,7 +240,9 @@ const FeedbackSection = () => {
           <div className="md:col-span-2 ">
             <div className="flex items-center justify-between mb-4">
               <h4 className="text-base font-medium text-gray-900 dark:text-white">
-                Recent Comments ({Math.min(feedback.comments.length, maxVisibleComments)} of {feedback.comments.length})
+                Recent Comments (
+                {Math.min(feedback.comments.length, maxVisibleComments)} of{" "}
+                {feedback.comments.length})
               </h4>
               {feedback.comments.length > maxVisibleComments && (
                 <button
@@ -198,17 +254,20 @@ const FeedbackSection = () => {
               )}
             </div>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 max-h-100 overflow-y-auto hide-scrollbar">
-              {feedback.comments.slice(0, maxVisibleComments).map((comment, index) => (
-                <CommentCard key={index} comment={comment} index={index} />
-              ))}
-              
+              {feedback.comments
+                .slice(0, maxVisibleComments)
+                .map((comment, index) => (
+                  <CommentCard key={index} comment={comment} index={index} />
+                ))}
+
               {feedback.comments.length > maxVisibleComments && (
                 <div className="lg:col-span-1 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-4 text-center">
                   <button
                     onClick={() => setIsModalOpen(true)}
                     className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
                   >
-                    + {feedback.comments.length - maxVisibleComments} more comments
+                    + {feedback.comments.length - maxVisibleComments} more
+                    comments
                   </button>
                   <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                     Click to view all student feedback
@@ -224,27 +283,42 @@ const FeedbackSection = () => {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="text-center p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
               <div className="text-lg font-semibold text-green-600 dark:text-green-400">
-                {Math.round((feedback.comments.filter(c => c.includes('Great') || c.includes('Excellent')).length / feedback.comments.length) * 100)}%
+                {Math.round(
+                  (feedback.comments.filter(
+                    (c) => c.includes("Great") || c.includes("Excellent"),
+                  ).length /
+                    feedback.comments.length) *
+                    100,
+                )}
+                %
               </div>
-              <div className="text-xs text-green-600 dark:text-green-400">Positive</div>
+              <div className="text-xs text-green-600 dark:text-green-400">
+                Positive
+              </div>
             </div>
             <div className="text-center p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
               <div className="text-lg font-semibold text-blue-600 dark:text-blue-400">
                 {feedback.averageRating}
               </div>
-              <div className="text-xs text-blue-600 dark:text-blue-400">Avg Rating</div>
+              <div className="text-xs text-blue-600 dark:text-blue-400">
+                Avg Rating
+              </div>
             </div>
             <div className="text-center p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
               <div className="text-lg font-semibold text-purple-600 dark:text-purple-400">
                 {feedback.comments.length}
               </div>
-              <div className="text-xs text-purple-600 dark:text-purple-400">Comments</div>
+              <div className="text-xs text-purple-600 dark:text-purple-400">
+                Comments
+              </div>
             </div>
             <div className="text-center p-4 bg-orange-50 dark:bg-orange-900/20 rounded-lg">
               <div className="text-lg font-semibold text-orange-600 dark:text-orange-400">
                 85%
               </div>
-              <div className="text-xs text-orange-600 dark:text-orange-400">Response Rate</div>
+              <div className="text-xs text-orange-600 dark:text-orange-400">
+                Response Rate
+              </div>
             </div>
           </div>
         </div>

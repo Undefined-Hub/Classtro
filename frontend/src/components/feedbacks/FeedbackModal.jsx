@@ -1,26 +1,29 @@
-import React from 'react';
-import { X, Bug, Heart, Send } from 'lucide-react';
+import React from "react";
+import { X, Bug, Heart, Send } from "lucide-react";
 
-const FeedbackModal = ({ 
-  isOpen, 
-  reportType, 
-  formData, 
+const FeedbackModal = ({
+  isOpen,
+  reportType,
+  formData,
   screenshotPreview,
   isSubmitting,
-  onClose, 
-  onInputChange, 
+  onClose,
+  onInputChange,
   onSubmit,
-  onRemoveScreenshot 
+  onRemoveScreenshot,
 }) => {
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[10000] flex items-center justify-center p-5 transition-all duration-300">
-      <div className="bg-white dark:bg-gray-800 rounded-3xl max-w-[500px] w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-gray-200 dark:border-gray-700 transition-all duration-300" onClick={(e) => e.stopPropagation()}>
+      <div
+        className="bg-white dark:bg-gray-800 rounded-3xl max-w-[500px] w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-gray-200 dark:border-gray-700 transition-all duration-300"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
           <h3 className="flex items-center gap-3 m-0 text-xl font-bold text-gray-900 dark:text-white">
-            {reportType === 'bug' ? (
+            {reportType === "bug" ? (
               <>
                 <div className="p-2 rounded-xl bg-red-100 dark:bg-red-900/50">
                   <Bug size={24} className="text-red-600 dark:text-red-400" />
@@ -30,13 +33,16 @@ const FeedbackModal = ({
             ) : (
               <>
                 <div className="p-2 rounded-xl bg-blue-100 dark:bg-blue-900/50">
-                  <Heart size={24} className="text-blue-600 dark:text-blue-400" />
+                  <Heart
+                    size={24}
+                    className="text-blue-600 dark:text-blue-400"
+                  />
                 </div>
                 Submit Feedback
               </>
             )}
           </h3>
-          <button 
+          <button
             className="bg-none border-none cursor-pointer p-2 rounded-xl text-gray-500 dark:text-gray-400 transition-all duration-200 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-700 dark:hover:text-gray-200"
             onClick={onClose}
             aria-label="Close"
@@ -48,7 +54,10 @@ const FeedbackModal = ({
         {/* Form */}
         <form onSubmit={onSubmit} className="p-4">
           <div className="mb-4">
-            <label htmlFor="title" className="block mb-2 font-semibold text-gray-700 dark:text-gray-200 text-sm">
+            <label
+              htmlFor="title"
+              className="block mb-2 font-semibold text-gray-700 dark:text-gray-200 text-sm"
+            >
               Title *
             </label>
             <input
@@ -57,14 +66,21 @@ const FeedbackModal = ({
               name="title"
               value={formData.title}
               onChange={onInputChange}
-              placeholder={reportType === 'bug' ? 'Brief description of the issue' : 'Feedback title'}
+              placeholder={
+                reportType === "bug"
+                  ? "Brief description of the issue"
+                  : "Feedback title"
+              }
               className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-xl text-sm bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 transition-all duration-200 focus:outline-none focus:border-blue-500 dark:focus:border-blue-400 focus:ring-4 focus:ring-blue-500/20 dark:focus:ring-blue-400/20"
               required
             />
           </div>
 
           <div className="mb-4">
-            <label htmlFor="description" className="block mb-2 font-semibold text-gray-700 dark:text-gray-200 text-sm">
+            <label
+              htmlFor="description"
+              className="block mb-2 font-semibold text-gray-700 dark:text-gray-200 text-sm"
+            >
               Description *
             </label>
             <textarea
@@ -72,17 +88,24 @@ const FeedbackModal = ({
               name="description"
               value={formData.description}
               onChange={onInputChange}
-              placeholder={reportType === 'bug' ? 'Describe what happened' : 'Your feedback'}
+              placeholder={
+                reportType === "bug"
+                  ? "Describe what happened"
+                  : "Your feedback"
+              }
               rows="3"
               className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-xl text-sm bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 transition-all duration-200 focus:outline-none focus:border-blue-500 dark:focus:border-blue-400 focus:ring-4 focus:ring-blue-500/20 dark:focus:ring-blue-400/20 resize-vertical min-h-[72px]"
               required
             />
           </div>
 
-          {reportType === 'bug' && (
+          {reportType === "bug" && (
             <>
               <div className="mb-4">
-                <label htmlFor="stepsToReproduce" className="block mb-2 font-semibold text-gray-700 dark:text-gray-200 text-sm">
+                <label
+                  htmlFor="stepsToReproduce"
+                  className="block mb-2 font-semibold text-gray-700 dark:text-gray-200 text-sm"
+                >
                   Steps to Reproduce *
                 </label>
                 <textarea
@@ -98,7 +121,10 @@ const FeedbackModal = ({
               </div>
 
               <div className="mb-4">
-                <label htmlFor="severity" className="block mb-2 font-semibold text-gray-700 dark:text-gray-200 text-sm">
+                <label
+                  htmlFor="severity"
+                  className="block mb-2 font-semibold text-gray-700 dark:text-gray-200 text-sm"
+                >
                   Severity
                 </label>
                 <select
@@ -116,7 +142,10 @@ const FeedbackModal = ({
               </div>
 
               <div className="mb-4">
-                <label htmlFor="screenshot" className="block mb-2 font-semibold text-gray-700 dark:text-gray-200 text-sm">
+                <label
+                  htmlFor="screenshot"
+                  className="block mb-2 font-semibold text-gray-700 dark:text-gray-200 text-sm"
+                >
                   Screenshot (optional)
                 </label>
                 <input
@@ -128,15 +157,18 @@ const FeedbackModal = ({
                   className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-xl text-sm bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white transition-all duration-200 focus:outline-none focus:border-blue-500 dark:focus:border-blue-400 focus:ring-4 focus:ring-blue-500/20 dark:focus:ring-blue-400/20 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 dark:file:bg-blue-900/50 dark:file:text-blue-300 dark:hover:file:bg-blue-800/50"
                 />
                 <small className="block mt-1 text-gray-500 dark:text-gray-400 text-xs">
-                  📸 Upload a screenshot to help us understand the issue better (Max 5MB)
+                  📸 Upload a screenshot to help us understand the issue better
+                  (Max 5MB)
                 </small>
                 {screenshotPreview && (
                   <div className="mt-3 p-2 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-600">
-                    <p className="text-xs text-gray-600 dark:text-gray-400 mb-2">Preview:</p>
+                    <p className="text-xs text-gray-600 dark:text-gray-400 mb-2">
+                      Preview:
+                    </p>
                     <div className="relative">
-                      <img 
-                        src={screenshotPreview} 
-                        alt="Screenshot preview" 
+                      <img
+                        src={screenshotPreview}
+                        alt="Screenshot preview"
                         className="max-w-full h-auto max-h-32 rounded border object-contain"
                       />
                       <button
@@ -155,8 +187,11 @@ const FeedbackModal = ({
           )}
 
           <div className="mb-4">
-            <label htmlFor="userEmail" className="block mb-2 font-semibold text-gray-700 dark:text-gray-200 text-sm">
-              Email {reportType === 'bug' ? '*' : '(optional)'}
+            <label
+              htmlFor="userEmail"
+              className="block mb-2 font-semibold text-gray-700 dark:text-gray-200 text-sm"
+            >
+              Email {reportType === "bug" ? "*" : "(optional)"}
             </label>
             <input
               type="email"
@@ -166,13 +201,12 @@ const FeedbackModal = ({
               onChange={onInputChange}
               placeholder="your@email.com"
               className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-xl text-sm bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 transition-all duration-200 focus:outline-none focus:border-blue-500 dark:focus:border-blue-400 focus:ring-4 focus:ring-blue-500/20 dark:focus:ring-blue-400/20"
-              required={reportType === 'bug'}
+              required={reportType === "bug"}
             />
             <small className="block mt-1 text-gray-500 dark:text-gray-400 text-xs">
-              {reportType === 'bug' 
-                ? '📧 Required for bug reports so we can follow up'
-                : '💌 Optional - we\'ll use this to follow up on your feedback'
-              }
+              {reportType === "bug"
+                ? "📧 Required for bug reports so we can follow up"
+                : "💌 Optional - we'll use this to follow up on your feedback"}
             </small>
           </div>
 
@@ -188,9 +222,9 @@ const FeedbackModal = ({
             <button
               type="submit"
               className={`px-5 py-2.5 border-none text-white rounded-xl cursor-pointer font-medium text-sm flex items-center justify-center gap-2 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none order-1 sm:order-2 ${
-                reportType === 'bug' 
-                  ? 'bg-gradient-to-r from-red-500 to-red-600 hover:shadow-red-500/30 dark:from-red-600 dark:to-red-700' 
-                  : 'bg-gradient-to-r from-blue-600 to-blue-700 hover:shadow-blue-600/30 dark:from-blue-500 dark:to-blue-600'
+                reportType === "bug"
+                  ? "bg-gradient-to-r from-red-500 to-red-600 hover:shadow-red-500/30 dark:from-red-600 dark:to-red-700"
+                  : "bg-gradient-to-r from-blue-600 to-blue-700 hover:shadow-blue-600/30 dark:from-blue-500 dark:to-blue-600"
               }`}
               disabled={isSubmitting}
             >
@@ -202,7 +236,7 @@ const FeedbackModal = ({
               ) : (
                 <>
                   <Send size={16} />
-                  Submit {reportType === 'bug' ? 'Bug Report' : 'Feedback'}
+                  Submit {reportType === "bug" ? "Bug Report" : "Feedback"}
                 </>
               )}
             </button>

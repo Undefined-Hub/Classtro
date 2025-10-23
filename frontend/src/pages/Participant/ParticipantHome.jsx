@@ -115,7 +115,6 @@ const ParticipantHome = () => {
   const handleClassroomSelect = (classroom) => {
     setSelectedClassroom(classroom);
     // TODO: Navigate to classroom details or sessions
-    
   };
 
   const handleSearchChange = (term) => {

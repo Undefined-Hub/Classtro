@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
-import FloatingButton from './FloatingButton';
-import OptionsPanel from './OptionsPanel';
-import FeedbackModal from './FeedbackModal';
+import React, { useState } from "react";
+import FloatingButton from "./FloatingButton";
+import OptionsPanel from "./OptionsPanel";
+import FeedbackModal from "./FeedbackModal";
 
 const FloatingBugButton = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -10,12 +10,12 @@ const FloatingBugButton = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [screenshotPreview, setScreenshotPreview] = useState(null);
   const [formData, setFormData] = useState({
-    title: '',
-    description: '',
-    stepsToReproduce: '',
-    severity: 'medium',
-    userEmail: '',
-    screenshot: null
+    title: "",
+    description: "",
+    stepsToReproduce: "",
+    severity: "medium",
+    userEmail: "",
+    screenshot: null,
   });
 
   const handleFloatingButtonClick = () => {
@@ -36,27 +36,28 @@ const FloatingBugButton = () => {
       setScreenshotPreview(null);
     }
     setFormData({
-      title: '',
-      description: '',
-      stepsToReproduce: '',
-      severity: 'medium',
-      userEmail: '',
-      screenshot: null
+      title: "",
+      description: "",
+      stepsToReproduce: "",
+      severity: "medium",
+      userEmail: "",
+      screenshot: null,
     });
   };
 
   const handleInputChange = (e) => {
     const { name, value, type, checked, files } = e.target;
-    
-    if (type === 'file' && name === 'screenshot' && files[0]) {
+
+    if (type === "file" && name === "screenshot" && files[0]) {
       const file = files[0];
       const previewUrl = URL.createObjectURL(file);
       setScreenshotPreview(previewUrl);
-      setFormData(prev => ({ ...prev, [name]: file }));
+      setFormData((prev) => ({ ...prev, [name]: file }));
     } else {
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
-        [name]: type === 'checkbox' ? checked : type === 'file' ? files[0] : value
+        [name]:
+          type === "checkbox" ? checked : type === "file" ? files[0] : value,
       }));
     }
   };
@@ -66,59 +67,67 @@ const FloatingBugButton = () => {
     setIsSubmitting(true);
 
     const formDataToSend = new FormData();
-    formDataToSend.append('type', reportType);
-    formDataToSend.append('title', formData.title.trim());
-    formDataToSend.append('description', formData.description.trim());
-    
+    formDataToSend.append("type", reportType);
+    formDataToSend.append("title", formData.title.trim());
+    formDataToSend.append("description", formData.description.trim());
+
     const metadata = {
       userAgent: navigator.userAgent,
-      appVersion: import.meta.env.VITE_APP_VERSION || '1.0.0',
+      appVersion: import.meta.env.VITE_APP_VERSION || "1.0.0",
       viewport: `${window.innerWidth}x${window.innerHeight}`,
       url: window.location.href,
       timestamp: new Date().toISOString(),
-      console: []
+      console: [],
     };
-    formDataToSend.append('metadata', JSON.stringify(metadata));
+    formDataToSend.append("metadata", JSON.stringify(metadata));
 
-    if (reportType === 'bug') {
-      formDataToSend.append('stepsToReproduce', formData.stepsToReproduce.trim());
-      formDataToSend.append('severity', formData.severity);
-      formDataToSend.append('userEmail', formData.userEmail.trim());
+    if (reportType === "bug") {
+      formDataToSend.append(
+        "stepsToReproduce",
+        formData.stepsToReproduce.trim(),
+      );
+      formDataToSend.append("severity", formData.severity);
+      formDataToSend.append("userEmail", formData.userEmail.trim());
       if (formData.screenshot) {
-        formDataToSend.append('screenshot', formData.screenshot);
+        formDataToSend.append("screenshot", formData.screenshot);
       }
     } else {
       if (formData.userEmail.trim()) {
-        formDataToSend.append('userEmail', formData.userEmail.trim());
+        formDataToSend.append("userEmail", formData.userEmail.trim());
       }
     }
 
     try {
-      const BACKEND_BASE_URL = import.meta.env.VITE_BACKEND_BASE_URL || "http://localhost:5000";
+      const BACKEND_BASE_URL =
+        import.meta.env.VITE_BACKEND_BASE_URL || "http://localhost:5000";
       const response = await fetch(`${BACKEND_BASE_URL}/api/feedback`, {
-        method: 'POST',
-        body: formDataToSend
+        method: "POST",
+        body: formDataToSend,
       });
 
       if (response.ok) {
         const result = await response.json();
-        alert(`${reportType === 'bug' ? 'Bug report' : 'Feedback'} submitted successfully! Report #${result.reportNumber || result.id}`);
+        alert(
+          `${reportType === "bug" ? "Bug report" : "Feedback"} submitted successfully! Report #${result.reportNumber || result.id}`,
+        );
         handleCloseModal();
       } else {
-        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
-        let errorMessage = 'Failed to submit report. ';
+        const errorData = await response
+          .json()
+          .catch(() => ({ error: "Unknown error" }));
+        let errorMessage = "Failed to submit report. ";
         if (errorData.details && Array.isArray(errorData.details)) {
-          errorMessage += errorData.details.map(d => d.msg).join(', ');
+          errorMessage += errorData.details.map((d) => d.msg).join(", ");
         } else if (errorData.error) {
           errorMessage += errorData.error;
         } else {
-          errorMessage += 'Please try again.';
+          errorMessage += "Please try again.";
         }
         alert(errorMessage);
       }
     } catch (error) {
-      console.error('Error submitting report:', error);
-      alert('Network error. Please check your connection and try again.');
+      console.error("Error submitting report:", error);
+      alert("Network error. Please check your connection and try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -129,24 +138,18 @@ const FloatingBugButton = () => {
       URL.revokeObjectURL(screenshotPreview);
     }
     setScreenshotPreview(null);
-    setFormData(prev => ({ ...prev, screenshot: null }));
-    const fileInput = document.getElementById('screenshot');
-    if (fileInput) fileInput.value = '';
+    setFormData((prev) => ({ ...prev, screenshot: null }));
+    const fileInput = document.getElementById("screenshot");
+    if (fileInput) fileInput.value = "";
   };
 
   return (
     <>
-      <FloatingButton 
-        isOpen={isOpen} 
-        onClick={handleFloatingButtonClick} 
-      />
-      
-      <OptionsPanel 
-        isOpen={isOpen} 
-        onOptionSelect={handleOptionSelect} 
-      />
-      
-      <FeedbackModal 
+      <FloatingButton isOpen={isOpen} onClick={handleFloatingButtonClick} />
+
+      <OptionsPanel isOpen={isOpen} onOptionSelect={handleOptionSelect} />
+
+      <FeedbackModal
         isOpen={showModal}
         reportType={reportType}
         formData={formData}

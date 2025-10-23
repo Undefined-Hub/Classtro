@@ -22,8 +22,8 @@ const SessionSchema = new mongoose.Schema(
     endAt: { type: Date },
 
     maxStudents: { type: Number, default: 200 },
-    
-    participantCount: { type: Number, default: 0 },  // live concurrent count
+
+    participantCount: { type: Number, default: 0 }, // live concurrent count
     totalParticipants: { type: Number, default: 0 }, // unique participants joined
 
     metadata: { type: mongoose.Schema.Types.Mixed }, // poll configs, Q&A, etc.

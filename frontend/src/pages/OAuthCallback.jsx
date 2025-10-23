@@ -11,19 +11,19 @@ export default function OAuthCallback() {
   useEffect(() => {
     const handleOAuthCallback = () => {
       // Get OAuth result from URL parameters
-      const success = searchParams.get('success');
-      const error = searchParams.get('error');
-      const accessToken = searchParams.get('accessToken');
-      const userData = searchParams.get('user');
-      const isNewUser = searchParams.get('isNewUser') === 'true';
+      const success = searchParams.get("success");
+      const error = searchParams.get("error");
+      const accessToken = searchParams.get("accessToken");
+      const userData = searchParams.get("user");
+      const isNewUser = searchParams.get("isNewUser") === "true";
 
       // Get the return destination from localStorage
-      const returnTo = localStorage.getItem('oauth_return_to');
-      const timestamp = localStorage.getItem('oauth_timestamp');
+      const returnTo = localStorage.getItem("oauth_return_to");
+      const timestamp = localStorage.getItem("oauth_timestamp");
 
       // Clean up localStorage
-      localStorage.removeItem('oauth_return_to');
-      localStorage.removeItem('oauth_timestamp');
+      localStorage.removeItem("oauth_return_to");
+      localStorage.removeItem("oauth_timestamp");
 
       // Check if OAuth session is valid (within 10 minutes)
       if (timestamp && Date.now() - parseInt(timestamp) > 10 * 60 * 1000) {
@@ -35,7 +35,7 @@ export default function OAuthCallback() {
       if (error) {
         safeToast.error(decodeURIComponent(error));
         // Navigate back to the original page
-        if (returnTo === 'register') {
+        if (returnTo === "register") {
           navigate("/register", { replace: true });
         } else {
           navigate("/login", { replace: true });
@@ -43,14 +43,14 @@ export default function OAuthCallback() {
         return;
       }
 
-      if (success === 'true' && accessToken && userData) {
+      if (success === "true" && accessToken && userData) {
         try {
           const user = JSON.parse(decodeURIComponent(userData));
 
           // For existing users with roles, log them in directly
           if (!isNewUser && user.role && user.role !== "UNKNOWN") {
             login(user, accessToken);
-            
+
             // Navigate to dashboard based on role
             if (user.role === "TEACHER") {
               safeToast.success("Welcome back!");

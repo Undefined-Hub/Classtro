@@ -64,7 +64,9 @@ export const ParticipantSessionProvider = ({ children }) => {
   }, []);
 
   // Socket lifecycle - create once per provider when sessionData exists
-  const SOCKET_URL = (import.meta.env?.VITE_BACKEND_BASE_URL || "http://localhost:3000") + "/sessions";
+  const SOCKET_URL =
+    (import.meta.env?.VITE_BACKEND_BASE_URL || "http://localhost:3000") +
+    "/sessions";
   useEffect(() => {
     // only create when we have session data and no socket
     if (!sessionData || socketRef.current) return;
@@ -115,30 +117,30 @@ export const ParticipantSessionProvider = ({ children }) => {
       clearSession,
 
       sessionData,
-      setSessionData,      
+      setSessionData,
 
       activePoll,
       setActivePoll,
-      
-      broadcastMsg, 
+
+      broadcastMsg,
       setBroadcastMsg,
 
-      participantCount, 
+      participantCount,
       setParticipantCount,
-      
-      selectedOption, 
+
+      selectedOption,
       setSelectedOption,
 
-      pollSubmitting, 
+      pollSubmitting,
       setPollSubmitting,
 
-      pollSubmitted, 
+      pollSubmitted,
       setPollSubmitted,
 
-      pollId, 
-      setPollId
+      pollId,
+      setPollId,
     }),
-    [sessionData, activePoll, socketReady]
+    [sessionData, activePoll, socketReady],
   );
 
   return (
@@ -152,7 +154,7 @@ export const useParticipantSession = () => {
   const ctx = useContext(ParticipantSessionContext);
   if (!ctx)
     throw new Error(
-      "useParticipantSession must be used within ParticipantSessionProvider"
+      "useParticipantSession must be used within ParticipantSessionProvider",
     );
   return ctx;
 };

@@ -34,7 +34,7 @@ const PollManager = () => {
 
     // * Filter out any empty options
     const validOptions = pollFormData.options.filter(
-      (option) => option.trim() !== ""
+      (option) => option.trim() !== "",
     );
 
     // * Validate Question and Options
@@ -62,16 +62,15 @@ const PollManager = () => {
     };
 
     // * Debug Logs
-    
 
     // * API Call to create the poll
     const res = await api.post(
       `/api/sessions/${sessionData._id}/polls`,
-      pollData
+      pollData,
     );
 
     // * Set Active Poll
-    
+
     setActivePoll(res.data);
 
     // * Emit Socket Event for New Poll Creation
@@ -86,32 +85,29 @@ const PollManager = () => {
 
   // * Handle End Poll
   const handleEndPoll = async () => {
-      if (activePoll) {
-        
-  
-        // * Poll Object with End Parameters
-        const endedPoll = {
-          ...activePoll,
-          isActive: false,
-          endedAt: new Date().toISOString(),
-        };
-  
-        // * Api call to patch and make the poll isActive false
-        await api.patch(`/api/polls/${activePoll._id}`);
-  
-        // * Poll Close Socket Emit
-        
-        socketRef.current.emit("poll:close", {
-          code: sessionData.code,
-          pollId: activePoll._id,
-        });
-  
-        // * Add to Past Polls and Clear Active Poll
-        setPastPolls([endedPoll, ...pastPolls]);
-        setActivePoll(null);
-      }
-    };
+    if (activePoll) {
+      // * Poll Object with End Parameters
+      const endedPoll = {
+        ...activePoll,
+        isActive: false,
+        endedAt: new Date().toISOString(),
+      };
 
+      // * Api call to patch and make the poll isActive false
+      await api.patch(`/api/polls/${activePoll._id}`);
+
+      // * Poll Close Socket Emit
+
+      socketRef.current.emit("poll:close", {
+        code: sessionData.code,
+        pollId: activePoll._id,
+      });
+
+      // * Add to Past Polls and Clear Active Poll
+      setPastPolls([endedPoll, ...pastPolls]);
+      setActivePoll(null);
+    }
+  };
 
   // * Handle poll option change
   const handlePollOptionChange = (index, value) => {
@@ -146,8 +142,6 @@ const PollManager = () => {
 
   // * Fetch Past Polls and Active Polls for the Session (ISOLATED)
   const fetchPolls = async () => {
-    
-
     // * Validate Session._id
     if (!sessionData?._id) return;
 
@@ -155,7 +149,6 @@ const PollManager = () => {
     try {
       // * API call to fetch polls for a specific session (USING SESSION._ID)
       const res = await api.get(`/api/sessions/${sessionData._id}/polls`);
-      
 
       // * If res is array then set pastPolls and activePoll
       if (Array.isArray(res.data)) {
@@ -256,7 +249,7 @@ const PollManager = () => {
               onClick={() => {
                 if (activePoll) {
                   alert(
-                    "A poll is already active. Please end the current poll before creating a new one."
+                    "A poll is already active. Please end the current poll before creating a new one.",
                   );
                   return;
                 }

@@ -1,4 +1,4 @@
-import { useCallback, useRef } from 'react';
+import { useCallback, useRef } from "react";
 
 /**
  * Custom hook for debouncing function calls
@@ -9,17 +9,20 @@ import { useCallback, useRef } from 'react';
 export const useDebounce = (callback, delay) => {
   const timeoutRef = useRef(null);
 
-  const debouncedCallback = useCallback((...args) => {
-    // Clear existing timeout
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-    }
+  const debouncedCallback = useCallback(
+    (...args) => {
+      // Clear existing timeout
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
 
-    // Set new timeout
-    timeoutRef.current = setTimeout(() => {
-      callback(...args);
-    }, delay);
-  }, [callback, delay]);
+      // Set new timeout
+      timeoutRef.current = setTimeout(() => {
+        callback(...args);
+      }, delay);
+    },
+    [callback, delay],
+  );
 
   // Cleanup function to clear timeout on unmount
   const cancel = useCallback(() => {
@@ -42,29 +45,32 @@ export const useSubmitDebounce = (callback, delay = 300) => {
   const timeoutRef = useRef(null);
   const loadingRef = useRef(false);
 
-  const execute = useCallback(async (...args) => {
-    // Prevent multiple simultaneous calls
-    if (loadingRef.current) {
-      return;
-    }
-
-    // Clear existing timeout
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-    }
-
-    // Set new timeout
-    timeoutRef.current = setTimeout(async () => {
-      try {
-        loadingRef.current = true;
-        await callback(...args);
-      } catch (error) {
-        console.error('Debounced callback error:', error);
-      } finally {
-        loadingRef.current = false;
+  const execute = useCallback(
+    async (...args) => {
+      // Prevent multiple simultaneous calls
+      if (loadingRef.current) {
+        return;
       }
-    }, delay);
-  }, [callback, delay]);
+
+      // Clear existing timeout
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+
+      // Set new timeout
+      timeoutRef.current = setTimeout(async () => {
+        try {
+          loadingRef.current = true;
+          await callback(...args);
+        } catch (error) {
+          console.error("Debounced callback error:", error);
+        } finally {
+          loadingRef.current = false;
+        }
+      }, delay);
+    },
+    [callback, delay],
+  );
 
   const cancel = useCallback(() => {
     if (timeoutRef.current) {

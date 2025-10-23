@@ -35,11 +35,9 @@ const ParticipantLivePoll = () => {
 
   const totalVotes = activePoll.options.reduce(
     (sum, opt) => sum + (typeof opt.votes === "number" ? opt.votes : 0),
-    0
+    0,
   );
-  useEffect(() => {
-    
-  }, [activePoll]);
+  useEffect(() => {}, [activePoll]);
 
   const handlePollSubmit = (optionId) => {
     // * Guard clauses
@@ -51,7 +49,9 @@ const ParticipantLivePoll = () => {
     }
 
     // * Find option index and validate
-    const optionIndex = activePoll.options.findIndex((opt) => opt._id === optionId);
+    const optionIndex = activePoll.options.findIndex(
+      (opt) => opt._id === optionId,
+    );
     if (optionIndex === -1) return;
 
     // Optimistically mark selected option so UI updates immediately
@@ -80,7 +80,7 @@ const ParticipantLivePoll = () => {
         // server acknowledged
         setPollSubmitting(false);
         setPollSubmitted(true);
-      }
+      },
     );
 
     // Fallback: if server does not ack within 8s, clear submitting state

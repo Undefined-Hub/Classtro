@@ -23,7 +23,7 @@ function setupSockets(server) {
   function emitRoomUpdate(namespace, code) {
     const roomName = `session:${code}`;
     const socketsInRoom = Array.from(
-      namespace.adapter.rooms.get(roomName) || []
+      namespace.adapter.rooms.get(roomName) || [],
     );
     const count = socketsInRoom.length;
 
@@ -55,7 +55,7 @@ function setupSockets(server) {
           (pollCounts[pollId][optionIndex] || 0) + 1;
         voteMap[pollId][participantId] = optionIndex;
         console.log(
-          `🗳️ Vote recorded: Poll ${pollId}, Participant ${participantId}, Option ${optionIndex}`
+          `🗳️ Vote recorded: Poll ${pollId}, Participant ${participantId}, Option ${optionIndex}`,
         );
 
         // Update MongoDB poll option votes to match in-memory counts
@@ -76,7 +76,7 @@ function setupSockets(server) {
         sessionNamespace
           .to(`session:${code}`)
           .emit("poll:update", { pollId, counts: pollCounts[pollId] });
-      }
+      },
     );
 
     // --- JOIN SESSION ---
@@ -96,7 +96,7 @@ function setupSockets(server) {
     // --- TEACHER BROADCAST MESSAGE ---
     socket.on("broadcast:teacher", ({ code, message, teacherId }) => {
       console.log(
-        `📢 Teacher ${teacherId} broadcast in session ${code}: ${message}`
+        `📢 Teacher ${teacherId} broadcast in session ${code}: ${message}`,
       );
 
       // Send message to all in this session (students + teacher if connected)
@@ -120,28 +120,30 @@ function setupSockets(server) {
     // --- SESSION END ---
     socket.on("session:end", ({ code }, callback) => {
       console.log(`⏹️ Session ${code} end request received from ${socket.id}`);
-      
+
       try {
         // Emit to all participants that session has ended
         sessionNamespace.to(`session:${code}`).emit("session:ended");
-        console.log(`📢 Session ended notification sent to all participants in ${code}`);
-        
+        console.log(
+          `📢 Session ended notification sent to all participants in ${code}`,
+        );
+
         // Remove all sockets from the session room
         sessionNamespace.in(`session:${code}`).socketsLeave(`session:${code}`);
         console.log(`🧹 All sockets removed from session:${code}`);
-        
+
         // Send acknowledgment to confirm successful processing
-        if (callback && typeof callback === 'function') {
-          callback({ success: true, message: 'Session ended successfully' });
+        if (callback && typeof callback === "function") {
+          callback({ success: true, message: "Session ended successfully" });
           console.log(`✅ Acknowledgment sent for session ${code}`);
         }
-        
+
         console.log(`⏹️ Session ${code} cleanup completed successfully`);
       } catch (error) {
         console.error(`❌ Error ending session ${code}:`, error);
-        
+
         // Send error acknowledgment
-        if (callback && typeof callback === 'function') {
+        if (callback && typeof callback === "function") {
           callback({ success: false, error: error.message });
         }
       }

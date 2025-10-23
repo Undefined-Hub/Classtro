@@ -1,8 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 
-
-
 const SessionCard = ({ session, onSessionClick, selectedRoom }) => {
   const navigate = useNavigate();
 

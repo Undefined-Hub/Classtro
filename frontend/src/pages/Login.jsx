@@ -16,7 +16,10 @@ function Login({ onLogin }) {
   const { execute: debouncedLogin } = useSubmitDebounce(async () => {
     const pending = safeToast.loading("Signing in...");
     try {
-      const res = await api.post('/api/auth/login', { email: username, password });
+      const res = await api.post("/api/auth/login", {
+        email: username,
+        password,
+      });
       let data = res.data || {};
       if (res.status === 200 && data.user && data.accessToken) {
         login(data.user, data.accessToken);
@@ -34,7 +37,7 @@ function Login({ onLogin }) {
         safeToast.dismiss(pending);
         safeToast.error(
           data.message ||
-          "Login failed. Please check your credentials and try again.",
+            "Login failed. Please check your credentials and try again.",
         );
       }
     } catch (err) {
@@ -95,9 +98,9 @@ function Login({ onLogin }) {
   // Redirect-based Google login for better mobile compatibility
   const { execute: debouncedGoogleLogin } = useSubmitDebounce(() => {
     // Store the current page info to return here after OAuth
-    localStorage.setItem('oauth_return_to', 'login');
-    localStorage.setItem('oauth_timestamp', Date.now().toString());
-    
+    localStorage.setItem("oauth_return_to", "login");
+    localStorage.setItem("oauth_timestamp", Date.now().toString());
+
     // Redirect to Google OAuth (no popup)
     window.location.href = `${BACKEND_URL}/api/auth/google?redirect_to=login`;
   }, 1000); // 1s debounce for Google login to prevent multiple redirects

@@ -1,8 +1,8 @@
 import React from "react";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
-import Hero from '../components/Hero'
-import Details from '../components/Details'
+import Hero from "../components/Hero";
+import Details from "../components/Details";
 
 function Landing() {
   return (
@@ -14,7 +14,7 @@ function Landing() {
       </main>
       <Footer />
     </div>
-  )
+  );
 }
 
 export default Landing;

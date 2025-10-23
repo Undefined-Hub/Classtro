@@ -35,7 +35,7 @@ export default function Register() {
     try {
       const res = await api.post(`/api/auth/register`, form);
       const data = res.data || {};
-      
+
       if (res.status == 201) {
         // Show success toast
         safeToast.success(
@@ -48,13 +48,13 @@ export default function Register() {
         }
         safeToast.dismiss(pendingToastId);
         // Redirect to verification page, pass email for verification
-        navigate("/verify", { 
-          state: { 
-            email: form.email, 
+        navigate("/verify", {
+          state: {
+            email: form.email,
             step: 1,
             google: false,
-            oauth: false 
-          } 
+            oauth: false,
+          },
         });
       } else {
         safeToast.dismiss(pendingToastId);
@@ -76,9 +76,9 @@ export default function Register() {
   // Redirect-based Google registration for better mobile compatibility
   const { execute: debouncedGoogleRegister } = useSubmitDebounce(() => {
     // Store the current page info to return here after OAuth
-    localStorage.setItem('oauth_return_to', 'register');
-    localStorage.setItem('oauth_timestamp', Date.now().toString());
-    
+    localStorage.setItem("oauth_return_to", "register");
+    localStorage.setItem("oauth_timestamp", Date.now().toString());
+
     // Redirect to Google OAuth (no popup)
     window.location.href = `${BACKEND_URL}/api/auth/google?redirect_to=register`;
   }, 1000); // 1s debounce for Google registration

@@ -1,4 +1,4 @@
-import React,{useRef, useEffect, useState} from "react";
+import React, { useRef, useEffect, useState } from "react";
 import ParticipantLivePoll from "./ParticipantLivePoll";
 import { useParticipantSession } from "../../context/ParticipantSessionContext";
 const WelcomeContent = ({
@@ -26,48 +26,46 @@ const WelcomeContent = ({
     <div className="max-w-4xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
       <div className="text-center">
         <>
-          {
-            (!activePoll && !broadcastMsg && !hasInteracted) ? (
-              <>
-                <div className="mx-auto flex items-center justify-center w-20 h-20 sm:w-24 sm:h-24 bg-gradient-to-br from-green-100 via-green-50 to-green-200 dark:from-green-900/40 dark:via-green-900/20 dark:to-green-800 rounded-full shadow-lg mb-8">
-                  <svg
-                    className="w-10 h-10 sm:w-12 sm:h-12 text-green-600 dark:text-green-400"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M5 13l4 4L19 7"
-                    />
-                  </svg>
-                </div>
-                <p className="text-xl sm:text-2xl font-semibold text-gray-800 dark:text-gray-100 mb-6 px-2 tracking-tight">
-                  Successfully joined the session
-                </p>
-                <div className="flex justify-center">
-                  <span className="inline-block px-4 py-2 rounded-lg bg-white dark:bg-gray-800 shadow text-sm text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700">
-                    Waiting for host to start a poll or send an announcement
-                  </span>
-                </div>
-              </>
-            ) : (
-              <>
-                <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-900 dark:text-white mb-4 tracking-tight">
-                  {activePoll ? "Live Polls" : "Session Updates"}
-                </h1>
-                <div className="flex justify-center">
-                  <span className="inline-block px-4 py-2 rounded-lg bg-blue-50 dark:bg-blue-900/20 shadow text-sm text-blue-800 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
-                    {activePoll
-                      ? "Participate in real-time polls from your host"
-                      : "Stay tuned for announcements and activities"}
-                  </span>
-                </div>
-              </>
-            )
-          }
+          {!activePoll && !broadcastMsg && !hasInteracted ? (
+            <>
+              <div className="mx-auto flex items-center justify-center w-20 h-20 sm:w-24 sm:h-24 bg-gradient-to-br from-green-100 via-green-50 to-green-200 dark:from-green-900/40 dark:via-green-900/20 dark:to-green-800 rounded-full shadow-lg mb-8">
+                <svg
+                  className="w-10 h-10 sm:w-12 sm:h-12 text-green-600 dark:text-green-400"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M5 13l4 4L19 7"
+                  />
+                </svg>
+              </div>
+              <p className="text-xl sm:text-2xl font-semibold text-gray-800 dark:text-gray-100 mb-6 px-2 tracking-tight">
+                Successfully joined the session
+              </p>
+              <div className="flex justify-center">
+                <span className="inline-block px-4 py-2 rounded-lg bg-white dark:bg-gray-800 shadow text-sm text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700">
+                  Waiting for host to start a poll or send an announcement
+                </span>
+              </div>
+            </>
+          ) : (
+            <>
+              <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-900 dark:text-white mb-4 tracking-tight">
+                {activePoll ? "Live Polls" : "Session Updates"}
+              </h1>
+              <div className="flex justify-center">
+                <span className="inline-block px-4 py-2 rounded-lg bg-blue-50 dark:bg-blue-900/20 shadow text-sm text-blue-800 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+                  {activePoll
+                    ? "Participate in real-time polls from your host"
+                    : "Stay tuned for announcements and activities"}
+                </span>
+              </div>
+            </>
+          )}
 
           <div className="my-4 sm:mt-6 inline-flex items-center justify-center px-2.5 py-1 bg-gray-100 dark:bg-gray-800 rounded-full">
             <svg
@@ -102,7 +100,7 @@ const WelcomeContent = ({
             </div>
           </div>
 
-          {activePoll && <ParticipantLivePoll/>}
+          {activePoll && <ParticipantLivePoll />}
 
           {/* Only show "Waiting for Host" if there is NO activePoll and NO broadcastMsg */}
           {!activePoll && !broadcastMsg && (
@@ -128,7 +126,7 @@ const WelcomeContent = ({
               </p>
             </div>
           )}
-          
+
           {/* Show broadcast message if present and no activePoll */}
           {!activePoll && broadcastMsg && (
             <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-6 max-w-lg mx-auto mt-8 animate-fade-in">
@@ -174,7 +172,6 @@ const WelcomeContent = ({
       </div>
     </div>
   );
-
 };
 
 export default WelcomeContent;

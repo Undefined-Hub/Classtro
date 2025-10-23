@@ -1,6 +1,14 @@
-import React from 'react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { useAnalyticsData } from '../../context/AnalyticsContext';
+import React from "react";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
+import { useAnalyticsData } from "../../context/AnalyticsContext";
 
 const ParticipantTimeline = () => {
   const { analyticsData, loading } = useAnalyticsData();
@@ -50,53 +58,65 @@ const ParticipantTimeline = () => {
           <span>Active Count</span>
         </div>
       </div>
-      
+
       <div className="h-48 sm:h-56 md:h-64 flex-1">
         <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={participantsTimeline} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.3} />
-            <XAxis 
-              dataKey="time" 
+          <LineChart
+            data={participantsTimeline}
+            margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+          >
+            <CartesianGrid
+              strokeDasharray="3 3"
+              stroke="#374151"
+              opacity={0.3}
+            />
+            <XAxis
+              dataKey="time"
               stroke="#6B7280"
               fontSize={10}
               tick={{ fontSize: 10 }}
               interval="preserveStartEnd"
             />
-            <YAxis 
+            <YAxis
               stroke="#6B7280"
               fontSize={10}
               tick={{ fontSize: 10 }}
               width={30}
             />
             <Tooltip content={<CustomTooltip />} />
-            <Line 
-              type="monotone" 
-              dataKey="activeCount" 
-              stroke="#3B82F6" 
+            <Line
+              type="monotone"
+              dataKey="activeCount"
+              stroke="#3B82F6"
               strokeWidth={2}
-              dot={{ fill: '#3B82F6', strokeWidth: 1, r: 3 }}
-              activeDot={{ r: 5, stroke: '#3B82F6', strokeWidth: 2 }}
+              dot={{ fill: "#3B82F6", strokeWidth: 1, r: 3 }}
+              activeDot={{ r: 5, stroke: "#3B82F6", strokeWidth: 2 }}
             />
           </LineChart>
         </ResponsiveContainer>
       </div>
-      
+
       <div className="mt-3 sm:mt-4 grid grid-cols-3 gap-2 sm:gap-4">
         <div className="text-center p-2 sm:p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
           <div className="text-sm sm:text-lg font-semibold text-gray-900 dark:text-white">
-            {Math.max(...participantsTimeline.map(p => p.activeCount))}
+            {Math.max(...participantsTimeline.map((p) => p.activeCount))}
           </div>
           <div className="text-xs text-gray-500 dark:text-gray-400">Peak</div>
         </div>
         <div className="text-center p-2 sm:p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
           <div className="text-sm sm:text-lg font-semibold text-gray-900 dark:text-white">
-            {Math.round(participantsTimeline.reduce((sum, p) => sum + p.activeCount, 0) / participantsTimeline.length)}
+            {Math.round(
+              participantsTimeline.reduce((sum, p) => sum + p.activeCount, 0) /
+                participantsTimeline.length,
+            )}
           </div>
-          <div className="text-xs text-gray-500 dark:text-gray-400">Average</div>
+          <div className="text-xs text-gray-500 dark:text-gray-400">
+            Average
+          </div>
         </div>
         <div className="text-center p-2 sm:p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
           <div className="text-sm sm:text-lg font-semibold text-gray-900 dark:text-white">
-            {Math.min(...participantsTimeline.map(p => p.activeCount))}
+            {Math.min(...participantsTimeline.map((p) => p.activeCount))}
           </div>
           <div className="text-xs text-gray-500 dark:text-gray-400">Lowest</div>
         </div>

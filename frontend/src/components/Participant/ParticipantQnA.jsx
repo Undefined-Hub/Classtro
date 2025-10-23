@@ -125,7 +125,7 @@ const ParticipantQnA = ({
   }, [askOpen]);
 
   // Inline ask panel component
-  
+
   return (
     <div className="max-w-xs sm:max-w-md lg:max-w-lg mx-auto px-1 sm:px-0">
       {/* Make the QnA container visually blend with the page background by removing
@@ -195,7 +195,6 @@ const ParticipantQnA = ({
             </div>
           ) : (
             <div className="divide-y divide-gray-200 dark:divide-gray-600">
-
               {[...questions]
                 .sort((a, b) => {
                   if ((b.upvotes || 0) !== (a.upvotes || 0))

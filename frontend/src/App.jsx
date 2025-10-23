@@ -5,7 +5,6 @@ import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import { useAuth } from "./context/UserContext.jsx";
 import FloatingBugButton from "./components/FloatingBugButton.jsx";
 
-
 const Landing = lazy(() => import("./pages/Landing"));
 const Login = lazy(() => import("./pages/Login"));
 const DashboardPage = lazy(() => import("./pages/Host/DashboardPage.jsx"));
@@ -13,9 +12,15 @@ const DashboardLayout = lazy(() => import("./components/DashboardLayout.jsx"));
 const RoomsPage = lazy(() => import("./pages/Host/RoomsPage.jsx"));
 const SessionsPage = lazy(() => import("./pages/Host/SessionsPage.jsx"));
 const RoomDetailPage = lazy(() => import("./pages/Host/RoomDetailPage.jsx"));
-const SessionWorkspace = lazy(() => import("./pages/Host/SessionWorkspace.jsx"));
-const ParticipantHome = lazy(() => import("./pages/Participant/ParticipantHome"));
-const ParticipantSession = lazy(() => import("./pages/Participant/ParticipantSession"));
+const SessionWorkspace = lazy(
+  () => import("./pages/Host/SessionWorkspace.jsx"),
+);
+const ParticipantHome = lazy(
+  () => import("./pages/Participant/ParticipantHome"),
+);
+const ParticipantSession = lazy(
+  () => import("./pages/Participant/ParticipantSession"),
+);
 const NotFound = lazy(() => import("./pages/NotFound"));
 const Unauthorized = lazy(() => import("./pages/Unauthorized"));
 const Register = lazy(() => import("./pages/Register"));
@@ -25,7 +30,7 @@ const OAuthCallback = lazy(() => import("./pages/OAuthCallback.jsx"));
 
 const BACKEND_BASE_URL =
   import.meta.env.VITE_BACKEND_BASE_URL || "http://localhost:3000";
-// 
+//
 
 function App() {
   const navigate = useNavigate();
@@ -50,25 +55,29 @@ function App() {
         <Route path="/login" element={<Login onLogin={handleLogin} />} />
         <Route path="/register" element={<Register />} />
         <Route path="/verify" element={<VerifyAndRole />} />
-        <Route path="/auth/callback" element={<OAuthCallback onLogin={handleLogin} />} />
+        <Route
+          path="/auth/callback"
+          element={<OAuthCallback onLogin={handleLogin} />}
+        />
         {/* Protected routes group */}
         <Route element={<ProtectedRoute roles={["TEACHER"]} />}>
           {/* Redirect /dashboard to /dashboard/rooms */}
-          <Route path="/dashboard" element={<Navigate to="/dashboard/rooms" replace />} />
-          
+          <Route
+            path="/dashboard"
+            element={<Navigate to="/dashboard/rooms" replace />}
+          />
+
           {/* Dashboard with nested routes */}
           <Route path="/dashboard" element={<DashboardLayout />}>
             <Route path="rooms" element={<RoomsPage />} />
             <Route path="rooms/:roomId" element={<RoomDetailPage />} />
             <Route path="sessions" element={<SessionsPage />} />
           </Route>
-          
-          <Route
-            path="/test/sessionWorkspace"
-            element={<SessionWorkspace />}/>
-            <Route path="/analytics" element={<AnalyticsPage/>} />
+
+          <Route path="/test/sessionWorkspace" element={<SessionWorkspace />} />
+          <Route path="/analytics" element={<AnalyticsPage />} />
         </Route>
-        
+
         <Route element={<ProtectedRoute roles={["STUDENT"]} />}>
           <Route path="/participant/home" element={<ParticipantHome />} />
           <Route path="/participant/session" element={<ParticipantSession />} />
@@ -76,7 +85,7 @@ function App() {
         <Route path="/unauthorized" element={<Unauthorized />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
-      
+
       {/* Floating Bug Report Button - appears on all pages */}
       <FloatingBugButton />
     </>

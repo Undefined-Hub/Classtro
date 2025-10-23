@@ -59,7 +59,9 @@ function DashboardPage() {
       setRoomsLoading(true);
       setRoomsError(null);
       try {
-        const res = await api.get(`/api/rooms/?page=${currentPage}&limit=${pageSize}`);
+        const res = await api.get(
+          `/api/rooms/?page=${currentPage}&limit=${pageSize}`,
+        );
         if (res.status != 200) throw new Error("Failed to fetch rooms");
         const data = res.data || {};
 
@@ -105,9 +107,7 @@ function DashboardPage() {
     setSessionsError(null);
 
     try {
-      const res = await api.get(
-        `/api/rooms/${roomId}/sessions`
-      );
+      const res = await api.get(`/api/rooms/${roomId}/sessions`);
 
       if (res.status != 200) {
         throw new Error("Failed to fetch sessions");
@@ -142,17 +142,15 @@ function DashboardPage() {
     setCreateRoomLoading(true);
 
     try {
-
       // Make API call to create room
       const res = await api.post(`/api/rooms/`, {
-          name: roomFormData.name,
-          description: roomFormData.description,
-          defaultMaxStudents: roomFormData.defaultMaxStudents,
+        name: roomFormData.name,
+        description: roomFormData.description,
+        defaultMaxStudents: roomFormData.defaultMaxStudents,
       });
 
       // Check if response is ok
       if (res.status != 201) {
-        
         const errorData = res.error;
         throw new Error(errorData || "Failed to create room");
       }
@@ -169,7 +167,6 @@ function DashboardPage() {
       setRoomFormData({ name: "", description: "", defaultMaxStudents: 200 });
 
       // Show success message (you might want to add a toast notification here)
-      
     } catch (error) {
       // Handle error
       setCreateRoomError(error.message || "Failed to create room");
@@ -193,10 +190,10 @@ function DashboardPage() {
       // Get auth token from localStorage
 
       // Make API call to create session
-      const res = await api.post(`/api/rooms/${selectedRoom._id}/sessions`,{
-            title: sessionFormData.title,
-            maxStudents: sessionFormData.maxStudents,
-          });
+      const res = await api.post(`/api/rooms/${selectedRoom._id}/sessions`, {
+        title: sessionFormData.title,
+        maxStudents: sessionFormData.maxStudents,
+      });
 
       // Check if response is ok
       if (res.status != 201) {
@@ -210,8 +207,6 @@ function DashboardPage() {
       // Update sessions state with the new session
       // Add to the beginning of the array to show it at the top of the list
       setSessions((prevSessions) => [sessionData, ...prevSessions]);
-
-      
 
       // Close the modal
       setShowCreateSessionModal(false);
@@ -245,7 +240,7 @@ function DashboardPage() {
 
   const handleSessionClick = (session) => {
     // Navigate to the session workspace with session data as state
-    
+
     navigate("/test/sessionWorkspace", {
       state: {
         sessionId: session._id,

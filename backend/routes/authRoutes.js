@@ -42,7 +42,10 @@ router.post("/register", registerUser);
 
 router.get(
   "/google",
-  passport.authenticate("google", { scope: ["profile", "email"],prompt: 'select_account' }),
+  passport.authenticate("google", {
+    scope: ["profile", "email"],
+    prompt: "select_account",
+  }),
 );
 
 router.get(
@@ -57,7 +60,7 @@ router.get(
 // Handle OAuth failures
 router.get("/google/failure", (req, res) => {
   const targetOrigin = process.env.CLIENT_ORIGIN || "http://localhost:5173";
-  
+
   const html = `<!DOCTYPE html>
   <html lang="en">
     <head>

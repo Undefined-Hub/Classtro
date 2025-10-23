@@ -59,7 +59,9 @@ function SessionsPage() {
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600 dark:text-gray-400">Loading sessions...</p>
+          <p className="mt-4 text-gray-600 dark:text-gray-400">
+            Loading sessions...
+          </p>
         </div>
       </div>
     );
@@ -69,11 +71,23 @@ function SessionsPage() {
     return (
       <div className="text-center py-8">
         <div className="text-red-600 dark:text-red-400 mb-4">
-          <svg className="w-12 h-12 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          <svg
+            className="w-12 h-12 mx-auto mb-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+            />
           </svg>
           <p className="text-lg font-medium">Error loading sessions</p>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">{roomsError}</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
+            {roomsError}
+          </p>
         </div>
         <button
           onClick={() => window.location.reload()}
@@ -90,10 +104,7 @@ function SessionsPage() {
       <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6">
         All Sessions
       </h2>
-      <AllSessionsTable
-        rooms={rooms}
-        onSessionClick={handleSessionClick}
-      />
+      <AllSessionsTable rooms={rooms} onSessionClick={handleSessionClick} />
     </>
   );
 }

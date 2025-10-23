@@ -38,7 +38,9 @@ function RoomsPage() {
       setRoomsLoading(true);
       setRoomsError(null);
       try {
-        const res = await api.get(`/api/rooms/?page=${currentPage}&limit=${pageSize}`);
+        const res = await api.get(
+          `/api/rooms/?page=${currentPage}&limit=${pageSize}`,
+        );
         if (res.status != 200) throw new Error("Failed to fetch rooms");
         const data = res.data || {};
 
@@ -73,7 +75,7 @@ function RoomsPage() {
   const handleRoomClick = (room) => {
     // Navigate to the specific room's sessions page
     navigate(`/dashboard/rooms/${room._id}`, {
-      state: { room }
+      state: { room },
     });
   };
 
@@ -89,9 +91,9 @@ function RoomsPage() {
     try {
       // Make API call to create room
       const res = await api.post(`/api/rooms/`, {
-          name: roomFormData.name,
-          description: roomFormData.description,
-          defaultMaxStudents: roomFormData.defaultMaxStudents,
+        name: roomFormData.name,
+        description: roomFormData.description,
+        defaultMaxStudents: roomFormData.defaultMaxStudents,
       });
 
       // Check if response is ok
@@ -110,7 +112,6 @@ function RoomsPage() {
 
       // Reset form data
       setRoomFormData({ name: "", description: "", defaultMaxStudents: 200 });
-
     } catch (error) {
       // Handle error
       setCreateRoomError(error.message || "Failed to create room");
