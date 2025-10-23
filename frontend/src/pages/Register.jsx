@@ -73,72 +73,14 @@ export default function Register() {
     debouncedRegister();
   };
 
-  // Debounced Google registration to prevent multiple popups
+  // Redirect-based Google registration for better mobile compatibility
   const { execute: debouncedGoogleRegister } = useSubmitDebounce(() => {
-    const popup = window.open(
-      `${BACKEND_URL}/api/auth/google?prompt=select_account`,
-      "google-oauth",
-      "width=500,height=600,scrollbars=yes,resizable=yes",
-    );
-
-    // Listen for messages from the popup
-    const messageListener = (event) => {
-      // Only accept messages from our backend origin (the popup)
-      try {
-        const backendOrigin = new URL(BACKEND_URL).origin;
-        if (event.origin !== backendOrigin) return;
-      } catch (err) {
-        return;
-      }
-
-      if (event.data.type === "OAUTH_SUCCESS") {
-        const { accessToken, user, isNewUser } = event.data;
-
-        // For existing users with roles, log them in directly
-        if (!isNewUser && user.role && user.role !== "UNKNOWN") {
-          login(user, accessToken);
-          if (user.role === "TEACHER") {
-            navigate("/dashboard", { replace: true });
-          } else if (user.role === "STUDENT") {
-            navigate("/participant/home", { replace: true });
-          }
-        } else {
-          // For new users or existing users without roles, go to role selection
-          // Note: We don't log them in yet - this happens after role selection
-          navigate("/verify", {
-            replace: true,
-            state: {
-              step: 2,
-              google: true,
-              email: user.email,
-              oauth: true,
-              accessToken, // Pass token to be used after role selection
-              user, // Pass user data
-            },
-          });
-        }
-
-        // Cleanup popup and listener
-        popup.close();
-        window.removeEventListener("message", messageListener);
-      } else if (event.data.type === "OAUTH_ERROR") {
-        const errorMessage = event.data.message || "OAuth registration failed";
-        setError(errorMessage);
-        safeToast.error(errorMessage);
-        popup.close();
-        window.removeEventListener("message", messageListener);
-      }
-    };
-
-    window.addEventListener("message", messageListener);
-
-    // Handle popup being closed manually
-    const checkClosed = setInterval(() => {
-      if (popup.closed) {
-        window.removeEventListener("message", messageListener);
-        clearInterval(checkClosed);
-      }
-    }, 1000);
+    // Store the current page info to return here after OAuth
+    localStorage.setItem('oauth_return_to', 'register');
+    localStorage.setItem('oauth_timestamp', Date.now().toString());
+    
+    // Redirect to Google OAuth (no popup)
+    window.location.href = `${BACKEND_URL}/api/auth/google?redirect_to=register`;
   }, 1000); // 1s debounce for Google registration
 
   const handleGoogleRegister = () => {

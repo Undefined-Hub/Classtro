@@ -168,85 +168,58 @@ const registerUser = async (req, res) => {
 };
 
 const googleAuthCallback = async (req, res) => {
-  // Generate access token
-  const payload = { user: { id: req.user.id } };
-  const accessToken = generateToken(payload, process.env.JWT_SECRET, {
-    expiresIn: "1h",
-  });
+  try {
+    const user = req.user; // This comes from Passport after successful authentication
 
-  // Generate refresh token
-  const refreshToken = generateToken(payload, process.env.JWT_REFRESH_SECRET, {
-    expiresIn: "7d",
-  });
+    if (!user) {
+      // Handle authentication failure
+      return res.redirect(`http://localhost:5173/auth/callback?error=authentication_failed`);
+    }
 
-  req.user.refreshToken = refreshToken;
-  await req.user.save();
+    // Generate access token
+    const payload = { user: { id: user.id } };
+    const accessToken = generateToken(payload, process.env.JWT_SECRET, {
+      expiresIn: "1h",
+    });
 
-  res.cookie("refreshToken", refreshToken, {
-    httpOnly: true,
-    secure: true,
-    sameSite: "Strict",
-  });
+    // Generate refresh token
+    const refreshToken = generateToken(payload, process.env.JWT_REFRESH_SECRET, {
+      expiresIn: "7d",
+    });
 
-  // Instead of redirecting the popup, send a tiny HTML bridge that
-  // postMessages the result to the opener (main window) and then closes itself.
-  // This enables the main window to decide where to navigate next.
-  const safeUser = {
-    id: req.user.id,
-    name: req.user.name,
-    username: req.user.username,
-    email: req.user.email,
-    role: req.user.role,
-    profilePicture: req.user.profilePicture,
-  };
+    user.refreshToken = refreshToken;
+    await user.save();
 
-  const payloadForOpener = {
-    type: "OAUTH_SUCCESS",
-    accessToken,
-    user: safeUser,
-    isNewUser: req.user.isNewUser || false, // Include isNewUser flag
-  };
+    // Set refresh token cookie
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "Strict",
+    });
 
-  const targetOrigin = process.env.CLIENT_ORIGIN || "http://localhost:5173"; // Frontend origin
+    // Prepare user data
+    const safeUser = {
+      id: user.id,
+      name: user.name,
+      username: user.username,
+      email: user.email,
+      role: user.role,
+      profilePicture: user.profilePicture,
+    };
 
-  const html = `<!DOCTYPE html>
-  <html lang="en">
-    <head>
-      <meta charset="UTF-8" />
-      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-      <title>Signing you in...</title>
-      <style>
-        body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; margin: 0; display: grid; place-items: center; height: 100vh; color: #111; }
-        .box { text-align: center; }
-      </style>
-    </head>
-    <body>
-      <div class="box">
-        <p>Successfully authenticated. You can close this window.</p>
-      </div>
-      <script>
-        (function() {
-          try {
-            var data = ${JSON.stringify(payloadForOpener)};
-            if (window.opener && !window.opener.closed) {
-              window.opener.postMessage(data, ${JSON.stringify(targetOrigin)});
-            }
-          } catch (e) {
-            try {
-              if (window.opener && !window.opener.closed) {
-                window.opener.postMessage({ type: 'OAUTH_ERROR', message: 'Failed to deliver token' }, '*');
-              }
-            } catch (_) {}
-          } finally {
-            // Allow a brief moment for the message to be delivered before closing
-            setTimeout(function(){ window.close(); }, 300);
-          }
-        })();
-      </script>
-    </body>
-  </html>`;
+    // Redirect to frontend callback with auth data
+    const callbackUrl = new URL('http://localhost:5173/auth/callback');
+    callbackUrl.searchParams.set('success', 'true');
+    callbackUrl.searchParams.set('accessToken', accessToken);
+    callbackUrl.searchParams.set('user', JSON.stringify(safeUser));
+    callbackUrl.searchParams.set('isNewUser', user.isNewUser || false);
+    
+    res.redirect(callbackUrl.toString());
 
-  res.status(200).send(html);
+  } catch (error) {
+    console.error('Google OAuth callback error:', error);
+    res.redirect(`http://localhost:5173/auth/callback?error=internal_error`);
+  }
 };
 
 const refreshToken = async (req, res) => {

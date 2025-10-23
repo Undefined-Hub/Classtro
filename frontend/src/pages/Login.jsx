@@ -92,78 +92,15 @@ function Login({ onLogin }) {
     debouncedLogin();
   };
 
-  // Debounced Google login to prevent multiple popup windows
+  // Redirect-based Google login for better mobile compatibility
   const { execute: debouncedGoogleLogin } = useSubmitDebounce(() => {
-    const popup = window.open(
-      `${BACKEND_URL}/api/auth/google?prompt=select_account`,
-      "google-oauth",
-      "width=500,height=600,scrollbars=yes,resizable=yes",
-    );
-
-    // Listen for messages from the popup
-    const messageListener = (event) => {
-      // Only accept messages from our backend origin (the popup)
-      try {
-        const backendOrigin = new URL(BACKEND_URL).origin;
-        // 
-        // 
-        if (event.origin !== backendOrigin) return;
-      } catch (err) {
-        return;
-      }
-
-      if (event.data.type === "OAUTH_SUCCESS") {
-        const { accessToken, user, isNewUser } = event.data;
-
-        // For existing users with roles, log them in directly
-        if (!isNewUser && user.role && user.role !== "UNKNOWN") {
-          // Persist auth and update app state via context
-          login(user, accessToken);
-          // Navigate to dashboard based on role
-          if (user.role === "TEACHER") {
-            navigate("/dashboard", { replace: true });
-          } else if (user.role === "STUDENT") {
-            navigate("/participant/home", { replace: true });
-          }
-        } else {
-          // For new users or existing users without roles, go to role selection
-          // Note: We don't log them in yet - this happens after role selection
-          navigate("/verify", {
-            replace: true,
-            state: {
-              step: 2,
-              google: true,
-              email: user.email,
-              oauth: true,
-              accessToken, // Pass token to be used after role selection
-              user, // Pass user data
-            },
-          });
-        }
-
-        // Cleanup popup, listener and interval
-        popup.close();
-        window.removeEventListener("message", messageListener);
-        if (checkClosed) clearInterval(checkClosed);
-      } else if (event.data.type === "OAUTH_ERROR") {
-        const errorMessage = event.data.message || "OAuth login failed";
-        safeToast.error(errorMessage);
-        popup.close();
-        window.removeEventListener("message", messageListener);
-        if (checkClosed) clearInterval(checkClosed);
-      }
-    };
-
-    window.addEventListener("message", messageListener);
-
-    // Handle popup being closed manually
-    let checkClosed = setInterval(() => {
-      if (popup.closed) {
-        window.removeEventListener("message", messageListener);
-        clearInterval(checkClosed);
-      }
-    }, 1000);
-  }, 1000); // 1s debounce for Google login to prevent multiple popups
+    // Store the current page info to return here after OAuth
+    localStorage.setItem('oauth_return_to', 'login');
+    localStorage.setItem('oauth_timestamp', Date.now().toString());
+    
+    // Redirect to Google OAuth (no popup)
+    window.location.href = `${BACKEND_URL}/api/auth/google?redirect_to=login`;
+  }, 1000); // 1s debounce for Google login to prevent multiple redirects
 
   const handleGoogleLogin = () => {
     debouncedGoogleLogin();

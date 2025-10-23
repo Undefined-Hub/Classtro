@@ -17,6 +17,7 @@ const Unauthorized = lazy(() => import("./pages/Unauthorized"));
 const Register = lazy(() => import("./pages/Register"));
 const VerifyAndRole = lazy(() => import("./pages/VerifyAndRole"));
 const AnalyticsPage = lazy(() => import("./pages/Host/AnalyticsPage.jsx"));
+const OAuthCallback = lazy(() => import("./pages/OAuthCallback.jsx"));
 
 const BACKEND_BASE_URL =
   import.meta.env.VITE_BACKEND_BASE_URL || "http://localhost:3000";
@@ -45,6 +46,7 @@ function App() {
         <Route path="/login" element={<Login onLogin={handleLogin} />} />
         <Route path="/register" element={<Register />} />
         <Route path="/verify" element={<VerifyAndRole />} />
+        <Route path="/auth/callback" element={<OAuthCallback onLogin={handleLogin} />} />
         {/* Protected routes group */}
         <Route element={<ProtectedRoute roles={["TEACHER"]} />}>
           <Route path="/dashboard" element={<DashboardPage />} />
