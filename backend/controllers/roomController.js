@@ -41,8 +41,14 @@ const listRooms = async (req, res, next) => {
   try {
     const query = validateInput(listRoomsQuerySchema, req.query);
 
-    // Count total rooms first
-    const total = await Room.countDocuments({ teacherId: req.user.id });
+    // Filter condition to exclude archived rooms
+    const filterCondition = { 
+      teacherId: req.user.id,
+      archivedAt: { $exists: false } // Only get non-archived rooms
+    };
+
+    // Count total non-archived rooms first
+    const total = await Room.countDocuments(filterCondition);
 
     // Calculate totalPages
     const totalPages = Math.max(1, Math.ceil(total / query.limit));
@@ -54,7 +60,7 @@ const listRooms = async (req, res, next) => {
     const skip = (page - 1) * query.limit;
 
     // Fetch rooms with adjusted skip
-    const rooms = await Room.find({ teacherId: req.user.id })
+    const rooms = await Room.find(filterCondition)
       .skip(skip)
       .limit(query.limit)
       .sort({ createdAt: -1 });

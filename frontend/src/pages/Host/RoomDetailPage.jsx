@@ -4,13 +4,17 @@ import { useNavigate, useParams, useLocation } from "react-router-dom";
 /* Components import  */
 import RoomDetail from "../../components/Host/dashboard/RoomDetail";
 import CreateSessionModal from "../../components/Host/dashboard/CreateSessionModal";
+import ManageSessionModal from "../../components/Host/dashboard/ManageSessionModal";
 
 /* Api import */
 import api from "../../utils/api";
+import toast from "../../utils/toastUtils";
 
 function RoomDetailPage() {
   const [selectedRoom, setSelectedRoom] = useState(null);
   const [showCreateSessionModal, setShowCreateSessionModal] = useState(false);
+  const [showManageSessionModal, setShowManageSessionModal] = useState(false);
+  const [selectedSession, setSelectedSession] = useState(null);
   const [sessionFormData, setSessionFormData] = useState({
     title: "",
     maxStudents: 200,
@@ -133,6 +137,37 @@ function RoomDetailPage() {
     });
   };
 
+  const handleManageSession = (session) => {
+    setSelectedSession(session);
+    setShowManageSessionModal(true);
+  };
+
+  const handleUpdateSession = async (sessionId, updateData) => {
+    try {
+      const res = await api.patch(`/api/sessions/id/${sessionId}`, updateData);
+      
+      if (res.status !== 200) {
+        throw new Error("Failed to update session");
+      }
+
+      const updatedSession = res.data;
+      
+      // Update the session in the sessions list
+      setSessions(prevSessions => 
+        prevSessions.map(session => 
+          session._id === sessionId ? updatedSession : session
+        )
+      );
+
+      // Show success toast
+      toast.success("Session updated successfully!");
+
+      return updatedSession;
+    } catch (error) {
+      throw new Error(error.response?.data?.message || error.message || "Failed to update session");
+    }
+  };
+
   if (!selectedRoom) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -182,6 +217,7 @@ function RoomDetailPage() {
         onBack={handleBackToRooms}
         onCreateSession={() => setShowCreateSessionModal(true)}
         onSessionClick={handleSessionClick}
+        onManageSession={handleManageSession}
         sessions={sessions}
         setSessions={setSessions}
         loading={sessionsLoading}
@@ -198,6 +234,17 @@ function RoomDetailPage() {
         roomName={selectedRoom?.name}
         isLoading={createSessionLoading}
         error={createSessionError}
+      />
+
+      {/* Manage Session Modal */}
+      <ManageSessionModal
+        isOpen={showManageSessionModal}
+        onClose={() => {
+          setShowManageSessionModal(false);
+          setSelectedSession(null);
+        }}
+        session={selectedSession}
+        onUpdate={handleUpdateSession}
       />
     </>
   );
