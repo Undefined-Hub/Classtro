@@ -7,6 +7,7 @@ const SessionList = ({
   error,
   onSessionClick,
   onCreateSession,
+  onManageSession,
 }) => (
   <div>
     <div className="mb-6 flex items-center justify-between">
@@ -82,6 +83,7 @@ const SessionList = ({
             key={session._id}
             session={session}
             onSessionClick={onSessionClick}
+            onManageSession={onManageSession}
           />
         ))}
       </div>

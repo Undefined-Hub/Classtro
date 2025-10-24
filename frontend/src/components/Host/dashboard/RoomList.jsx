@@ -110,8 +110,11 @@ const RoomList = ({
               {/* Header with title and menu */}
               <div className="p-6 pb-4">
                 <div className="flex items-start justify-between mb-3">
-                  <div className="flex-1 min-w-0">
-                    <h3 className="text-xl font-bold text-gray-900 dark:text-white truncate">
+                  <div className="flex-1 min-w-0 pr-3">
+                    <h3 
+                      className="text-xl font-bold text-gray-900 dark:text-white truncate"
+                      title={room?.name}
+                    >
                       {room?.name}
                     </h3>
                     <div className="flex items-center mt-2 space-x-2">
@@ -152,14 +155,14 @@ const RoomList = ({
 
                     {/* Dropdown Menu */}
                     {openMenuId === room._id && (
-                      <div className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 py-2 z-[150] animate-in fade-in slide-in-from-top-2 duration-200">
+                      <div className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 p-2 z-[150] animate-in fade-in slide-in-from-top-2 duration-200">
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
                             e.preventDefault();
                             handleMenuAction('manage', room);
                           }}
-                          className="w-full flex items-center justify-between px-4 py-3 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-all duration-200 group/item"
+                          className="w-full flex items-center justify-between px-4 py-3 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-lg transition-all duration-200 group/item"
                         >
                           <span className="font-medium">Manage</span>
                           <svg className="w-4 h-4 text-gray-400 group-hover/item:text-blue-500 transition-colors duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -167,7 +170,7 @@ const RoomList = ({
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                           </svg>
                         </button>
-                        <div className="h-px bg-gray-200 dark:bg-gray-700 mx-2 my-1"></div>
+                        <div className="h-px bg-gray-200 dark:bg-gray-700 my-1"></div>
                         
                         <button
                           onClick={(e) => {
@@ -175,13 +178,13 @@ const RoomList = ({
                             e.preventDefault();
                             handleMenuAction('archive', room);
                           }}
-                          className="w-full flex items-center justify-between px-4 py-3 text-sm text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-all duration-200 group/item"
+                          className="w-full flex items-center justify-between px-4 py-3 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-lg transition-all duration-200 group/item"
                         >
                           <span className="font-medium">Archive</span>
-                          <Archive className="w-4 h-4 text-amber-400 group-hover/item:text-amber-500 transition-colors duration-200" />
+                          <Archive className="w-4 h-4 text-gray-400 group-hover/item:text-blue-500 transition-colors duration-200" />
                         </button>
 
-                        <div className="h-px bg-gray-200 dark:bg-gray-700 mx-2 my-1"></div>
+                        <div className="h-px bg-gray-200 dark:bg-gray-700 my-1"></div>
 
                         <button
                           onClick={(e) => {
@@ -189,7 +192,7 @@ const RoomList = ({
                             e.preventDefault();
                             handleMenuAction('delete', room);
                           }}
-                          className="w-full flex items-center justify-between px-4 py-3 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all duration-200 group/item"
+                          className="w-full flex items-center justify-between px-4 py-3 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all duration-200 group/item"
                         >
                           <span className="font-medium">Delete</span>
                           <svg className="w-4 h-4 text-red-400 group-hover/item:text-red-500 transition-colors duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
