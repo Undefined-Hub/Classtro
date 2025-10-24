@@ -294,8 +294,7 @@ function RoomsPage() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             <div>
-              <p className="font-medium">Archived rooms can be restored</p>
-              <p className="mt-1">You can unarchive this room later from your settings.</p>
+              <p className="font-normal">Archived rooms can be restored and you can unarchive this room later from your settings.</p>
             </div>
           </div>
         </div>

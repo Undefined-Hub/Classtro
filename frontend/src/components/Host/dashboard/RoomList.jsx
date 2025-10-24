@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
+import { Archive } from "lucide-react";
 
 const RoomList = ({
   rooms,
@@ -127,7 +128,7 @@ const RoomList = ({
                   <div className="relative group/menu" ref={openMenuId === room._id ? menuRef : null}>
                     <button
                       onClick={(e) => handleMenuClick(e, room._id)}
-                      className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-200 opacity-0 group-hover:opacity-100 relative z-10 hover:scale-105"
+                      className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-200 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 relative z-10 hover:scale-105"
                     >
                       <svg
                         className="w-4 h-4 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors duration-200"
@@ -177,9 +178,7 @@ const RoomList = ({
                           className="w-full flex items-center justify-between px-4 py-3 text-sm text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-all duration-200 group/item"
                         >
                           <span className="font-medium">Archive</span>
-                          <svg className="w-4 h-4 text-amber-400 group-hover/item:text-amber-500 transition-colors duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8l6 6m6-1v-3a2 2 0 00-2-2H9a2 2 0 00-2 2v3m14 0v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6m14 0H5" />
-                          </svg>
+                          <Archive className="w-4 h-4 text-amber-400 group-hover/item:text-amber-500 transition-colors duration-200" />
                         </button>
 
                         <div className="h-px bg-gray-200 dark:bg-gray-700 mx-2 my-1"></div>
