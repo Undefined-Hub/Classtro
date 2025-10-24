@@ -283,7 +283,7 @@ function RoomsPage() {
         onConfirm={confirmArchiveRoom}
         title="Archive Room"
         confirmText="Archive Room"
-        confirmType="warning"
+        confirmType="primary"
       >
         <p className="mb-3">
           Are you sure you want to archive <span className="font-semibold text-gray-900 dark:text-white">"{selectedRoom?.name}"</span>?
@@ -313,7 +313,7 @@ function RoomsPage() {
         confirmText="Delete Forever"
         confirmType="danger"
         requireTextConfirmation={true}
-        textToType="DELETE"
+        textToType={`DELETE ${selectedRoom?.name}`}
       >
         <div className="space-y-4">
           <p>
@@ -326,12 +326,10 @@ function RoomsPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.732 15.5C3.962 16.333 4.924 18 6.464 18z" />
               </svg>
               <div className="text-sm text-red-700 dark:text-red-300">
-                <p className="font-semibold mb-2">⚠️ This action cannot be undone!</p>
+                <p className="font-semibold mb-2">This action cannot be undone!</p>
                 <ul className="space-y-1 list-disc list-inside">
-                  <li>The room will be deleted permanently</li>
-                  <li>All sessions and their data will be removed</li>
-                  <li>All participant data will be lost</li>
-                  <li>This cannot be recovered</li>
+                  <li>The room will be deleted permanently along with all sessions, participant data, and associated content.</li>
+                  <li>Once deleted, this data cannot be recovered or restored.</li>
                 </ul>
               </div>
             </div>
