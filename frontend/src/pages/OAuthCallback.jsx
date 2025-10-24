@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../context/UserContext.jsx";
 import safeToast from "../utils/toastUtils";
@@ -7,9 +7,15 @@ export default function OAuthCallback() {
   const navigate = useNavigate();
   const { login } = useAuth();
   const [searchParams] = useSearchParams();
+  const hasProcessed = useRef(false);
 
   useEffect(() => {
+    // Prevent multiple executions
+    if (hasProcessed.current) return;
+    
     const handleOAuthCallback = () => {
+      hasProcessed.current = true;
+      
       // Get OAuth result from URL parameters
       const success = searchParams.get("success");
       const error = searchParams.get("error");
@@ -51,14 +57,17 @@ export default function OAuthCallback() {
           if (!isNewUser && user.role && user.role !== "UNKNOWN") {
             login(user, accessToken);
 
-            // Navigate to dashboard based on role
-            if (user.role === "TEACHER") {
-              safeToast.success("Welcome back!");
-              navigate("/dashboard", { replace: true });
-            } else if (user.role === "STUDENT") {
-              safeToast.success("Welcome back!");
-              navigate("/participant/home", { replace: true });
-            }
+            // Small delay to ensure state is updated before navigation
+            setTimeout(() => {
+              // Navigate to dashboard based on role
+              if (user.role === "TEACHER") {
+                safeToast.success("Welcome back!");
+                navigate("/dashboard", { replace: true });
+              } else if (user.role === "STUDENT") {
+                safeToast.success("Welcome back!");
+                navigate("/participant/home", { replace: true });
+              }
+            }, 100);
           } else {
             // For new users or existing users without roles, go to role selection
             navigate("/verify", {
@@ -85,34 +94,18 @@ export default function OAuthCallback() {
     };
 
     handleOAuthCallback();
-  }, [searchParams, navigate, login]);
+  }, []); // Empty dependency array to prevent re-execution
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
-      <div className="max-w-md w-full space-y-8">
-        <div className="text-center">
-          <div className="mx-auto flex items-center justify-center w-16 h-16 bg-blue-100 dark:bg-blue-900 rounded-full mb-4">
-            <svg
-              className="w-8 h-8 text-blue-600 dark:text-blue-400 animate-spin"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-              />
-            </svg>
-          </div>
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-            Processing Authentication
-          </h2>
-          <p className="text-gray-600 dark:text-gray-400">
-            Please wait while we complete your sign-in...
-          </p>
-        </div>
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8 text-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 dark:border-purple-400 mx-auto mb-4"></div>
+        <h2 className="text-xl font-semibold text-gray-700 dark:text-gray-100 mb-2">
+          Completing Authentication...
+        </h2>
+        <p className="text-gray-500 dark:text-gray-400">
+          Please wait while we log you in securely.
+        </p>
       </div>
     </div>
   );
