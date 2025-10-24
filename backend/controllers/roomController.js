@@ -130,9 +130,9 @@ const updateRoom = async (req, res, next) => {
 
 /**
  * Soft-delete / archive a room
- * DELETE /api/rooms/:roomId
+ * PUT /api/rooms/:roomId
  */
-const deleteRoom = async (req, res, next) => {
+const archiveRoom = async (req, res, next) => {
   try {
     const params = validateInput(roomIdParamSchema, req.params);
 
@@ -228,13 +228,72 @@ const listRoomSessions = async (req, res, next) => {
   }
 };
 
+/**
+ * Get archived rooms for a specific user (teacher)
+ * GET /api/rooms/:userId/archives?page=1&limit=10
+ */
+const getArchivedRoomsByUserId = async (req, res, next) => {
+  try {
+    // Validate query parameters for pagination
+    const query = validateInput(listRoomsQuerySchema, req.query);
+    const { userId } = req.params;
+
+    // Validate that the user is requesting their own archived rooms or has admin access
+    if (req.user.id !== userId && req.user.role !== 'ADMIN') {
+      const error = new Error("Unauthorized access to user's archived rooms");
+      error.status = 403;
+      throw error;
+    }
+
+    // Filter condition to get only archived rooms for the user
+    const filterCondition = { 
+      teacherId: userId,
+      archivedAt: { $exists: true } // Only get archived rooms
+    };
+
+    // Count total archived rooms
+    const total = await Room.countDocuments(filterCondition);
+
+    // Calculate totalPages
+    const totalPages = Math.max(1, Math.ceil(total / query.limit));
+
+    // Adjust page if it exceeds totalPages
+    const page = Math.min(query.page, totalPages);
+
+    // Calculate skip with adjusted page
+    const skip = (page - 1) * query.limit;
+
+    // Fetch archived rooms with pagination
+    const archivedRooms = await Room.find(filterCondition)
+      .skip(skip)
+      .limit(query.limit)
+      .sort({ archivedAt: -1 }) // Sort by most recently archived first
+      .select('name description defaultMaxStudents teacherId createdAt archivedAt updatedAt');
+
+    res.json({
+      success: true,
+      message: "Archived rooms retrieved successfully",
+      pagination: {
+        currentPage: page,
+        totalPages,
+        pageSize: query.limit,
+        totalItems: total,
+      },
+      rooms: archivedRooms,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
 module.exports = {
   createRoom,
   listRooms,
   getRoomById,
   updateRoom,
-  deleteRoom,
+  archiveRoom,
   unarchiveRoom,
   listRoomSessions,
   hardDeleteRoom,
+  getArchivedRoomsByUserId,
 };
