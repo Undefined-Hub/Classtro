@@ -201,8 +201,8 @@ const QuickActions = ({ questions, onSetActiveView, activeView }) => {
                 onClick={handleQRCode}
                 className={`w-9 h-9 rounded-lg shadow-md flex items-center justify-center transition-all duration-200 hover:scale-105 ${
                   activeView === "qr" 
-                    ? 'bg-green-600 text-white' 
-                    : 'bg-green-600/80 hover:bg-green-600 text-white'
+                    ? 'bg-blue-600 text-white' 
+                    : 'bg-blue-600/80 hover:bg-blue-600 text-white'
                 }`}
               >
                 <QrCode className="w-4 h-4" />

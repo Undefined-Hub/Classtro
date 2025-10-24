@@ -48,6 +48,9 @@ const MainContent = () => {
           <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
             Welcome to {sessionData.title}
           </h2>
+          <p className="text-gray-600 dark:text-gray-300 mb-1">
+            Room: {sessionData.roomName}
+          </p>
           <p className="text-gray-600 dark:text-gray-300 mb-3">
             Your session is active with {activeParticipantsCount} students
             currently joined.

@@ -19,7 +19,7 @@ const ParticipantList = ({
   const activeParticipantsCount = participants.filter((p) => p.isActive).length;
 
   return (
-    <div className="w-80 bg-white dark:bg-gray-800 border-l border-gray-200 dark:border-gray-700 flex flex-col">
+    <div className="w-80 h-full bg-white dark:bg-gray-800 border-l border-gray-200 dark:border-gray-700 flex flex-col">
       <div className="p-3 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
         <h3 className="font-medium text-gray-900 dark:text-white flex items-center justify-between">
           <span>Students ({activeParticipantsCount})</span>
