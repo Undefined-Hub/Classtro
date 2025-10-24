@@ -1,6 +1,7 @@
 import React, { useEffect } from "react";
 import SessionStats from "./SessionStats";
 import { useHostSession } from "../../../context/HostSessionContext";
+import { ChartNoAxesColumn, MessageCircleQuestionMark } from "lucide-react";
 
 const MainContent = () => {
   // * Context
@@ -88,19 +89,7 @@ const MainContent = () => {
               }}
               className="inline-flex items-center px-3 py-1.5 bg-blue-600 text-white rounded-lg text-xs hover:bg-blue-700 focus:ring-2 focus:ring-blue-500"
             >
-              <svg
-                className="w-3 h-3 mr-1"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
-                />
-              </svg>
+              <ChartNoAxesColumn className="w-3 h-3 mr-1" />
               Create Poll
             </button>
           </div>
@@ -110,25 +99,13 @@ const MainContent = () => {
               Q&A Session
             </h3>
             <p className="text-gray-600 dark:text-gray-300 mb-3 text-sm">
-              View and answer student questions.
+              View student questions and doubts, clear their confusion and get insights.
             </p>
             <button
               onClick={() => setActiveView("qa")}
               className="inline-flex items-center px-3 py-1.5 bg-blue-600 text-white rounded-lg text-xs hover:bg-blue-700 focus:ring-2 focus:ring-blue-500"
             >
-              <svg
-                className="w-3 h-3 mr-1"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
+              <MessageCircleQuestionMark className="w-3 h-3 mr-1" />
               View Q&A ({questions.length})
             </button>
           </div>
