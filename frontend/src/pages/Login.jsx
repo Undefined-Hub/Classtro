@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../context/UserContext.jsx";
 import safeToast from "../utils/toastUtils";
 import api from "../utils/api.js";
@@ -7,10 +7,23 @@ import { useSubmitDebounce } from "../hooks/useDebounce.js";
 function Login({ onLogin }) {
   const navigate = useNavigate();
   const { login } = useAuth();
+  const [searchParams] = useSearchParams();
   const BACKEND_URL =
     import.meta.env.VITE_BACKEND_BASE_URL || "http://localhost:3000";
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+
+  // Handle OAuth error from URL parameters
+  useEffect(() => {
+    const oauthError = searchParams.get("oauth_error");
+    if (oauthError) {
+      safeToast.error(decodeURIComponent(oauthError));
+      // Clean up URL by removing the error parameter
+      const newUrl = new URL(window.location);
+      newUrl.searchParams.delete("oauth_error");
+      window.history.replaceState({}, '', newUrl);
+    }
+  }, [searchParams]);
 
   // Debounced login submission to prevent spam
   const { execute: debouncedLogin } = useSubmitDebounce(async () => {
