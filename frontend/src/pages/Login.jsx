@@ -38,7 +38,12 @@ function Login({ onLogin }) {
         login(data.user, data.accessToken);
         safeToast.dismiss(pending);
         safeToast.success("Logged in successfully");
-        if (data.user?.role === "TEACHER") {
+        
+        // Check for redirect parameter
+        const redirectTo = searchParams.get("redirect");
+        if (redirectTo) {
+          navigate(redirectTo, { replace: true });
+        } else if (data.user?.role === "TEACHER") {
           navigate("/dashboard", { replace: true });
         } else if (data.user?.role === "STUDENT") {
           navigate("/participant/home", { replace: true });
@@ -113,6 +118,12 @@ function Login({ onLogin }) {
     // Store the current page info to return here after OAuth
     localStorage.setItem("oauth_return_to", "login");
     localStorage.setItem("oauth_timestamp", Date.now().toString());
+
+    // Get redirect parameter if it exists
+    const redirectTo = searchParams.get("redirect");
+    if (redirectTo) {
+      localStorage.setItem("oauth_redirect_to", redirectTo);
+    }
 
     // Redirect to Google OAuth (no popup)
     window.location.href = `${BACKEND_URL}/api/auth/google?redirect_to=login`;

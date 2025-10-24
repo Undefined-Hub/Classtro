@@ -1,5 +1,5 @@
 import React from "react";
-import { X, AlertCircle } from "lucide-react";
+import { X, MessagesSquare  , Bug } from "lucide-react";
 
 const FloatingButton = ({ isOpen, onClick }) => {
   return (
@@ -16,7 +16,7 @@ const FloatingButton = ({ isOpen, onClick }) => {
         {isOpen ? (
           <X size={18} className="transition-all duration-300 sm:w-5 sm:h-5 -rotate-45" />
         ) : (
-          <AlertCircle
+          <MessagesSquare  
             size={20}
             className="transition-all duration-300 sm:w-6 sm:h-6"
           />

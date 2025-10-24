@@ -6,11 +6,12 @@ const QRJoinView = ({ sessionData, onClose, activeView, setActiveView }) => {
   const qrRef = useRef(null);
   const [copied, setCopied] = useState(false);
 
-  // 🔧 Stable QR generation (won’t go blank)
+  // 🔧 Stable QR generation (won't go blank)
   useEffect(() => {
     if (!sessionData?.code || !qrRef.current || activeView !== "qr") return;
 
-    const joinUrl = `${window.location.origin}/participant/join?code=${sessionData.code}`;
+    const baseUrl = import.meta.env.VITE_FRONTEND_BASE_URL || window.location.origin;
+    const joinUrl = `${baseUrl}/participant/join?code=${sessionData.code}`;
 
     // Clear any existing QR code
     qrRef.current.innerHTML = '';
@@ -83,7 +84,8 @@ const QRJoinView = ({ sessionData, onClose, activeView, setActiveView }) => {
 
   const handleCopyLink = async () => {
     try {
-      const joinUrl = `${window.location.origin}/participant/join?code=${sessionData.code}`;
+      const baseUrl = import.meta.env.VITE_FRONTEND_BASE_URL || window.location.origin;
+      const joinUrl = `${baseUrl}/participant/join?code=${sessionData.code}`;
       await navigator.clipboard.writeText(joinUrl);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);

@@ -3,6 +3,7 @@ import api from "../../../utils/api";
 import LivePoll from "./LivePoll";
 import PastPolls from "./PastPolls";
 import { useHostSession } from "../../../context/HostSessionContext";
+import { ChartNoAxesColumn } from "lucide-react";
 const PollManager = () => {
   // * Context
   const {
@@ -280,19 +281,7 @@ const PollManager = () => {
           <LivePoll onPollSubmit={handleEndPoll} />
         ) : pastPolls.length > 0 ? (
           <div className="flex flex-col items-center justify-center py-12">
-            <svg
-              className="w-12 h-12 text-gray-300 dark:text-gray-600 mb-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
-              />
-            </svg>
+            <ChartNoAxesColumn className="w-12 h-12 text-gray-300 dark:text-gray-600 mb-4" />
             <span className="text-gray-400 dark:text-gray-500 text-lg font-medium text-center">
               No live polls yet
             </span>

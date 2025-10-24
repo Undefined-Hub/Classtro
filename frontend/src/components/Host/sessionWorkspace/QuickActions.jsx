@@ -131,14 +131,14 @@ const QuickActions = ({ questions, onSetActiveView, activeView }) => {
         }}
       >
         {/* Dock Container */}
-        <div className="bg-gray-900/85 backdrop-blur-md rounded-xl px-2 py-1.5 shadow-xl border border-white/10">
+        <div className="bg-white/10 backdrop-blur-md rounded-full px-3 py-2 shadow-xl border border-white/20">
           <div className="flex items-center space-x-2">
             
             {/* Polls Button */}
             <div className="relative group">
               <button
                 onClick={() => handleToggle("polls")}
-                className={`w-9 h-9 rounded-lg shadow-md flex items-center justify-center transition-all duration-200 hover:scale-105 ${
+                className={`w-9 h-9 rounded-full shadow-md flex items-center justify-center transition-all duration-200 hover:scale-105 ${
                   activeView === "polls" 
                     ? 'bg-blue-600 text-white' 
                     : 'bg-white/10 hover:bg-white/20 text-white'
@@ -156,7 +156,7 @@ const QuickActions = ({ questions, onSetActiveView, activeView }) => {
             <div className="relative group">
               <button
                 onClick={() => handleToggle("qa")}
-                className={`w-9 h-9 rounded-lg shadow-md flex items-center justify-center transition-all duration-200 hover:scale-105 ${
+                className={`w-9 h-9 rounded-full shadow-md flex items-center justify-center transition-all duration-200 hover:scale-105 ${
                   activeView === "qa" 
                     ? 'bg-blue-600 text-white' 
                     : 'bg-white/10 hover:bg-white/20 text-white'
@@ -182,7 +182,7 @@ const QuickActions = ({ questions, onSetActiveView, activeView }) => {
             <div className="relative group">
               <button
                 onClick={handleFullscreen}
-                className="w-9 h-9 bg-white/10 hover:bg-white/20 text-white rounded-lg shadow-md flex items-center justify-center transition-all duration-200 hover:scale-105"
+                className="w-9 h-9 bg-white/10 hover:bg-white/20 text-white rounded-full shadow-md flex items-center justify-center transition-all duration-200 hover:scale-105"
               >
                 {isFullscreen ? (
                   <Shrink className="w-4 h-4" />
@@ -199,7 +199,7 @@ const QuickActions = ({ questions, onSetActiveView, activeView }) => {
             <div className="relative group">
               <button
                 onClick={handleQRCode}
-                className={`w-9 h-9 rounded-lg shadow-md flex items-center justify-center transition-all duration-200 hover:scale-105 ${
+                className={`w-9 h-9 rounded-full shadow-md flex items-center justify-center transition-all duration-200 hover:scale-105 ${
                   activeView === "qr" 
                     ? 'bg-blue-600 text-white' 
                     : 'bg-blue-600/80 hover:bg-blue-600 text-white'

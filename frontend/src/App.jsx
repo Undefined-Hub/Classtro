@@ -21,6 +21,9 @@ const ParticipantHome = lazy(
 const ParticipantSession = lazy(
   () => import("./pages/Participant/ParticipantSession"),
 );
+const ParticipantJoin = lazy(
+  () => import("./pages/Participant/ParticipantJoin"),
+);
 const NotFound = lazy(() => import("./pages/NotFound"));
 const Unauthorized = lazy(() => import("./pages/Unauthorized"));
 const Register = lazy(() => import("./pages/Register"));
@@ -82,6 +85,9 @@ function App() {
           <Route path="/participant/home" element={<ParticipantHome />} />
           <Route path="/participant/session" element={<ParticipantSession />} />
         </Route>
+        
+        {/* QR Join Route - Public but requires login */}
+        <Route path="/participant/join" element={<ParticipantJoin />} />
         <Route path="/unauthorized" element={<Unauthorized />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
