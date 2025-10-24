@@ -9,6 +9,7 @@ import PollManager from "../../components/Host/sessionWorkspace/PollManager";
 import QAManager from "../../components/Host/sessionWorkspace/QAManager";
 import ParticipantList from "../../components/Host/sessionWorkspace/ParticipantList";
 import QuickActions from "../../components/Host/sessionWorkspace/QuickActions";
+import QRJoinView from "../../components/Host/sessionWorkspace/QRJoinView";
 import { useHostSession } from "../../context/HostSessionContext.jsx";
 import axios from "axios";
 // * API import
@@ -536,6 +537,13 @@ const SessionWorkspace = () => {
             questions={questions}
             onUpvoteQuestion={handleUpvoteQuestion}
             onMarkAnswered={handleMarkAnswered}
+            activeView={activeView}
+            setActiveView={setActiveView}
+          />
+
+          {/* QR Join View */}
+          <QRJoinView
+            sessionData={sessionData}
             activeView={activeView}
             setActiveView={setActiveView}
           />
