@@ -1,12 +1,52 @@
 import React, { useState } from "react";
 import { Outlet, useNavigate, useLocation, NavLink } from "react-router-dom";
+import { User, LogOut } from "lucide-react";
 import LogoutModal from "./LogoutModal.jsx";
 import ProfileImageOrInitials from "./ProfileImageOrInitials.jsx";
 
 function DashboardLayout() {
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [showProfileDropdown, setShowProfileDropdown] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+  const hideTimeoutRef = React.useRef(null);
+
+  // Close dropdown when clicking outside
+  React.useEffect(() => {
+    const handleClickOutside = () => {
+      setShowProfileDropdown(false);
+    };
+
+    if (showProfileDropdown) {
+      document.addEventListener('click', handleClickOutside);
+      return () => document.removeEventListener('click', handleClickOutside);
+    }
+  }, [showProfileDropdown]);
+
+  // Handle mouse enter with immediate show
+  const handleMouseEnter = () => {
+    if (hideTimeoutRef.current) {
+      clearTimeout(hideTimeoutRef.current);
+      hideTimeoutRef.current = null;
+    }
+    setShowProfileDropdown(true);
+  };
+
+  // Handle mouse leave with delay
+  const handleMouseLeave = () => {
+    hideTimeoutRef.current = setTimeout(() => {
+      setShowProfileDropdown(false);
+    }, 150); // 150ms delay before hiding
+  };
+
+  // Cleanup timeout on unmount
+  React.useEffect(() => {
+    return () => {
+      if (hideTimeoutRef.current) {
+        clearTimeout(hideTimeoutRef.current);
+      }
+    };
+  }, []);
 
   // Get user data from localStorage
   const user = JSON.parse(localStorage.getItem("user")) || {
@@ -40,27 +80,53 @@ function DashboardLayout() {
               <p className="text-blue-100">Welcome back, {user.name}</p>
             </div>
             <div className="mt-4 md:mt-0 flex items-center space-x-4">
-              {/* Profile Button */}
-              <button
-                onClick={() => navigate("/profile")}
-                className="flex items-center space-x-3 p-2 rounded-lg hover:bg-white/10 transition-all duration-200 group focus:outline-none focus:ring-2 focus:ring-white/20"
-                title="View Profile"
+              {/* Profile Dropdown */}
+              <div 
+                className="relative"
+                onMouseEnter={handleMouseEnter}
+                onMouseLeave={handleMouseLeave}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowProfileDropdown(!showProfileDropdown);
+                }}
               >
-                <ProfileImageOrInitials
-                  src={user.profilePicture}
-                  alt={user.name}
-                  initials={user.name ? user.name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2) : "U"}
-                  className="w-10 h-10 rounded-full border-2 border-white/20 group-hover:border-white/40 transition-colors"
-                  avatarColorClass="bg-blue-500"
-                />
-                <div className="hidden md:block text-left">
-                  <p className="text-white font-medium text-sm truncate max-w-32">{user.name || "User"}</p>
-                  <p className="text-blue-100 text-xs">View Profile</p>
-                </div>
-                <svg className="hidden md:block w-4 h-4 text-white/60 group-hover:text-white/80 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </button>
+                <button
+                  className="p-1 rounded-full hover:bg-white/10 transition-all duration-200 group focus:outline-none focus:ring-2 focus:ring-white/20"
+                  title="Profile Options"
+                >
+                  <ProfileImageOrInitials
+                    src={user.profilePicture}
+                    alt={user.name}
+                    initials={user.name ? user.name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2) : "U"}
+                    className="w-8 h-8 sm:w-10 sm:h-10 rounded-full border-2 border-white/20 group-hover:border-white/40 transition-colors cursor-pointer"
+                    avatarColorClass="bg-blue-500"
+                  />
+                </button>
+
+                {/* Dropdown Menu */}
+                {showProfileDropdown && (
+                  <>
+                    {/* Invisible bridge to prevent gap issues */}
+                    <div className="absolute right-0 top-full h-1 w-full"></div>
+                    <div className="absolute right-0 mt-1 w-40 sm:w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-2 z-50">
+                    <button
+                      onClick={() => navigate("/profile")}
+                      className="w-full flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                    >
+                      <User className="w-4 h-4 mr-3" />
+                      View Profile
+                    </button>
+                      <button
+                        onClick={handleLogout}
+                        className="w-full flex items-center px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                      >
+                        <LogOut className="w-4 h-4 mr-3" />
+                        Logout
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
           </div>
         </div>
