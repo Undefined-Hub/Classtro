@@ -5,14 +5,13 @@ const {
     changePassword,
     getUserProfile,
 } = require("../controllers/userController.js");
-const authenticateJWT = require("../middlewares/authenticateJWT.js");
 
 const router = Router();
 dotenv.config();
 
 // Routes
-router.get("/profile/:id", authenticateJWT, getUserProfile); // Get user profile
-router.put("/profile/:id", authenticateJWT, updateUserProfile); // Update user profile (username, profile image)
-router.put("/password/:id", authenticateJWT, changePassword); // Change password (separate route)
+router.get("/profile/:id", getUserProfile); // Get user profile
+router.put("/profile/:id", updateUserProfile); // Update user profile (username, profile image)
+router.put("/password/:id", changePassword); // Change password (separate route)
 
 module.exports = router;

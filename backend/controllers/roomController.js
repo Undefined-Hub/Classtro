@@ -44,7 +44,10 @@ const listRooms = async (req, res, next) => {
     // Filter condition to exclude archived rooms
     const filterCondition = { 
       teacherId: req.user.id,
-      archivedAt: { $exists: false } // Only get non-archived rooms
+      $or: [
+        { archivedAt: { $exists: false } }, // Field doesn't exist
+        { archivedAt: null } // Field exists but is null
+      ]
     };
 
     // Count total non-archived rooms first
@@ -136,20 +139,42 @@ const archiveRoom = async (req, res, next) => {
   try {
     const params = validateInput(roomIdParamSchema, req.params);
 
-    const room = await Room.findOneAndUpdate(
-      { _id: params.roomId, teacherId: req.user.id },
-      { $set: { archivedAt: new Date() } },
-      { new: true },
-    );
+    console.log(`Archiving room ${params.roomId} for user ${req.user.id}`);
 
-    if (!room) {
+    // First check if room exists and is owned by the user
+    const existingRoom = await Room.findOne({
+      _id: params.roomId,
+      teacherId: req.user.id
+    });
+
+    if (!existingRoom) {
+      console.log(`Room not found: ${params.roomId} for user: ${req.user.id}`);
       const error = new Error("Room not found or not owned by you");
       error.status = 404;
       throw error;
     }
 
+    console.log(`Found room: ${existingRoom.name}, current archivedAt: ${existingRoom.archivedAt}`);
+
+    // Check if room is already archived
+    if (existingRoom.archivedAt) {
+      console.log(`Room ${params.roomId} is already archived`);
+      const error = new Error("Room is already archived");
+      error.status = 400;
+      throw error;
+    }
+
+    // Archive the room
+    const room = await Room.findOneAndUpdate(
+      { _id: params.roomId, teacherId: req.user.id },
+      { $set: { archivedAt: new Date() } },
+      { new: true }
+    );
+
+    console.log(`Room ${params.roomId} archived successfully`);
     res.json({ message: "Room archived successfully", room });
   } catch (err) {
+    console.error(`Error archiving room ${params.roomId}:`, err);
     next(err);
   }
 };
@@ -159,20 +184,42 @@ const unarchiveRoom = async (req, res, next) => {
   try {
     const params = validateInput(roomIdParamSchema, req.params);
 
-    const room = await Room.findOneAndUpdate(
-      { _id: params.roomId, teacherId: req.user.id },
-      { $set: { archivedAt: null } },
-      { new: true },
-    );
+    console.log(`Unarchiving room ${params.roomId} for user ${req.user.id}`);
 
-    if (!room) {
+    // First check if room exists and is owned by the user
+    const existingRoom = await Room.findOne({
+      _id: params.roomId,
+      teacherId: req.user.id
+    });
+
+    if (!existingRoom) {
+      console.log(`Room not found: ${params.roomId} for user: ${req.user.id}`);
       const error = new Error("Room not found or not owned by you");
       error.status = 404;
       throw error;
     }
 
+    console.log(`Found room: ${existingRoom.name}, archivedAt: ${existingRoom.archivedAt}`);
+
+    // Check if room is actually archived
+    if (!existingRoom.archivedAt) {
+      console.log(`Room ${params.roomId} is not archived`);
+      const error = new Error("Room is not archived");
+      error.status = 400;
+      throw error;
+    }
+
+    // Update the room to unarchive it
+    const room = await Room.findOneAndUpdate(
+      { _id: params.roomId, teacherId: req.user.id },
+      { $unset: { archivedAt: 1 } }, // Remove the field completely
+      { new: true }
+    );
+
+    console.log(`Room ${params.roomId} unarchived successfully`);
     res.json({ message: "Room unarchived successfully", room });
   } catch (err) {
+    console.error(`Error unarchiving room ${params.roomId}:`, err);
     next(err);
   }
 };
@@ -248,7 +295,7 @@ const getArchivedRoomsByUserId = async (req, res, next) => {
     // Filter condition to get only archived rooms for the user
     const filterCondition = { 
       teacherId: userId,
-      archivedAt: { $exists: true } // Only get archived rooms
+      archivedAt: { $exists: true, $ne: null } // Only get archived rooms (not null and exists)
     };
 
     // Count total archived rooms
