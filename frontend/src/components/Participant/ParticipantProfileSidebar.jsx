@@ -18,9 +18,10 @@ const ParticipantProfileSidebar = ({
             <ProfileImageOrInitials
               src={user?.profilePicture}
               alt={user?.name}
-              initials={getInitials(user?.name)}
+              name={user?.name}
               className="w-16 h-16 sm:w-20 sm:h-20 rounded-full mx-auto"
               avatarColorClass="bg-blue-600"
+              textSizeClass="text-2xl"
             />
           </div>
           <h2 className="mt-2 sm:mt-4 text-lg sm:text-xl font-bold text-gray-900 dark:text-white truncate">

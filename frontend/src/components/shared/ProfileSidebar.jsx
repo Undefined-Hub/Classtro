@@ -7,11 +7,11 @@ const ProfileSidebar = ({
   activeTab, 
   setActiveTab, 
   onLogout,
-  getInitials 
+  userType = "host" // "host" or "participant"
 }) => {
   return (
-    <div className="w-full lg:w-80">
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-3 sm:p-4 min-h-[300px] sm:min-h-[400px] lg:min-h-[600px] h-full flex flex-col">
+    <div className="w-full lg:w-80 lg:sticky lg:top-8 lg:self-start">
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-3 sm:p-4 h-[500px] max-h-[calc(100vh-8rem)] flex flex-col">
         {/* Profile Header */}
         <div className="text-center mb-3 sm:mb-4">
           <div className="relative inline-block">
@@ -46,7 +46,8 @@ const ProfileSidebar = ({
             Profile
           </button>
           
-          {user?.role === "TEACHER" && (
+          {/* Conditional Archived Tab - Only show for Teachers/Hosts */}
+          {userType === "host" && user?.role === "TEACHER" && (
             <button
               onClick={() => setActiveTab("archived")}
               className={`w-full flex items-center px-2 sm:px-3 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-medium transition-colors ${

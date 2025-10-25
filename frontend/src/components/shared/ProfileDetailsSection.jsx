@@ -9,7 +9,7 @@ const ProfileDetailsSection = ({
   profileForm,
   setProfileForm,
   onProfileUpdate,
-  getInitials
+  userType = "host" // "host" or "participant"
 }) => {
   const handleCancelEdit = () => {
     setIsEditingProfile(false);
@@ -19,6 +19,22 @@ const ProfileDetailsSection = ({
       profilePicture: user?.profilePicture || ""
     });
   };
+
+  // Role-specific styling
+  const getRoleConfig = () => {
+    if (userType === "participant") {
+      return {
+        label: "STUDENT",
+        colorClass: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300"
+      };
+    }
+    return {
+      label: user?.role || "USER",
+      colorClass: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300"
+    };
+  };
+
+  const roleConfig = getRoleConfig();
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 h-full flex flex-col">
@@ -144,8 +160,8 @@ const ProfileDetailsSection = ({
                   <Shield className="w-5 h-5 text-gray-400 mr-3" />
                   <div>
                     <p className="text-sm text-gray-500 dark:text-gray-400">Role</p>
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300">
-                      {user?.role}
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${roleConfig.colorClass}`}>
+                      {roleConfig.label}
                     </span>
                   </div>
                 </div>

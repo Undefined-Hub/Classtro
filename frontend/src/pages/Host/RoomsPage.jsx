@@ -29,7 +29,7 @@ function RoomsPage() {
   const [createRoomError, setCreateRoomError] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [pageSize, setPageSize] = useState(11);
+  const [pageSize, setPageSize] = useState(5);
   const navigate = useNavigate();
 
   // Get auth token from localStorage
