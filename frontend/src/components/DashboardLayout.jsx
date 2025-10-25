@@ -90,18 +90,20 @@ function DashboardLayout() {
                   setShowProfileDropdown(!showProfileDropdown);
                 }}
               >
-                <button
+                <div
                   className="p-1 rounded-full hover:bg-white/10 transition-all duration-200 group focus:outline-none focus:ring-2 focus:ring-white/20"
                   title="Profile Options"
                 >
                   <ProfileImageOrInitials
                     src={user.profilePicture}
                     alt={user.name}
-                    initials={user.name ? user.name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2) : "U"}
-                    className="w-8 h-8 sm:w-10 sm:h-10 rounded-full border-2 border-white/20 group-hover:border-white/40 transition-colors cursor-pointer"
+                    name={user?.name}
+                    className="w-8 h-8 sm:w-14 sm:h-14 rounded-full border-2 border-white/20 group-hover:border-white/40 transition-colors cursor-pointer"
                     avatarColorClass="bg-blue-500"
+                    textSizeClass="text-lg"
                   />
-                </button>
+                </div>
+                
 
                 {/* Dropdown Menu */}
                 {showProfileDropdown && (

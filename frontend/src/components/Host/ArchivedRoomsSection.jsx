@@ -66,7 +66,7 @@ const RoomCard = ({ room, onUnarchive }) => {
         {room.description || "No description"}
       </p>
       <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 mb-3">
-        <span>ID: {room._id.slice(-6).toUpperCase()}</span>
+        {/* <span>ID: {room._id.slice(-6).toUpperCase()}</span> */}
         <span>{new Date(room.createdAt).toLocaleDateString()}</span>
       </div>
       <button

@@ -47,9 +47,10 @@ const ParticipantProfileDetailsSection = ({
               <ProfileImageOrInitials
                 src={user?.profilePicture}
                 alt={user?.name}
-                initials={getInitials(user?.name)}
+                name={user?.name}
                 className="w-32 h-32 rounded-full"
                 avatarColorClass="bg-blue-600"
+                textSizeClass="text-4xl"
               />
               {isEditingProfile && (
                 <button className="absolute bottom-2 right-2 bg-blue-600 hover:bg-blue-700 text-white rounded-full p-2 shadow-lg transition-colors">

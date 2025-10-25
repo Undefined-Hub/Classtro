@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { Play, BarChart3 } from "lucide-react";
 
 const SessionCard = ({ session, onSessionClick, selectedRoom, onManageSession }) => {
   const navigate = useNavigate();
@@ -57,7 +58,7 @@ const SessionCard = ({ session, onSessionClick, selectedRoom, onManageSession })
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer border border-gray-100 dark:border-gray-700 hover:border-gray-200 dark:hover:border-gray-600 group relative overflow-hidden">
+    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer border border-gray-100 dark:border-gray-700 hover:border-gray-200 dark:hover:border-gray-600 group relative">
       {/* Active indicator bar */}
       <div
         className={`h-1 w-full ${session.isActive ? "bg-gradient-to-r from-green-500 to-emerald-500" : "bg-gray-300 dark:bg-gray-600"}`}
@@ -88,7 +89,7 @@ const SessionCard = ({ session, onSessionClick, selectedRoom, onManageSession })
             </span>
 
             {/* 3-dot menu */}
-            <div className="relative" ref={menuRef}>
+            <div className="relative group/menu" ref={menuRef}>
               <button
                 onClick={handleMenuClick}
                 className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-200 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 relative z-10 hover:scale-105"
@@ -101,6 +102,17 @@ const SessionCard = ({ session, onSessionClick, selectedRoom, onManageSession })
                   <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
                 </svg>
               </button>
+
+              {/* Hover tooltip */}
+              <div className="absolute -top-12 left-1/2 transform -translate-x-1/2 opacity-0 group-hover/menu:opacity-100 transition-all duration-300 ease-out pointer-events-none z-[9999] group-hover/menu:translate-y-0 translate-y-1">
+                <div className="bg-gray-900 dark:bg-gray-700 text-white text-xs px-3 py-2 rounded-lg shadow-xl border border-gray-700 dark:border-gray-600 whitespace-nowrap backdrop-blur-sm">
+                  <span className="font-medium">Options</span>
+                  {/* Tooltip arrow */}
+                  <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0">
+                    <div className="border-l-[5px] border-r-[5px] border-t-[5px] border-l-transparent border-r-transparent border-t-gray-900 dark:border-t-gray-700"></div>
+                  </div>
+                </div>
+              </div>
 
               {/* Menu dropdown */}
               {showMenu && (
@@ -192,25 +204,7 @@ const SessionCard = ({ session, onSessionClick, selectedRoom, onManageSession })
               onClick={() => onSessionClick(session)}
               className="w-full flex items-center justify-center px-4 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-lg text-sm font-semibold transition-all duration-200 transform hover:scale-[1.02] hover:shadow-lg group/btn"
             >
-              <svg
-                className="w-5 h-5 mr-2 group-hover/btn:animate-pulse"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                />
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                />
-              </svg>
+              <Play className="w-5 h-5 mr-2 group-hover/btn:animate-pulse" />
               Join Live Session
             </button>
           ) : (
@@ -218,19 +212,7 @@ const SessionCard = ({ session, onSessionClick, selectedRoom, onManageSession })
               onClick={() => handleViewAnalytics(session)}
               className="w-full flex items-center justify-center px-4 py-2.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg text-sm font-semibold transition-all duration-200 transform hover:scale-[1.02]"
             >
-              <svg
-                className="w-5 h-5 mr-2"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                />
-              </svg>
+              <BarChart3 className="w-5 h-5 mr-2" />
               View Analytics
             </button>
           )}

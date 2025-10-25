@@ -3,7 +3,8 @@ import api from "../../../utils/api";
 import LivePoll from "./LivePoll";
 import PastPolls from "./PastPolls";
 import { useHostSession } from "../../../context/HostSessionContext";
-const PollManager = () => {
+import { ChartNoAxesColumn } from "lucide-react";
+const PollManager = ({ isParticipantListOpen = true }) => {
   // * Context
   const {
     socketRef,
@@ -152,7 +153,15 @@ const PollManager = () => {
 
       // * If res is array then set pastPolls and activePoll
       if (Array.isArray(res.data)) {
-        setPastPolls(res.data.filter((p) => !p.isActive));
+        // Sort past polls by endedAt date (latest first), fallback to createdAt
+        const sortedPastPolls = res.data
+          .filter((p) => !p.isActive)
+          .sort((a, b) => {
+            const dateA = new Date(a.endedAt || a.createdAt);
+            const dateB = new Date(b.endedAt || b.createdAt);
+            return dateB - dateA; // Latest first
+          });
+        setPastPolls(sortedPastPolls);
         setActivePoll(res.data.find((p) => p.isActive) || null);
       }
     } catch (err) {
@@ -220,8 +229,13 @@ const PollManager = () => {
 
   return (
     <>
-      <div className="p-3 h-full overflow-y-auto">
-        <div className="flex items-center justify-between mb-4">
+      <div className="p-3 h-full overflow-y-auto no-scrollbar">
+        <div className={`mx-auto transition-all duration-300 ${
+          isParticipantListOpen 
+            ? 'max-w-5xl' 
+            : 'max-w-4xl'
+        }`}>
+          <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-bold text-gray-900 dark:text-white">
             Live Polls
           </h2>
@@ -280,19 +294,7 @@ const PollManager = () => {
           <LivePoll onPollSubmit={handleEndPoll} />
         ) : pastPolls.length > 0 ? (
           <div className="flex flex-col items-center justify-center py-12">
-            <svg
-              className="w-12 h-12 text-gray-300 dark:text-gray-600 mb-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
-              />
-            </svg>
+            <ChartNoAxesColumn className="w-12 h-12 text-gray-300 dark:text-gray-600 mb-4" />
             <span className="text-gray-400 dark:text-gray-500 text-lg font-medium text-center">
               No live polls yet
             </span>
@@ -348,6 +350,7 @@ const PollManager = () => {
             </button>
           </div>
         )}
+        </div>
       </div>
 
       {/* Poll Creation Form Modal */}

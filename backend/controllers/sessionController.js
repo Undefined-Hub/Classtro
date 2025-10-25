@@ -94,13 +94,21 @@ const getSessionByCode = async (req, res, next) => {
     const session = await Session.findOne({
       code: params.code,
       isActive: true,
-    }).select("title code roomId participantCount isActive startAt createdAt");
+    })
+    .select("title code roomId participantCount isActive startAt createdAt")
+    .populate("roomId", "name");
 
     if (!session) {
       return res.status(404).json({ error: "Session not found or inactive" });
     }
 
-    res.json(session);
+    // Format response to include roomName
+    const response = {
+      ...session.toObject(),
+      roomName: session.roomId?.name || null,
+    };
+
+    res.json(response);
   } catch (err) {
     next(err);
   }

@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useCallback, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { io } from "socket.io-client";
+import { Monitor, Smartphone } from "lucide-react";
 
 // * Components imports
 import SessionHeader from "../../components/Host/sessionWorkspace/SessionHeader";
@@ -9,6 +10,7 @@ import PollManager from "../../components/Host/sessionWorkspace/PollManager";
 import QAManager from "../../components/Host/sessionWorkspace/QAManager";
 import ParticipantList from "../../components/Host/sessionWorkspace/ParticipantList";
 import QuickActions from "../../components/Host/sessionWorkspace/QuickActions";
+import QRJoinView from "../../components/Host/sessionWorkspace/QRJoinView";
 import { useHostSession } from "../../context/HostSessionContext.jsx";
 import axios from "axios";
 // * API import
@@ -102,6 +104,23 @@ const SessionWorkspace = () => {
 
     resetHostSession,
   } = useHostSession();
+
+  // * Participant List Collapse State
+  const [isParticipantListOpen, setIsParticipantListOpen] = useState(true);
+
+  // * Mobile Detection
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 1024); // lg breakpoint
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   // * Load session data from navigation state
   useEffect(() => {
@@ -353,6 +372,7 @@ const SessionWorkspace = () => {
   const getInitials = (name) => {
     return name
       .split(" ")
+      .slice(0, 2) // Only take first 2 words
       .map((part) => part[0])
       .join("")
       .toUpperCase();
@@ -504,6 +524,33 @@ const SessionWorkspace = () => {
   };
 
   const sessionDuration = calculateDuration();
+
+  // Mobile View - Session management not available
+  if (isMobile) {
+    return (
+      <div className="h-screen flex items-center justify-center p-6 bg-gray-50 dark:bg-gray-900">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 max-w-xs w-full text-center">
+          <Monitor className="w-12 h-12 text-blue-600 dark:text-blue-400 mx-auto mb-4" />
+          
+          <h1 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+            Not Available on Mobile
+          </h1>
+          
+          <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+            Session management is not yet available on mobile. Please use a larger screen.
+          </p>
+
+          <button
+            onClick={() => navigate('/dashboard')}
+            className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
+          >
+            Back to Dashboard
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="bg-white dark:bg-gray-900 h-screen flex flex-col overflow-hidden">
       {/* Header with session info - Fixed height */}
@@ -512,12 +559,14 @@ const SessionWorkspace = () => {
         sessionDuration={sessionDuration}
         onNavigateBack={() => navigate(-1)}
         onEndSession={() => setShowConfirmClose(true)}
+        activeView={activeView}
+        isParticipantListOpen={isParticipantListOpen}
       />
 
       {/* Main content area with grid layout - Takes remaining height */}
       <div className="flex-1 flex overflow-hidden">
         {/* Main content area (2/3) */}
-        <div className="flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-800 relative">
+        <div className="flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-900 relative">
           {/* Floating Quick Actions Menu */}
           <QuickActions
             questions={questions}
@@ -526,10 +575,10 @@ const SessionWorkspace = () => {
           />
 
           {/* Main Content */}
-          {activeView === "main" && <MainContent />}
+          {activeView === "main" && <MainContent isParticipantListOpen={isParticipantListOpen} />}
 
           {/* Poll Manager */}
-          <PollManager />
+          <PollManager isParticipantListOpen={isParticipantListOpen} />
 
           {/* Q&A Manager */}
           <QAManager
@@ -538,25 +587,77 @@ const SessionWorkspace = () => {
             onMarkAnswered={handleMarkAnswered}
             activeView={activeView}
             setActiveView={setActiveView}
+            isParticipantListOpen={isParticipantListOpen}
+          />
+
+          {/* QR Join View */}
+          <QRJoinView
+            sessionData={sessionData}
+            activeView={activeView}
+            setActiveView={setActiveView}
           />
         </div>
 
-        {/* Participants Sidebar */}
-        <ParticipantList
-          participants={participantsList}
-          sessionData={sessionData}
-          questions={questions}
-          onKickParticipant={handleKickParticipant}
-          onShowConfirmClose={() => setShowConfirmClose(true)}
-          getInitials={getInitials}
-          getAvatarColor={getAvatarColor}
-          showBroadcastForm={showBroadcastForm}
-          setShowBroadcastForm={setShowBroadcastForm}
-          broadcastMessage={broadcastMessage}
-          setBroadcastMessage={setBroadcastMessage}
-          broadcastStatus={broadcastStatus}
-          handleBroadcast={handleBroadcast}
-        />
+        {/* Collapsible Participants Sidebar */}
+        <div className="relative flex">
+          {/* Toggle Button */}
+          <div className="group relative">
+            <button
+              onClick={() => setIsParticipantListOpen(!isParticipantListOpen)}
+              className="absolute left-0 top-1/2 transform -translate-y-1/2 -translate-x-1/2 z-50 p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-lg transition-all duration-200"
+            >
+              <svg
+                className={`w-4 h-4 transition-transform duration-300 ${
+                  isParticipantListOpen ? "rotate-0" : "rotate-180"
+                }`}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 5l7 7-7 7"
+                />
+              </svg>
+            </button>
+
+            {/* Custom Tooltip */}
+            <div className="absolute right-full mr-3 top-1/2 transform -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-all duration-300 delay-300 pointer-events-none z-[60] group-hover:scale-100 scale-95">
+              <div className="bg-black text-white text-xs px-3 py-2 rounded-lg whitespace-nowrap shadow-lg border border-gray-800">
+                {isParticipantListOpen ? "Hide Participants" : "Show Participants"}
+                {/* Tooltip Arrow */}
+                <div className="absolute left-full top-1/2 transform -translate-y-1/2 border-4 border-transparent border-l-black"></div>
+              </div>
+            </div>
+          </div>
+
+          {/* Participants Panel */}
+          <div
+            className={`transition-all duration-300 ease-in-out overflow-hidden ${
+              isParticipantListOpen 
+                ? "w-80 opacity-100 translate-x-0" 
+                : "w-0 opacity-0 translate-x-full"
+            }`}
+          >
+            <ParticipantList
+              participants={participantsList}
+              sessionData={sessionData}
+              questions={questions}
+              onKickParticipant={handleKickParticipant}
+              onShowConfirmClose={() => setShowConfirmClose(true)}
+              getInitials={getInitials}
+              getAvatarColor={getAvatarColor}
+              showBroadcastForm={showBroadcastForm}
+              setShowBroadcastForm={setShowBroadcastForm}
+              broadcastMessage={broadcastMessage}
+              setBroadcastMessage={setBroadcastMessage}
+              broadcastStatus={broadcastStatus}
+              handleBroadcast={handleBroadcast}
+            />
+          </div>
+        </div>
       </div>
 
       {/* Confirm Close Session Modal */}

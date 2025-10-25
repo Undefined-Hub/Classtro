@@ -25,10 +25,12 @@ export default function OAuthCallback() {
 
       // Get the return destination from localStorage
       const returnTo = localStorage.getItem("oauth_return_to");
+      const redirectTo = localStorage.getItem("oauth_redirect_to");
       const timestamp = localStorage.getItem("oauth_timestamp");
 
       // Clean up localStorage
       localStorage.removeItem("oauth_return_to");
+      localStorage.removeItem("oauth_redirect_to");
       localStorage.removeItem("oauth_timestamp");
 
       // Check if OAuth session is valid (within 10 minutes)
@@ -59,13 +61,18 @@ export default function OAuthCallback() {
 
             // Small delay to ensure state is updated before navigation
             setTimeout(() => {
-              // Navigate to dashboard based on role
-              if (user.role === "TEACHER") {
-                safeToast.success("Welcome back!");
-                navigate("/dashboard", { replace: true });
-              } else if (user.role === "STUDENT") {
-                safeToast.success("Welcome back!");
-                navigate("/participant/home", { replace: true });
+              safeToast.success("Welcome back!");
+              
+              // Check for redirect parameter first
+              if (redirectTo) {
+                navigate(redirectTo, { replace: true });
+              } else {
+                // Navigate to dashboard based on role
+                if (user.role === "TEACHER") {
+                  navigate("/dashboard", { replace: true });
+                } else if (user.role === "STUDENT") {
+                  navigate("/participant/home", { replace: true });
+                }
               }
             }, 100);
           } else {
