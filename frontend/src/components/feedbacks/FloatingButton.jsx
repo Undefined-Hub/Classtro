@@ -3,7 +3,7 @@ import { X, MessagesSquare  , Bug } from "lucide-react";
 
 const FloatingButton = ({ isOpen, onClick }) => {
   return (
-    <div className="fixed bottom-6 right-6 z-[9999] font-sans">
+    <div className="fixed bottom-6 right-6 z-[9999] font-sans group">
       <button
         className={`w-12 h-12 rounded-full border-none shadow-md cursor-pointer flex items-center justify-center transition-all duration-300 ease-out ${
           isOpen
@@ -13,6 +13,10 @@ const FloatingButton = ({ isOpen, onClick }) => {
         onClick={onClick}
         aria-label="Report Bug or Feedback"
       >
+        {/* Custom Tooltip */}
+        <div className="absolute bottom-full right-0 mb-2 px-2 py-1 bg-black text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-all duration-200 delay-500 whitespace-nowrap pointer-events-none z-10">
+          {isOpen ? "Close" : "Report Bug or Feedback"}
+        </div>
         {isOpen ? (
           <X size={18} className="transition-all duration-300 sm:w-5 sm:h-5 -rotate-45" />
         ) : (

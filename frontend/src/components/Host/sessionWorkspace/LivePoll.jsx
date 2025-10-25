@@ -131,18 +131,83 @@ const LivePoll = ({ onPollSubmit }) => {
   );
 
   const renderPieChart = () => {
+    const centerX = 100;
+    const centerY = 100;
+    const radius = 80;
+    
+    // Show pie chart structure even with 0 votes
     if (totalVotes === 0) {
+      // Equal segments for all options when no votes
+      const equalAngle = 360 / activePoll.options.length;
+      
       return (
-        <div className="flex items-center justify-center h-64">
-          <p className="text-gray-500 dark:text-gray-400">No votes yet</p>
+        <div className="flex items-center justify-center p-8">
+          <div className="relative">
+            <svg width="200" height="200">
+              {activePoll.options.map((option, index) => {
+                const startAngle = index * equalAngle;
+                const endAngle = (index + 1) * equalAngle;
+                
+                // Convert angles to radians
+                const startAngleRad = (startAngle - 90) * (Math.PI / 180);
+                const endAngleRad = (endAngle - 90) * (Math.PI / 180);
+                
+                // Calculate path coordinates
+                const x1 = centerX + radius * Math.cos(startAngleRad);
+                const y1 = centerY + radius * Math.sin(startAngleRad);
+                const x2 = centerX + radius * Math.cos(endAngleRad);
+                const y2 = centerY + radius * Math.sin(endAngleRad);
+                
+                const largeArcFlag = equalAngle > 180 ? 1 : 0;
+                
+                const pathData = [
+                  `M ${centerX} ${centerY}`,
+                  `L ${x1} ${y1}`,
+                  `A ${radius} ${radius} 0 ${largeArcFlag} 1 ${x2} ${y2}`,
+                  'Z'
+                ].join(' ');
+                
+                return (
+                  <path
+                    key={option._id}
+                    d={pathData}
+                    fill={`hsl(${200 + index * 40}, 30%, 80%)`}
+                    className="transition-all duration-500"
+                  />
+                );
+              })}
+            </svg>
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="text-center">
+                <div className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                  No votes yet
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="ml-8 space-y-2">
+            {activePoll.options.map((option, index) => (
+              <div key={option._id} className="flex items-center space-x-2">
+                <div 
+                  className="w-4 h-4 rounded-full"
+                  style={{ backgroundColor: `hsl(${200 + index * 40}, 30%, 80%)` }}
+                />
+                <div className="text-sm">
+                  <span className="font-medium text-gray-900 dark:text-white">
+                    {option.text}
+                  </span>
+                  <span className="text-gray-600 dark:text-gray-300 ml-2">
+                    0% • 0 votes
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       );
     }
 
     let cumulativeAngle = 0;
-    const centerX = 100;
-    const centerY = 100;
-    const radius = 80;
     
     return (
       <div className="flex items-center justify-center p-8">
@@ -150,11 +215,29 @@ const LivePoll = ({ onPollSubmit }) => {
           <svg width="200" height="200">
             {activePoll.options.map((option, index) => {
               const percentage = (option.votes / totalVotes) * 100;
+              
+              // Skip rendering if percentage is 0
+              if (percentage === 0) return null;
+              
               const angle = (percentage / 100) * 360;
               const startAngle = cumulativeAngle;
               const endAngle = cumulativeAngle + angle;
               
               cumulativeAngle += angle;
+              
+              // Handle 100% case - render as full circle
+              if (percentage >= 100) {
+                return (
+                  <circle
+                    key={option._id}
+                    cx={centerX}
+                    cy={centerY}
+                    r={radius}
+                    fill={`hsl(${200 + index * 40}, 60%, 60%)`}
+                    className="transition-all duration-500 hover:opacity-80"
+                  />
+                );
+              }
               
               // Convert angles to radians
               const startAngleRad = (startAngle - 90) * (Math.PI / 180);
@@ -213,10 +296,54 @@ const LivePoll = ({ onPollSubmit }) => {
   };
 
   const renderDonutChart = () => {
+    // Show donut chart structure even with 0 votes
     if (totalVotes === 0) {
       return (
-        <div className="flex items-center justify-center h-64">
-          <p className="text-gray-500 dark:text-gray-400">No votes yet</p>
+        <div className="flex items-center justify-center p-8">
+          <div className="relative">
+            <svg width="200" height="200" className="transform -rotate-90">
+              <circle
+                cx="100"
+                cy="100"
+                r="80"
+                fill="none"
+                stroke="#e5e7eb"
+                strokeWidth="30"
+                className="dark:stroke-gray-600"
+              />
+            </svg>
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="text-center">
+                <div className="text-xl font-bold text-gray-500 dark:text-gray-400">
+                  0
+                </div>
+                <div className="text-xs text-gray-500 dark:text-gray-400">
+                  Responses
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div className="ml-8 grid grid-cols-1 gap-2">
+            {activePoll.options.map((option, index) => (
+              <div key={option._id} className="flex items-center space-x-3 p-2 bg-gray-50 dark:bg-gray-600/30 rounded-lg opacity-60">
+                <div className="w-6 h-6 bg-gray-200 dark:bg-gray-600 rounded-full flex items-center justify-center text-gray-700 dark:text-gray-300 font-bold text-xs">
+                  {String.fromCharCode(65 + index)}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                    {option.text}
+                  </div>
+                  <div className="text-xs text-gray-600 dark:text-gray-300">
+                    0% • 0 votes
+                  </div>
+                </div>
+                <div 
+                  className="w-3 h-3 rounded-full flex-shrink-0 bg-gray-300 dark:bg-gray-500"
+                />
+              </div>
+            ))}
+          </div>
         </div>
       );
     }
@@ -238,6 +365,26 @@ const LivePoll = ({ onPollSubmit }) => {
             />
             {activePoll.options.map((option, index) => {
               const percentage = (option.votes / totalVotes) * 100;
+              
+              // Skip rendering if percentage is 0
+              if (percentage === 0) return null;
+              
+              // For 100% case, render full circle
+              if (percentage >= 100) {
+                return (
+                  <circle
+                    key={option._id}
+                    cx="100"
+                    cy="100"
+                    r="80"
+                    fill="none"
+                    stroke={`hsl(${200 + index * 40}, 60%, 60%)`}
+                    strokeWidth="30"
+                    className="transition-all duration-500"
+                  />
+                );
+              }
+              
               const strokeDasharray = `${percentage * 5.03} 502`;
               const strokeDashoffset = -cumulativePercentage * 5.03;
               cumulativePercentage += percentage;

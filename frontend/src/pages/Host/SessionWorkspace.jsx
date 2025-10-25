@@ -372,6 +372,7 @@ const SessionWorkspace = () => {
   const getInitials = (name) => {
     return name
       .split(" ")
+      .slice(0, 2) // Only take first 2 words
       .map((part) => part[0])
       .join("")
       .toUpperCase();
@@ -559,6 +560,7 @@ const SessionWorkspace = () => {
         onNavigateBack={() => navigate(-1)}
         onEndSession={() => setShowConfirmClose(true)}
         activeView={activeView}
+        isParticipantListOpen={isParticipantListOpen}
       />
 
       {/* Main content area with grid layout - Takes remaining height */}
@@ -573,10 +575,10 @@ const SessionWorkspace = () => {
           />
 
           {/* Main Content */}
-          {activeView === "main" && <MainContent />}
+          {activeView === "main" && <MainContent isParticipantListOpen={isParticipantListOpen} />}
 
           {/* Poll Manager */}
-          <PollManager />
+          <PollManager isParticipantListOpen={isParticipantListOpen} />
 
           {/* Q&A Manager */}
           <QAManager
@@ -585,6 +587,7 @@ const SessionWorkspace = () => {
             onMarkAnswered={handleMarkAnswered}
             activeView={activeView}
             setActiveView={setActiveView}
+            isParticipantListOpen={isParticipantListOpen}
           />
 
           {/* QR Join View */}
@@ -598,27 +601,37 @@ const SessionWorkspace = () => {
         {/* Collapsible Participants Sidebar */}
         <div className="relative flex">
           {/* Toggle Button */}
-          <button
-            onClick={() => setIsParticipantListOpen(!isParticipantListOpen)}
-            className="absolute left-0 top-1/2 transform -translate-y-1/2 -translate-x-1/2 z-50 p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-lg transition-all duration-200"
-            title={isParticipantListOpen ? "Hide Participants" : "Show Participants"}
-          >
-            <svg
-              className={`w-4 h-4 transition-transform duration-300 ${
-                isParticipantListOpen ? "rotate-0" : "rotate-180"
-              }`}
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
+          <div className="group relative">
+            <button
+              onClick={() => setIsParticipantListOpen(!isParticipantListOpen)}
+              className="absolute left-0 top-1/2 transform -translate-y-1/2 -translate-x-1/2 z-50 p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-lg transition-all duration-200"
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M9 5l7 7-7 7"
-              />
-            </svg>
-          </button>
+              <svg
+                className={`w-4 h-4 transition-transform duration-300 ${
+                  isParticipantListOpen ? "rotate-0" : "rotate-180"
+                }`}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 5l7 7-7 7"
+                />
+              </svg>
+            </button>
+
+            {/* Custom Tooltip */}
+            <div className="absolute right-full mr-3 top-1/2 transform -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-all duration-300 delay-300 pointer-events-none z-[60] group-hover:scale-100 scale-95">
+              <div className="bg-black text-white text-xs px-3 py-2 rounded-lg whitespace-nowrap shadow-lg border border-gray-800">
+                {isParticipantListOpen ? "Hide Participants" : "Show Participants"}
+                {/* Tooltip Arrow */}
+                <div className="absolute left-full top-1/2 transform -translate-y-1/2 border-4 border-transparent border-l-black"></div>
+              </div>
+            </div>
+          </div>
 
           {/* Participants Panel */}
           <div

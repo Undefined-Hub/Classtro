@@ -4,7 +4,7 @@ import LivePoll from "./LivePoll";
 import PastPolls from "./PastPolls";
 import { useHostSession } from "../../../context/HostSessionContext";
 import { ChartNoAxesColumn } from "lucide-react";
-const PollManager = () => {
+const PollManager = ({ isParticipantListOpen = true }) => {
   // * Context
   const {
     socketRef,
@@ -153,7 +153,15 @@ const PollManager = () => {
 
       // * If res is array then set pastPolls and activePoll
       if (Array.isArray(res.data)) {
-        setPastPolls(res.data.filter((p) => !p.isActive));
+        // Sort past polls by endedAt date (latest first), fallback to createdAt
+        const sortedPastPolls = res.data
+          .filter((p) => !p.isActive)
+          .sort((a, b) => {
+            const dateA = new Date(a.endedAt || a.createdAt);
+            const dateB = new Date(b.endedAt || b.createdAt);
+            return dateB - dateA; // Latest first
+          });
+        setPastPolls(sortedPastPolls);
         setActivePoll(res.data.find((p) => p.isActive) || null);
       }
     } catch (err) {
@@ -221,8 +229,13 @@ const PollManager = () => {
 
   return (
     <>
-      <div className="p-3 h-full overflow-y-auto">
-        <div className="flex items-center justify-between mb-4">
+      <div className="p-3 h-full overflow-y-auto no-scrollbar">
+        <div className={`mx-auto transition-all duration-300 ${
+          isParticipantListOpen 
+            ? 'max-w-5xl' 
+            : 'max-w-4xl'
+        }`}>
+          <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-bold text-gray-900 dark:text-white">
             Live Polls
           </h2>
@@ -337,6 +350,7 @@ const PollManager = () => {
             </button>
           </div>
         )}
+        </div>
       </div>
 
       {/* Poll Creation Form Modal */}

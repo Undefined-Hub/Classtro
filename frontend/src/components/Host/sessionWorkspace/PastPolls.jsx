@@ -24,10 +24,15 @@ const PastPolls = () => {
 
   return (
     <div className="mt-8">
-      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
-        <BarChart3 className="w-5 h-5 mr-2" />
-        Past Polls ({pastPolls.length})
-      </h3>
+      <div className="mb-4">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center">
+          <BarChart3 className="w-5 h-5 mr-2" />
+          Past Polls ({pastPolls.length})
+        </h3>
+        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+          Showing latest polls first
+        </p>
+      </div>
       
       <div className="space-y-3">
         {pastPolls.map((poll, pollIndex) => {

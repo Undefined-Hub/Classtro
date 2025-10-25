@@ -131,7 +131,7 @@ const QuickActions = ({ questions, onSetActiveView, activeView }) => {
         }}
       >
         {/* Dock Container */}
-        <div className="bg-white/10 backdrop-blur-md rounded-full px-3 py-2 shadow-xl border border-white/20">
+        <div className="bg-gray-800/90 dark:bg-white/10 backdrop-blur-md rounded-full px-3 py-2 shadow-xl border border-gray-700/50 dark:border-white/20">
           <div className="flex items-center space-x-2">
             
             {/* Polls Button */}
@@ -141,13 +141,13 @@ const QuickActions = ({ questions, onSetActiveView, activeView }) => {
                 className={`w-9 h-9 rounded-full shadow-md flex items-center justify-center transition-all duration-200 hover:scale-105 ${
                   activeView === "polls" 
                     ? 'bg-blue-600 text-white' 
-                    : 'bg-white/10 hover:bg-white/20 text-white'
+                    : 'bg-gray-600/50 dark:bg-white/10 hover:bg-gray-500/60 dark:hover:bg-white/20 text-white'
                 }`}
                 aria-pressed={activeView === "polls"}
               >
                 <ChartNoAxesColumn className="w-4 h-4" />
               </button>
-              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-black/80 text-white text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap pointer-events-none">
+              <div className="absolute bottom-10 left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-black/80 text-white text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap pointer-events-none">
                 Polls
               </div>
             </div>
@@ -159,7 +159,7 @@ const QuickActions = ({ questions, onSetActiveView, activeView }) => {
                 className={`w-9 h-9 rounded-full shadow-md flex items-center justify-center transition-all duration-200 hover:scale-105 ${
                   activeView === "qa" 
                     ? 'bg-blue-600 text-white' 
-                    : 'bg-white/10 hover:bg-white/20 text-white'
+                    : 'bg-gray-600/50 dark:bg-white/10 hover:bg-gray-500/60 dark:hover:bg-white/20 text-white'
                 }`}
                 aria-pressed={activeView === "qa"}
               >
@@ -170,19 +170,19 @@ const QuickActions = ({ questions, onSetActiveView, activeView }) => {
                   </span>
                 )}
               </button>
-              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-black/80 text-white text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap pointer-events-none">
+              <div className="absolute bottom-10 left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-black/80 text-white text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap pointer-events-none">
                 Q&A ({unansweredQuestions})
               </div>
             </div>
 
             {/* Divider */}
-            <div className="w-px h-6 bg-white/20"></div>
+            <div className="w-px h-6 bg-gray-400/60 dark:bg-white/20"></div>
 
             {/* Fullscreen Button */}
             <div className="relative group">
               <button
                 onClick={handleFullscreen}
-                className="w-9 h-9 bg-white/10 hover:bg-white/20 text-white rounded-full shadow-md flex items-center justify-center transition-all duration-200 hover:scale-105"
+                className="w-9 h-9 bg-gray-600/50 dark:bg-white/10 hover:bg-gray-500/60 dark:hover:bg-white/20 text-white rounded-full shadow-md flex items-center justify-center transition-all duration-200 hover:scale-105"
               >
                 {isFullscreen ? (
                   <Shrink className="w-4 h-4" />
@@ -190,7 +190,7 @@ const QuickActions = ({ questions, onSetActiveView, activeView }) => {
                   <Expand className="w-4 h-4" />
                 )}
               </button>
-              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-black/80 text-white text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap pointer-events-none">
+              <div className="absolute bottom-10 left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-black/80 text-white text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap pointer-events-none">
                 {isFullscreen ? 'Exit Full Screen' : 'Full Screen'}
               </div>
             </div>
@@ -202,12 +202,12 @@ const QuickActions = ({ questions, onSetActiveView, activeView }) => {
                 className={`w-9 h-9 rounded-full shadow-md flex items-center justify-center transition-all duration-200 hover:scale-105 ${
                   activeView === "qr" 
                     ? 'bg-blue-600 text-white' 
-                    : 'bg-blue-600/80 hover:bg-blue-600 text-white'
+                    : 'bg-blue-600/90 dark:bg-blue-600/80 hover:bg-blue-600 text-white'
                 }`}
               >
                 <QrCode className="w-4 h-4" />
               </button>
-              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-black/80 text-white text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap pointer-events-none">
+              <div className="absolute bottom-10 left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-black/80 text-white text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap pointer-events-none">
                 QR Code
               </div>
             </div>
