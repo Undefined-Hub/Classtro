@@ -185,7 +185,7 @@ const googleAuthCallback = async (req, res) => {
     if (!user) {
       // Handle authentication failure
       return res.redirect(
-        `http://localhost:5173/auth/callback?error=authentication_failed`,
+        `${process.env.CLIENT_ORIGIN || "http://localhost:5173"}/auth/callback?error=authentication_failed`,
       );
     }
 
@@ -225,16 +225,17 @@ const googleAuthCallback = async (req, res) => {
     };
 
     // Redirect to frontend callback with auth data
-    const callbackUrl = new URL("http://localhost:5173/auth/callback");
+    const clientOrigin = process.env.CLIENT_ORIGIN || "http://localhost:5173";
+    const callbackUrl = new URL("/auth/callback", clientOrigin);
     callbackUrl.searchParams.set("success", "true");
     callbackUrl.searchParams.set("accessToken", accessToken);
     callbackUrl.searchParams.set("user", JSON.stringify(safeUser));
     callbackUrl.searchParams.set("isNewUser", user.isNewUser || false);
 
     res.redirect(callbackUrl.toString());
-  } catch (error) {
+    } catch (error) {
     console.error("Google OAuth callback error:", error);
-    res.redirect(`http://localhost:5173/auth/callback?error=internal_error`);
+    res.redirect(`${process.env.CLIENT_ORIGIN || "http://localhost:5173"}/auth/callback?error=internal_error`);
   }
 };
 
