@@ -169,7 +169,7 @@ function RoomsPage() {
     if (!selectedRoom) return;
 
     try {
-      const res = await api.delete(`/api/rooms/${selectedRoom._id}`);
+      const res = await api.put(`/api/rooms/${selectedRoom._id}`);
       
       if (res.status !== 200) {
         throw new Error("Failed to archive room");

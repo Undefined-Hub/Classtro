@@ -7,9 +7,11 @@ const sessionRoutes = require("./sessionRoutes");
 const qnaRoutes = require("./qnaRoutes");
 const pollRoutes = require("./pollRoutes");
 const feedbackRoutes = require("./feedbackRoutes");
+const userRoutes = require("./userRoutes");
 const router = Router();
 
 router.use("/api/auth", authRoutes);
+router.use("/api/users", authenticateJWT, userRoutes);
 router.use("/api/util", authenticateJWT, utilRoutes);
 router.use("/api/rooms", authenticateJWT, roomRoutes);
 router.use("/api/sessions", sessionRoutes);

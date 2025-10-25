@@ -1,11 +1,52 @@
 import React, { useState } from "react";
 import { Outlet, useNavigate, useLocation, NavLink } from "react-router-dom";
+import { User, LogOut } from "lucide-react";
 import LogoutModal from "./LogoutModal.jsx";
+import ProfileImageOrInitials from "./ProfileImageOrInitials.jsx";
 
 function DashboardLayout() {
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [showProfileDropdown, setShowProfileDropdown] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+  const hideTimeoutRef = React.useRef(null);
+
+  // Close dropdown when clicking outside
+  React.useEffect(() => {
+    const handleClickOutside = () => {
+      setShowProfileDropdown(false);
+    };
+
+    if (showProfileDropdown) {
+      document.addEventListener('click', handleClickOutside);
+      return () => document.removeEventListener('click', handleClickOutside);
+    }
+  }, [showProfileDropdown]);
+
+  // Handle mouse enter with immediate show
+  const handleMouseEnter = () => {
+    if (hideTimeoutRef.current) {
+      clearTimeout(hideTimeoutRef.current);
+      hideTimeoutRef.current = null;
+    }
+    setShowProfileDropdown(true);
+  };
+
+  // Handle mouse leave with delay
+  const handleMouseLeave = () => {
+    hideTimeoutRef.current = setTimeout(() => {
+      setShowProfileDropdown(false);
+    }, 150); // 150ms delay before hiding
+  };
+
+  // Cleanup timeout on unmount
+  React.useEffect(() => {
+    return () => {
+      if (hideTimeoutRef.current) {
+        clearTimeout(hideTimeoutRef.current);
+      }
+    };
+  }, []);
 
   // Get user data from localStorage
   const user = JSON.parse(localStorage.getItem("user")) || {
@@ -39,26 +80,53 @@ function DashboardLayout() {
               <p className="text-blue-100">Welcome back, {user.name}</p>
             </div>
             <div className="mt-4 md:mt-0 flex items-center space-x-4">
-              {/* Logout Button */}
-              <button
-                onClick={handleLogout}
-                className="inline-flex items-center px-4 py-2 border border-transparent rounded-lg text-sm font-medium text-red-600 bg-white hover:bg-red-50 shadow-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors duration-150"
+              {/* Profile Dropdown */}
+              <div 
+                className="relative"
+                onMouseEnter={handleMouseEnter}
+                onMouseLeave={handleMouseLeave}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowProfileDropdown(!showProfileDropdown);
+                }}
               >
-                <svg
-                  className="w-5 h-5 mr-2"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
+                <button
+                  className="p-1 rounded-full hover:bg-white/10 transition-all duration-200 group focus:outline-none focus:ring-2 focus:ring-white/20"
+                  title="Profile Options"
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+                  <ProfileImageOrInitials
+                    src={user.profilePicture}
+                    alt={user.name}
+                    initials={user.name ? user.name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2) : "U"}
+                    className="w-8 h-8 sm:w-10 sm:h-10 rounded-full border-2 border-white/20 group-hover:border-white/40 transition-colors cursor-pointer"
+                    avatarColorClass="bg-blue-500"
                   />
-                </svg>
-                Sign Out
-              </button>
+                </button>
+
+                {/* Dropdown Menu */}
+                {showProfileDropdown && (
+                  <>
+                    {/* Invisible bridge to prevent gap issues */}
+                    <div className="absolute right-0 top-full h-1 w-full"></div>
+                    <div className="absolute right-0 mt-1 w-40 sm:w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-2 z-50">
+                    <button
+                      onClick={() => navigate("/teacher/profile")}
+                      className="w-full flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                    >
+                      <User className="w-4 h-4 mr-3" />
+                      View Profile
+                    </button>
+                      <button
+                        onClick={handleLogout}
+                        className="w-full flex items-center px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                      >
+                        <LogOut className="w-4 h-4 mr-3" />
+                        Logout
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
           </div>
         </div>
