@@ -63,6 +63,13 @@ const ParticipantProfileDetailsSection = ({
             <p className="text-sm text-gray-500 dark:text-gray-400">
               {user?.email}
             </p>
+            {isEditingProfile && user?.authProvider === "GOOGLE" && (
+              <div className="mt-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                <p className="text-xs text-blue-800 dark:text-blue-300 text-center">
+                  Profile picture is managed by your Google account. To change it, please update your Google account profile picture.
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Right Column - Profile Information */}
