@@ -27,6 +27,21 @@ const Register = lazy(() => import("./pages/Register"));
 const VerifyAndRole = lazy(() => import("./pages/VerifyAndRole"));
 const AnalyticsPage = lazy(() => import("./pages/Host/AnalyticsPage.jsx"));
 const OAuthCallback = lazy(() => import("./pages/OAuthCallback.jsx"));
+const HostProfilePage = lazy(() => import("./pages/Host/HostProfilePage.jsx"));
+const ParticipantProfilePage = lazy(() => import("./pages/Participant/ParticipantProfilePage.jsx"));
+
+// Profile redirect component
+const ProfileRedirect = () => {
+  const { user } = useAuth();
+  
+  if (user?.role === "TEACHER") {
+    return <Navigate to="/teacher/profile" replace />;
+  } else if (user?.role === "STUDENT") {
+    return <Navigate to="/participant/profile" replace />;
+  }
+  
+  return <Navigate to="/login" replace />;
+};
 
 const BACKEND_BASE_URL =
   import.meta.env.VITE_BACKEND_BASE_URL || "http://localhost:3000";
@@ -59,6 +74,16 @@ function App() {
           path="/auth/callback"
           element={<OAuthCallback onLogin={handleLogin} />}
         />
+        {/* Universal Profile Route - redirects based on role */}
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute />
+          }
+        >
+          <Route index element={<ProfileRedirect />} />
+        </Route>
+
         {/* Protected routes group */}
         <Route element={<ProtectedRoute roles={["TEACHER"]} />}>
           {/* Redirect /dashboard to /dashboard/rooms */}
@@ -76,11 +101,13 @@ function App() {
 
           <Route path="/test/sessionWorkspace" element={<SessionWorkspace />} />
           <Route path="/analytics" element={<AnalyticsPage />} />
+          <Route path="/teacher/profile" element={<HostProfilePage />} />
         </Route>
 
         <Route element={<ProtectedRoute roles={["STUDENT"]} />}>
           <Route path="/participant/home" element={<ParticipantHome />} />
           <Route path="/participant/session" element={<ParticipantSession />} />
+          <Route path="/participant/profile" element={<ParticipantProfilePage />} />
         </Route>
         <Route path="/unauthorized" element={<Unauthorized />} />
         <Route path="*" element={<NotFound />} />

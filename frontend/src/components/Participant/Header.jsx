@@ -1,9 +1,51 @@
-import React from "react";
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { User, LogOut } from "lucide-react";
 import { useAuth } from "../../context/UserContext.jsx";
 import ProfileImageOrInitials from "../ProfileImageOrInitials.jsx";
 
 const Header = ({ onLogout }) => {
   const { user } = useAuth();
+  const navigate = useNavigate();
+  const [showProfileDropdown, setShowProfileDropdown] = useState(false);
+  const hideTimeoutRef = React.useRef(null);
+
+  // Handle mouse enter with immediate show
+  const handleMouseEnter = () => {
+    if (hideTimeoutRef.current) {
+      clearTimeout(hideTimeoutRef.current);
+      hideTimeoutRef.current = null;
+    }
+    setShowProfileDropdown(true);
+  };
+
+  // Handle mouse leave with delay
+  const handleMouseLeave = () => {
+    hideTimeoutRef.current = setTimeout(() => {
+      setShowProfileDropdown(false);
+    }, 150); // 150ms delay before hiding
+  };
+
+  // Cleanup timeout on unmount
+  React.useEffect(() => {
+    return () => {
+      if (hideTimeoutRef.current) {
+        clearTimeout(hideTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  // Close dropdown when clicking outside
+  React.useEffect(() => {
+    const handleClickOutside = () => {
+      setShowProfileDropdown(false);
+    };
+
+    if (showProfileDropdown) {
+      document.addEventListener('click', handleClickOutside);
+      return () => document.removeEventListener('click', handleClickOutside);
+    }
+  }, [showProfileDropdown]);
 
   const getInitials = (name) => {
     return (
@@ -31,55 +73,59 @@ const Header = ({ onLogout }) => {
 
           <div className="flex items-center justify-between sm:justify-end space-x-3 sm:space-x-4">
             {/* User Info - Hidden on mobile, shown on larger screens */}
-            <div className="hidden sm:block text-right">
-              <p className="text-sm text-blue-100">Student ID</p>
+            {/* <div className="hidden sm:block text-right">
+              <p className="text-sm text-blue-100">Student</p>
               <p className="font-medium text-sm">
-                {user?.username || user?.email?.split("@")[0] || "N/A"}
+                {user?.name || "Student"}
               </p>
-            </div>
+            </div> */}
 
-            {/* Profile Avatar */}
+            {/* Profile Dropdown */}
             <div className="flex-shrink-0 flex items-center gap-2">
-              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-blue-500 rounded-full flex items-center justify-center overflow-hidden flex-shrink-0">
-                {user?.profilePicture ? (
+              <div 
+                className="relative"
+                onMouseEnter={handleMouseEnter}
+                onMouseLeave={handleMouseLeave}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowProfileDropdown(!showProfileDropdown);
+                }}
+              >
+                <button className="p-1 rounded-full hover:bg-white/10 transition-all duration-200 group focus:outline-none focus:ring-2 focus:ring-white/20">
                   <ProfileImageOrInitials
-                    src={user.profilePicture}
-                    alt="Profile"
+                    src={user?.profilePicture}
+                    alt={user?.name}
                     initials={getInitials(user?.name)}
+                    className="w-8 h-8 sm:w-10 sm:h-10 rounded-full border-2 border-white/20 group-hover:border-white/40 transition-colors cursor-pointer"
+                    avatarColorClass="bg-blue-500"
                   />
-                ) : (
-                  <span className="text-sm sm:text-lg font-bold">
-                    {getInitials(user?.name)}
-                  </span>
+                </button>
+
+                {/* Dropdown Menu */}
+                {showProfileDropdown && (
+                  <>
+                    {/* Invisible bridge to prevent gap issues */}
+                    <div className="absolute right-0 top-full h-1 w-full"></div>
+                    <div className="absolute right-0 mt-1 w-40 sm:w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-2 z-50">
+                      <button
+                        onClick={() => navigate("/participant/profile")}
+                        className="w-full flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                      >
+                        <User className="w-4 h-4 mr-3" />
+                        View Profile
+                      </button>
+                      <button
+                        onClick={onLogout}
+                        className="w-full flex items-center px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                      >
+                        <LogOut className="w-4 h-4 mr-3" />
+                        Logout
+                      </button>
+                    </div>
+                  </>
                 )}
               </div>
-              <div className="flex-shrink-0 sm:hidden">
-                <p className="text-xs text-blue-100">Student ID</p>
-                <p className="font-medium  text-sm">
-                  {user?.username || user?.email?.split("@")[0] || "N/A"}
-                </p>
-              </div>
             </div>
-            {/* Logout Button */}
-            <button
-              onClick={onLogout}
-              className="inline-flex items-center px-3 py-2 sm:px-4 border border-transparent rounded-lg text-xs sm:text-sm font-medium text-red-600 bg-white hover:bg-red-50 shadow-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors duration-150 flex-shrink-0"
-            >
-              <svg
-                className="w-4 h-4 sm:w-5 sm:h-5 sm:mr-2"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
-                />
-              </svg>
-              <span className="sm:inline">Sign Out</span>
-            </button>
           </div>
         </div>
 
