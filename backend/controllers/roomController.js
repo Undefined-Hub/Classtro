@@ -41,8 +41,17 @@ const listRooms = async (req, res, next) => {
   try {
     const query = validateInput(listRoomsQuerySchema, req.query);
 
-    // Count total rooms first
-    const total = await Room.countDocuments({ teacherId: req.user.id });
+    // Filter condition to exclude archived rooms
+    const filterCondition = { 
+      teacherId: req.user.id,
+      $or: [
+        { archivedAt: { $exists: false } }, // Field doesn't exist
+        { archivedAt: null } // Field exists but is null
+      ]
+    };
+
+    // Count total non-archived rooms first
+    const total = await Room.countDocuments(filterCondition);
 
     // Calculate totalPages
     const totalPages = Math.max(1, Math.ceil(total / query.limit));
@@ -54,7 +63,7 @@ const listRooms = async (req, res, next) => {
     const skip = (page - 1) * query.limit;
 
     // Fetch rooms with adjusted skip
-    const rooms = await Room.find({ teacherId: req.user.id })
+    const rooms = await Room.find(filterCondition)
       .skip(skip)
       .limit(query.limit)
       .sort({ createdAt: -1 });
@@ -124,26 +133,48 @@ const updateRoom = async (req, res, next) => {
 
 /**
  * Soft-delete / archive a room
- * DELETE /api/rooms/:roomId
+ * PUT /api/rooms/:roomId
  */
-const deleteRoom = async (req, res, next) => {
+const archiveRoom = async (req, res, next) => {
   try {
     const params = validateInput(roomIdParamSchema, req.params);
 
-    const room = await Room.findOneAndUpdate(
-      { _id: params.roomId, teacherId: req.user.id },
-      { $set: { archivedAt: new Date() } },
-      { new: true },
-    );
+    console.log(`Archiving room ${params.roomId} for user ${req.user.id}`);
 
-    if (!room) {
+    // First check if room exists and is owned by the user
+    const existingRoom = await Room.findOne({
+      _id: params.roomId,
+      teacherId: req.user.id
+    });
+
+    if (!existingRoom) {
+      console.log(`Room not found: ${params.roomId} for user: ${req.user.id}`);
       const error = new Error("Room not found or not owned by you");
       error.status = 404;
       throw error;
     }
 
+    console.log(`Found room: ${existingRoom.name}, current archivedAt: ${existingRoom.archivedAt}`);
+
+    // Check if room is already archived
+    if (existingRoom.archivedAt) {
+      console.log(`Room ${params.roomId} is already archived`);
+      const error = new Error("Room is already archived");
+      error.status = 400;
+      throw error;
+    }
+
+    // Archive the room
+    const room = await Room.findOneAndUpdate(
+      { _id: params.roomId, teacherId: req.user.id },
+      { $set: { archivedAt: new Date() } },
+      { new: true }
+    );
+
+    console.log(`Room ${params.roomId} archived successfully`);
     res.json({ message: "Room archived successfully", room });
   } catch (err) {
+    console.error(`Error archiving room ${params.roomId}:`, err);
     next(err);
   }
 };
@@ -153,20 +184,42 @@ const unarchiveRoom = async (req, res, next) => {
   try {
     const params = validateInput(roomIdParamSchema, req.params);
 
-    const room = await Room.findOneAndUpdate(
-      { _id: params.roomId, teacherId: req.user.id },
-      { $set: { archivedAt: null } },
-      { new: true },
-    );
+    console.log(`Unarchiving room ${params.roomId} for user ${req.user.id}`);
 
-    if (!room) {
+    // First check if room exists and is owned by the user
+    const existingRoom = await Room.findOne({
+      _id: params.roomId,
+      teacherId: req.user.id
+    });
+
+    if (!existingRoom) {
+      console.log(`Room not found: ${params.roomId} for user: ${req.user.id}`);
       const error = new Error("Room not found or not owned by you");
       error.status = 404;
       throw error;
     }
 
+    console.log(`Found room: ${existingRoom.name}, archivedAt: ${existingRoom.archivedAt}`);
+
+    // Check if room is actually archived
+    if (!existingRoom.archivedAt) {
+      console.log(`Room ${params.roomId} is not archived`);
+      const error = new Error("Room is not archived");
+      error.status = 400;
+      throw error;
+    }
+
+    // Update the room to unarchive it
+    const room = await Room.findOneAndUpdate(
+      { _id: params.roomId, teacherId: req.user.id },
+      { $unset: { archivedAt: 1 } }, // Remove the field completely
+      { new: true }
+    );
+
+    console.log(`Room ${params.roomId} unarchived successfully`);
     res.json({ message: "Room unarchived successfully", room });
   } catch (err) {
+    console.error(`Error unarchiving room ${params.roomId}:`, err);
     next(err);
   }
 };
@@ -222,13 +275,72 @@ const listRoomSessions = async (req, res, next) => {
   }
 };
 
+/**
+ * Get archived rooms for a specific user (teacher)
+ * GET /api/rooms/:userId/archives?page=1&limit=10
+ */
+const getArchivedRoomsByUserId = async (req, res, next) => {
+  try {
+    // Validate query parameters for pagination
+    const query = validateInput(listRoomsQuerySchema, req.query);
+    const { userId } = req.params;
+
+    // Validate that the user is requesting their own archived rooms or has admin access
+    if (req.user.id !== userId && req.user.role !== 'ADMIN') {
+      const error = new Error("Unauthorized access to user's archived rooms");
+      error.status = 403;
+      throw error;
+    }
+
+    // Filter condition to get only archived rooms for the user
+    const filterCondition = { 
+      teacherId: userId,
+      archivedAt: { $exists: true, $ne: null } // Only get archived rooms (not null and exists)
+    };
+
+    // Count total archived rooms
+    const total = await Room.countDocuments(filterCondition);
+
+    // Calculate totalPages
+    const totalPages = Math.max(1, Math.ceil(total / query.limit));
+
+    // Adjust page if it exceeds totalPages
+    const page = Math.min(query.page, totalPages);
+
+    // Calculate skip with adjusted page
+    const skip = (page - 1) * query.limit;
+
+    // Fetch archived rooms with pagination
+    const archivedRooms = await Room.find(filterCondition)
+      .skip(skip)
+      .limit(query.limit)
+      .sort({ archivedAt: -1 }) // Sort by most recently archived first
+      .select('name description defaultMaxStudents teacherId createdAt archivedAt updatedAt');
+
+    res.json({
+      success: true,
+      message: "Archived rooms retrieved successfully",
+      pagination: {
+        currentPage: page,
+        totalPages,
+        pageSize: query.limit,
+        totalItems: total,
+      },
+      rooms: archivedRooms,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
 module.exports = {
   createRoom,
   listRooms,
   getRoomById,
   updateRoom,
-  deleteRoom,
+  archiveRoom,
   unarchiveRoom,
   listRoomSessions,
   hardDeleteRoom,
+  getArchivedRoomsByUserId,
 };

@@ -6,6 +6,7 @@ const RoomDetail = ({
   onBack,
   onCreateSession,
   onSessionClick,
+  onManageSession,
   sessions,
   setSessions,
   loading,
@@ -65,6 +66,7 @@ const RoomDetail = ({
         error={error}
         onSessionClick={onSessionClick}
         onCreateSession={onCreateSession}
+        onManageSession={onManageSession}
       />
     </div>
   );

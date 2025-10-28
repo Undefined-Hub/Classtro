@@ -42,7 +42,10 @@ router.post("/register", registerUser);
 
 router.get(
   "/google",
-  passport.authenticate("google", { scope: ["profile", "email"],prompt: 'select_account' }),
+  passport.authenticate("google", {
+    scope: ["profile", "email"],
+    prompt: "select_account",
+  }),
 );
 
 router.get(
@@ -56,45 +59,14 @@ router.get(
 
 // Handle OAuth failures
 router.get("/google/failure", (req, res) => {
-  const targetOrigin = process.env.CLIENT_ORIGIN || "http://localhost:5173";
+  const clientOrigin = process.env.CLIENT_ORIGIN || "http://localhost:5173";
   
-  const html = `<!DOCTYPE html>
-  <html lang="en">
-    <head>
-      <meta charset="UTF-8" />
-      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-      <title>Authentication Failed</title>
-      <style>
-        body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; margin: 0; display: grid; place-items: center; height: 100vh; color: #111; }
-        .box { text-align: center; }
-        .error { color: #dc2626; }
-      </style>
-    </head>
-    <body>
-      <div class="box">
-        <p class="error">Authentication failed. You can close this window.</p>
-      </div>
-      <script>
-        (function() {
-          try {
-            var data = {
-              type: 'OAUTH_ERROR',
-              message: 'This account was registered via a different method. Please use the original login method.'
-            };
-            if (window.opener && !window.opener.closed) {
-              window.opener.postMessage(data, ${JSON.stringify(targetOrigin)});
-            }
-          } catch (e) {
-            console.error('Failed to deliver error message:', e);
-          } finally {
-            setTimeout(function(){ window.close(); }, 2000);
-          }
-        })();
-      </script>
-    </body>
-  </html>`;
-
-  res.status(200).send(html);
+  // For redirect-based OAuth, redirect back to login with error parameter
+  const errorMessage = encodeURIComponent(
+    "This account was registered via a different method. Please use the original login method."
+  );
+  
+  res.redirect(`${clientOrigin}/login?oauth_error=${errorMessage}`);
 });
 
 router.post("/refresh", refreshToken);

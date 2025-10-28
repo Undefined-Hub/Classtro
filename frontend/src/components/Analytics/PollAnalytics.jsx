@@ -1,11 +1,19 @@
-import React, { useState } from 'react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { useAnalyticsData } from '../../context/AnalyticsContext';
+import React, { useState } from "react";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
+import { useAnalyticsData } from "../../context/AnalyticsContext";
 
 const PollAnalytics = () => {
   const { analyticsData, loading } = useAnalyticsData();
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'scroll'
+  const [viewMode, setViewMode] = useState("grid"); // 'grid' or 'scroll'
 
   if (loading) {
     return (
@@ -14,7 +22,10 @@ const PollAnalytics = () => {
           <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-1/4 mb-4"></div>
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
             {[...Array(2)].map((_, i) => (
-              <div key={i} className="border border-gray-200 dark:border-gray-700 rounded-xl p-4">
+              <div
+                key={i}
+                className="border border-gray-200 dark:border-gray-700 rounded-xl p-4"
+              >
                 <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4 mb-4"></div>
                 <div className="h-32 bg-gray-200 dark:bg-gray-700 rounded"></div>
               </div>
@@ -44,9 +55,11 @@ const PollAnalytics = () => {
   };
 
   const PollCard = ({ poll, index, isInModal = false }) => (
-    <div className={`border border-gray-200 dark:border-gray-700 rounded-xl p-3 sm:p-4 ${
-      isInModal ? 'w-full' : 'flex-shrink-0'
-    } ${!isInModal && viewMode === 'scroll' ? 'w-72 sm:w-80' : ''}`}>
+    <div
+      className={`border border-gray-200 dark:border-gray-700 rounded-xl p-3 sm:p-4 ${
+        isInModal ? "w-full" : "flex-shrink-0"
+      } ${!isInModal && viewMode === "scroll" ? "w-72 sm:w-80" : ""}`}
+    >
       <div className="mb-3">
         <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-1 line-clamp-2">
           Poll {index + 1}: {poll.question}
@@ -58,37 +71,45 @@ const PollAnalytics = () => {
         </div>
       </div>
 
-      <div className={`${isInModal ? 'h-48 sm:h-64' : 'h-32 sm:h-40'}`}>
+      <div className={`${isInModal ? "h-48 sm:h-64" : "h-32 sm:h-40"}`}>
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={poll.options} margin={{ top: 10, right: 10, left: 10, bottom: 20 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.3} />
-            <XAxis 
-              dataKey="text" 
+          <BarChart
+            data={poll.options}
+            margin={{ top: 10, right: 10, left: 10, bottom: 20 }}
+          >
+            <CartesianGrid
+              strokeDasharray="3 3"
+              stroke="#374151"
+              opacity={0.3}
+            />
+            <XAxis
+              dataKey="text"
               stroke="#6B7280"
               fontSize={isInModal ? 11 : 9}
-              tick={{fontSize: isInModal ? 11 : 9}}
+              tick={{ fontSize: isInModal ? 11 : 9 }}
               angle={-45}
               textAnchor="end"
               height={60}
             />
-            <YAxis 
+            <YAxis
               stroke="#6B7280"
               fontSize={isInModal ? 11 : 9}
-              tick={{fontSize: isInModal ? 11 : 9}}
+              tick={{ fontSize: isInModal ? 11 : 9 }}
             />
             <Tooltip content={<CustomTooltip />} />
-            <Bar 
-              dataKey="votes" 
-              fill="#8B5CF6"
-              radius={[4, 4, 0, 0]}
-            />
+            <Bar dataKey="votes" fill="#8B5CF6" radius={[4, 4, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
       </div>
 
-      <div className={`mt-3 grid ${poll.options.length <= 2 ? 'grid-cols-2' : 'grid-cols-2 sm:grid-cols-3'} gap-2`}>
+      <div
+        className={`mt-3 grid ${poll.options.length <= 2 ? "grid-cols-2" : "grid-cols-2 sm:grid-cols-3"} gap-2`}
+      >
         {poll.options.map((option, optionIndex) => (
-          <div key={optionIndex} className="text-center p-2 bg-gray-50 dark:bg-gray-700 rounded-lg">
+          <div
+            key={optionIndex}
+            className="text-center p-2 bg-gray-50 dark:bg-gray-700 rounded-lg"
+          >
             <div className="text-sm font-semibold text-gray-900 dark:text-white">
               {option.votes}
             </div>
@@ -115,15 +136,30 @@ const PollAnalytics = () => {
             onClick={() => setIsModalOpen(false)}
             className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
           >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            <svg
+              className="w-6 h-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M6 18L18 6M6 6l12 12"
+              />
             </svg>
           </button>
         </div>
         <div className="p-4 sm:p-6 overflow-y-auto max-h-[calc(90vh-80px)] hide-scrollbar">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
             {polls.map((poll, index) => (
-              <PollCard key={poll.id} poll={poll} index={index} isInModal={true} />
+              <PollCard
+                key={poll.id}
+                poll={poll}
+                index={index}
+                isInModal={true}
+              />
             ))}
           </div>
         </div>
@@ -143,26 +179,26 @@ const PollAnalytics = () => {
               Response distribution for polls conducted
             </p>
           </div>
-          
+
           {polls.length > 2 && (
             <div className="flex items-center space-x-2">
               <div className="flex bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
                 <button
-                  onClick={() => setViewMode('grid')}
+                  onClick={() => setViewMode("grid")}
                   className={`px-3 py-1 text-xs font-medium rounded ${
-                    viewMode === 'grid'
-                      ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow'
-                      : 'text-gray-500 dark:text-gray-400'
+                    viewMode === "grid"
+                      ? "bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow"
+                      : "text-gray-500 dark:text-gray-400"
                   }`}
                 >
                   Grid
                 </button>
                 <button
-                  onClick={() => setViewMode('scroll')}
+                  onClick={() => setViewMode("scroll")}
                   className={`px-3 py-1 text-xs font-medium rounded ${
-                    viewMode === 'scroll'
-                      ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow'
-                      : 'text-gray-500 dark:text-gray-400'
+                    viewMode === "scroll"
+                      ? "bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow"
+                      : "text-gray-500 dark:text-gray-400"
                   }`}
                 >
                   Scroll
@@ -179,17 +215,17 @@ const PollAnalytics = () => {
         </div>
 
         <div className="flex-1 overflow-hidden">
-          {viewMode === 'grid' ? (
+          {viewMode === "grid" ? (
             <div className="h-full overflow-y-auto hide-scrollbar">
               <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
                 {polls.slice(0, 2).map((poll, index) => (
                   <PollCard key={poll.id} poll={poll} index={index} />
                 ))}
               </div>
-              
+
               {polls.length > 2 && (
                 <div className="mt-4 text-center">
-                  <button 
+                  <button
                     onClick={() => setIsModalOpen(true)}
                     className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
                   >
@@ -200,7 +236,10 @@ const PollAnalytics = () => {
             </div>
           ) : (
             <div className="h-full overflow-x-auto hide-scrollbar">
-              <div className="flex space-x-4 pb-4" style={{ width: 'max-content' }}>
+              <div
+                className="flex space-x-4 pb-4"
+                style={{ width: "max-content" }}
+              >
                 {polls.map((poll, index) => (
                   <PollCard key={poll.id} poll={poll} index={index} />
                 ))}

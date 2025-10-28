@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useCallback, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { io } from "socket.io-client";
+import { Monitor, Smartphone } from "lucide-react";
 
 // * Components imports
 import SessionHeader from "../../components/Host/sessionWorkspace/SessionHeader";
@@ -9,13 +10,14 @@ import PollManager from "../../components/Host/sessionWorkspace/PollManager";
 import QAManager from "../../components/Host/sessionWorkspace/QAManager";
 import ParticipantList from "../../components/Host/sessionWorkspace/ParticipantList";
 import QuickActions from "../../components/Host/sessionWorkspace/QuickActions";
+import QRJoinView from "../../components/Host/sessionWorkspace/QRJoinView";
 import { useHostSession } from "../../context/HostSessionContext.jsx";
 import axios from "axios";
 // * API import
 import api from "../../utils/api.js";
 
 const BACKEND_BASE_URL =
-import.meta.env.VITE_BACKEND_BASE_URL || "http://localhost:5000";
+  import.meta.env.VITE_BACKEND_BASE_URL || "http://localhost:5000";
 
 const SOCKET_URL = BACKEND_BASE_URL + "/sessions";
 
@@ -59,7 +61,6 @@ const MOCK_SESSION_DATA = {
 
 // * Main Session Workspace Component
 const SessionWorkspace = () => {
-
   // * Router hooks
   const navigate = useNavigate();
   const location = useLocation();
@@ -104,6 +105,23 @@ const SessionWorkspace = () => {
     resetHostSession,
   } = useHostSession();
 
+  // * Participant List Collapse State
+  const [isParticipantListOpen, setIsParticipantListOpen] = useState(true);
+
+  // * Mobile Detection
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 1024); // lg breakpoint
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
   // * Load session data from navigation state
   useEffect(() => {
     // * Getting Session Data from navigation state
@@ -113,8 +131,7 @@ const SessionWorkspace = () => {
       const passedroomName = location.state.roomName;
 
       // * Debug log
-      
-      
+
       // * RoomId and RoomName handling
       const roomId = passedSessionData.roomId;
       const roomName = passedroomName ? passedroomName : "Unknown Room";
@@ -125,21 +142,17 @@ const SessionWorkspace = () => {
         roomName: roomName,
       };
 
-      // * Set session data in context 
+      // * Set session data in context
       setSessionData(newSessionData);
       // * Set Questions in context (mock data for now)
       setQuestions(MOCK_QUESTIONS);
     } else {
       // * Use mock data as fallback
-      
     }
-    
   }, [location]);
 
   // * Debug log session data changes
-  useEffect(() => {
-    
-  }, [sessionData]);
+  useEffect(() => {}, [sessionData]);
 
   // Fetch participants from backend with debouncing
   const fetchTimeoutRef = useRef(null);
@@ -154,11 +167,13 @@ const SessionWorkspace = () => {
       // Set a new timeout (300ms debounce)
       fetchTimeoutRef.current = setTimeout(async () => {
         try {
-          
           const res = await api.get(
-            `/api/sessions/code/${sessionCode}/participants`,{headers: {
-              'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
-            }}
+            `/api/sessions/code/${sessionCode}/participants`,
+            {
+              headers: {
+                Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+              },
+            },
           );
           setParticipantsList(res.data);
         } catch (err) {
@@ -167,7 +182,7 @@ const SessionWorkspace = () => {
         }
       }, 300); // 300ms debounce time
     },
-    [BACKEND_BASE_URL, setParticipantsList]
+    [BACKEND_BASE_URL, setParticipantsList],
   );
 
   // Connect to socket.io backend on mount
@@ -179,7 +194,7 @@ const SessionWorkspace = () => {
     const fetchQuestions = async () => {
       try {
         const res = await api.get(`/api/questions/session/${sessionData._id}`);
-       
+
         // Normalize backend question shape to frontend expected fields
         const normalized = (res.data.questions || []).map((q) => ({
           id: q._id,
@@ -192,7 +207,7 @@ const SessionWorkspace = () => {
         }));
         setQuestions(normalized);
       } catch (err) {
-        console.error('Failed to fetch questions:', err);
+        console.error("Failed to fetch questions:", err);
         setQuestions([]);
       }
     };
@@ -248,10 +263,10 @@ const SessionWorkspace = () => {
         prev.map((item) =>
           item.id === q._id
             ? {
-              ...item,
-              text: q.text || item.text,
-              answered: !!q.isAnswered,
-            }
+                ...item,
+                text: q.text || item.text,
+                answered: !!q.isAnswered,
+              }
             : item,
         ),
       );
@@ -264,27 +279,30 @@ const SessionWorkspace = () => {
       const { questionId, delta } = payload;
       setQuestions((prev) =>
         prev.map((item) =>
-          item.id === questionId ? { ...item, upvotes: (item.upvotes || 0) + delta } : item,
+          item.id === questionId
+            ? { ...item, upvotes: (item.upvotes || 0) + delta }
+            : item,
         ),
       );
     };
     const onAnswered = (payload) => {
       const { questionId } = payload;
-      setQuestions((prev) => prev.map((item) => (item.id === questionId ? { ...item, answered: true } : item)));
+      setQuestions((prev) =>
+        prev.map((item) =>
+          item.id === questionId ? { ...item, answered: true } : item,
+        ),
+      );
     };
 
-    socket.on('qna:question:created', onCreated);
-    socket.on('qna:question:updated', onUpdated);
-    socket.on('qna:question:deleted', onDeleted);
-    socket.on('qna:question:upvoted', onUpvoted);
-    socket.on('qna:question:answered', onAnswered);
+    socket.on("qna:question:created", onCreated);
+    socket.on("qna:question:updated", onUpdated);
+    socket.on("qna:question:deleted", onDeleted);
+    socket.on("qna:question:upvoted", onUpvoted);
+    socket.on("qna:question:answered", onAnswered);
     // Listen for room members
-    socket.on("room:members", (data) => {
-      
-    });
+    socket.on("room:members", (data) => {});
     // Listen for participant count updates
     socket.on("participants:update", (data) => {
-      
       // Refetch participants list whenever count changes
       fetchParticipants(sessionData.code);
     });
@@ -292,7 +310,6 @@ const SessionWorkspace = () => {
     socket.on("broadcast:message", (payload) => {
       // You can handle incoming broadcast messages here if needed
       // e.g., show a notification or update a chat
-      
     });
     return () => {
       try {
@@ -300,15 +317,15 @@ const SessionWorkspace = () => {
           code: sessionData.code,
           participantId: "teacher1",
         });
-      } catch { }
+      } catch {}
       socket.off("room:members");
       socket.off("participants:update");
       socket.off("broadcast:message");
-      socket.off('qna:question:created', onCreated);
-      socket.off('qna:question:updated', onUpdated);
-      socket.off('qna:question:deleted', onDeleted);
-      socket.off('qna:question:upvoted', onUpvoted);
-      socket.off('qna:question:answered', onAnswered);
+      socket.off("qna:question:created", onCreated);
+      socket.off("qna:question:updated", onUpdated);
+      socket.off("qna:question:deleted", onDeleted);
+      socket.off("qna:question:upvoted", onUpvoted);
+      socket.off("qna:question:answered", onAnswered);
       socket.off("connect");
       socket.off("connect_error");
       socket.off("disconnect");
@@ -355,6 +372,7 @@ const SessionWorkspace = () => {
   const getInitials = (name) => {
     return name
       .split(" ")
+      .slice(0, 2) // Only take first 2 words
       .map((part) => part[0])
       .join("")
       .toUpperCase();
@@ -382,8 +400,8 @@ const SessionWorkspace = () => {
   const handleUpvoteQuestion = (questionId) => {
     setQuestions(
       questions.map((q) =>
-        q.id === questionId ? { ...q, upvotes: q.upvotes + 1 } : q
-      )
+        q.id === questionId ? { ...q, upvotes: q.upvotes + 1 } : q,
+      ),
     );
   };
 
@@ -393,8 +411,8 @@ const SessionWorkspace = () => {
       await api.patch(`/api/questions/${questionId}/answer`);
       // Socket event will update all clients' state
     } catch (err) {
-      console.error('Failed to mark question as answered:', err);
-      alert('Failed to mark question as answered');
+      console.error("Failed to mark question as answered:", err);
+      alert("Failed to mark question as answered");
     }
   };
 
@@ -402,8 +420,8 @@ const SessionWorkspace = () => {
   const handleKickParticipant = (participantId) => {
     setParticipantsList(
       participantsList.map((p) =>
-        p._id === participantId ? { ...p, kicked: true } : p
-      )
+        p._id === participantId ? { ...p, kicked: true } : p,
+      ),
     );
   };
 
@@ -417,7 +435,9 @@ const SessionWorkspace = () => {
     try {
       // Step 1: Close session in database
       console.log("📡 Closing session in database...");
-      const res = await api.post(`/api/sessions/code/${sessionData.code}/close`);
+      const res = await api.post(
+        `/api/sessions/code/${sessionData.code}/close`,
+      );
       console.log("✅ Database session closed successfully");
 
       if (res.status !== 200) {
@@ -432,7 +452,6 @@ const SessionWorkspace = () => {
       resetHostSession();
       console.log("🏠 Navigating to dashboard...");
       navigate("/dashboard");
-      
     } catch (err) {
       console.error("❌ Session end failed:", err);
       alert("Failed to close session. Please try again.");
@@ -443,7 +462,7 @@ const SessionWorkspace = () => {
   const handleSocketEndSession = (sessionCode) => {
     return new Promise((resolve, reject) => {
       const socket = socketRef.current;
-      
+
       // Check if socket exists and is connected
       if (!socket) {
         console.warn("⚠️ Socket is null - session ended via API only");
@@ -456,14 +475,16 @@ const SessionWorkspace = () => {
       }
 
       console.log("🔌 Socket is connected, attempting to emit session:end");
-      
+
       let retryCount = 0;
       const maxRetries = 5;
       const retryDelay = 1000; // 1 second
 
       const attemptEmit = () => {
-        console.log(`📡 Attempt ${retryCount + 1}/${maxRetries} - Emitting session:end`);
-        
+        console.log(
+          `📡 Attempt ${retryCount + 1}/${maxRetries} - Emitting session:end`,
+        );
+
         // Use acknowledgment to confirm server received the message
         const timeout = setTimeout(() => {
           console.warn(`⏱️ Attempt ${retryCount + 1} timed out (5s)`);
@@ -472,12 +493,15 @@ const SessionWorkspace = () => {
 
         socket.emit("session:end", { code: sessionCode }, (acknowledgment) => {
           clearTimeout(timeout);
-          
+
           if (acknowledgment?.success) {
             console.log("✅ Session end confirmed by server");
             resolve();
           } else {
-            console.warn("⚠️ Server acknowledged but reported error:", acknowledgment);
+            console.warn(
+              "⚠️ Server acknowledged but reported error:",
+              acknowledgment,
+            );
             retryOrResolve();
           }
         });
@@ -500,6 +524,33 @@ const SessionWorkspace = () => {
   };
 
   const sessionDuration = calculateDuration();
+
+  // Mobile View - Session management not available
+  if (isMobile) {
+    return (
+      <div className="h-screen flex items-center justify-center p-6 bg-gray-50 dark:bg-gray-900">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 max-w-xs w-full text-center">
+          <Monitor className="w-12 h-12 text-blue-600 dark:text-blue-400 mx-auto mb-4" />
+          
+          <h1 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+            Not Available on Mobile
+          </h1>
+          
+          <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+            Session management is not yet available on mobile. Please use a larger screen.
+          </p>
+
+          <button
+            onClick={() => navigate('/dashboard')}
+            className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
+          >
+            Back to Dashboard
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="bg-white dark:bg-gray-900 h-screen flex flex-col overflow-hidden">
       {/* Header with session info - Fixed height */}
@@ -508,22 +559,26 @@ const SessionWorkspace = () => {
         sessionDuration={sessionDuration}
         onNavigateBack={() => navigate(-1)}
         onEndSession={() => setShowConfirmClose(true)}
+        activeView={activeView}
+        isParticipantListOpen={isParticipantListOpen}
       />
 
       {/* Main content area with grid layout - Takes remaining height */}
       <div className="flex-1 flex overflow-hidden">
         {/* Main content area (2/3) */}
-        <div className="flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-800 relative">
+        <div className="flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-900 relative">
           {/* Floating Quick Actions Menu */}
-          <QuickActions questions={questions} onSetActiveView={setActiveView} activeView={activeView} />
+          <QuickActions
+            questions={questions}
+            onSetActiveView={setActiveView}
+            activeView={activeView}
+          />
 
           {/* Main Content */}
-          {activeView === "main" && (
-            <MainContent/>
-          )}
+          {activeView === "main" && <MainContent isParticipantListOpen={isParticipantListOpen} />}
 
           {/* Poll Manager */}
-          <PollManager/>
+          <PollManager isParticipantListOpen={isParticipantListOpen} />
 
           {/* Q&A Manager */}
           <QAManager
@@ -532,27 +587,79 @@ const SessionWorkspace = () => {
             onMarkAnswered={handleMarkAnswered}
             activeView={activeView}
             setActiveView={setActiveView}
+            isParticipantListOpen={isParticipantListOpen}
+          />
+
+          {/* QR Join View */}
+          <QRJoinView
+            sessionData={sessionData}
+            activeView={activeView}
+            setActiveView={setActiveView}
           />
         </div>
 
-        {/* Participants Sidebar */}
-        <ParticipantList
-          participants={participantsList}
-          sessionData={sessionData}
-          questions={questions}
-          onKickParticipant={handleKickParticipant}
-          onShowConfirmClose={() => setShowConfirmClose(true)}
-          getInitials={getInitials}
-          getAvatarColor={getAvatarColor}
-          showBroadcastForm={showBroadcastForm}
-          setShowBroadcastForm={setShowBroadcastForm}
-          broadcastMessage={broadcastMessage}
-          setBroadcastMessage={setBroadcastMessage}
-          broadcastStatus={broadcastStatus}
-          handleBroadcast={handleBroadcast}
-        />
+        {/* Collapsible Participants Sidebar */}
+        <div className="relative flex">
+          {/* Toggle Button */}
+          <div className="group relative">
+            <button
+              onClick={() => setIsParticipantListOpen(!isParticipantListOpen)}
+              className="absolute left-0 top-1/2 transform -translate-y-1/2 -translate-x-1/2 z-50 p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-lg transition-all duration-200"
+            >
+              <svg
+                className={`w-4 h-4 transition-transform duration-300 ${
+                  isParticipantListOpen ? "rotate-0" : "rotate-180"
+                }`}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 5l7 7-7 7"
+                />
+              </svg>
+            </button>
+
+            {/* Custom Tooltip */}
+            <div className="absolute right-full mr-3 top-1/2 transform -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-all duration-300 delay-300 pointer-events-none z-[60] group-hover:scale-100 scale-95">
+              <div className="bg-black text-white text-xs px-3 py-2 rounded-lg whitespace-nowrap shadow-lg border border-gray-800">
+                {isParticipantListOpen ? "Hide Participants" : "Show Participants"}
+                {/* Tooltip Arrow */}
+                <div className="absolute left-full top-1/2 transform -translate-y-1/2 border-4 border-transparent border-l-black"></div>
+              </div>
+            </div>
+          </div>
+
+          {/* Participants Panel */}
+          <div
+            className={`transition-all duration-300 ease-in-out overflow-hidden ${
+              isParticipantListOpen 
+                ? "w-80 opacity-100 translate-x-0" 
+                : "w-0 opacity-0 translate-x-full"
+            }`}
+          >
+            <ParticipantList
+              participants={participantsList}
+              sessionData={sessionData}
+              questions={questions}
+              onKickParticipant={handleKickParticipant}
+              onShowConfirmClose={() => setShowConfirmClose(true)}
+              getInitials={getInitials}
+              getAvatarColor={getAvatarColor}
+              showBroadcastForm={showBroadcastForm}
+              setShowBroadcastForm={setShowBroadcastForm}
+              broadcastMessage={broadcastMessage}
+              setBroadcastMessage={setBroadcastMessage}
+              broadcastStatus={broadcastStatus}
+              handleBroadcast={handleBroadcast}
+            />
+          </div>
+        </div>
       </div>
-          
+
       {/* Confirm Close Session Modal */}
       {showConfirmClose && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">

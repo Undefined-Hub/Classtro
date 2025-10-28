@@ -32,7 +32,6 @@ const allowedBaseDomains = [
   "localhost",
 ];
 
-
 // Function to check if origin is allowed
 const isAllowedOrigin = (origin) => {
   if (!origin) return true; // allow requests like Postman / server-to-server
@@ -58,8 +57,6 @@ const isAllowedOrigin = (origin) => {
   }
 };
 
-
-
 app.use(
   cors({
     origin: (origin, callback) => {
@@ -70,7 +67,7 @@ app.use(
       }
     },
     credentials: true,
-  })
+  }),
 );
 
 app.use(express.json());
@@ -79,6 +76,10 @@ app.use(errorHandler);
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(passport.initialize());
+
+// Serve uploaded screenshots statically
+app.use("/uploads", express.static("uploads"));
+
 app.use(router);
 
 app.get("/", (req, res) => {

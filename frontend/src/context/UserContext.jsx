@@ -3,6 +3,7 @@ import React, {
   useContext,
   useEffect,
   useMemo,
+  useCallback,
   useState,
 } from "react";
 
@@ -33,25 +34,25 @@ export function AuthProvider({ children }) {
     }
   }, []);
 
-  const login = (userObj, accessToken) => {
+  const login = useCallback((userObj, accessToken) => {
     setUser(userObj);
     if (accessToken) {
       setToken(accessToken);
       localStorage.setItem(LS_TOKEN_KEY, accessToken);
     }
     localStorage.setItem(LS_USER_KEY, JSON.stringify(userObj));
-  };
+  }, []);
 
-  const logout = () => {
+  const logout = useCallback(() => {
     setUser(null);
     setToken(null);
     localStorage.removeItem(LS_TOKEN_KEY);
     localStorage.removeItem(LS_USER_KEY);
-  };
+  }, []);
 
   const value = useMemo(
     () => ({ user, token, loading, login, logout, isAuthenticated: !!user }),
-    [user, token, loading],
+    [user, token, loading, login, logout],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -24,10 +24,9 @@ const JoinSessionTab = () => {
 
     try {
       // 🔹 1. Call REST API first
-      const res = await api.post(`/api/sessions/code/${joinCode}/join`, 
-        {
-          name: user?.name || "Anonymous Student",
-        });
+      const res = await api.post(`/api/sessions/code/${joinCode}/join`, {
+        name: user?.name || "Anonymous Student",
+      });
 
       if (res.status !== 200 && res.status !== 201) {
         const errorData = res.error;
@@ -35,7 +34,6 @@ const JoinSessionTab = () => {
       }
 
       const sessionData = res.data || {};
-      
 
       // 🔹 2. Save to storage (preempt hydrate) and context, then navigate
       const fullData = { ...sessionData, joinCode };
@@ -50,7 +48,7 @@ const JoinSessionTab = () => {
       console.error("❌ Failed to join session:", error);
       setError(
         error.message ||
-          "Failed to join session. Please check the code and try again."
+          "Failed to join session. Please check the code and try again.",
       );
     } finally {
       setLoading(false);

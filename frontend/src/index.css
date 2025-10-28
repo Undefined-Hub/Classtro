@@ -3,8 +3,13 @@
 /* Utility: hide scrollbar but keep scrolling functional
 	- Works for WebKit (Chrome, Safari), Firefox, and IE/Edge
 */
-.no-scrollbar::-webkit-scrollbar { display: none; }
-.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
 
 /* Option 1: Hide Scrollbars Completely */
 .hide-scrollbar {
@@ -17,8 +22,6 @@
 .hide-scrollbar::-webkit-scrollbar {
   display: none; /* Safari and Chrome */
 }
-
-
 
 /* Option 2: Custom Theme-Aware Scrollbars */
 /* .scrollbar-thin {
@@ -85,7 +88,6 @@
     scrollbar-color: #4b5563 #1f2937;
   }
 } */
-
 
 /* Option 3: Minimal Custom Scrollbar */
 /* .scrollbar-minimal {

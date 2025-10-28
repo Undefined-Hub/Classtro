@@ -56,21 +56,21 @@ const EmailVerificationStep = ({
           type="submit"
           disabled={loading || otp.length !== 6}
         >
-        <svg
-          className="w-5 h-5 mr-2"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M5 13l4 4L19 7"
-          />
-        </svg>
-        {loading ? "Verifying..." : "Verify"}
-      </button>
+          <svg
+            className="w-5 h-5 mr-2"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M5 13l4 4L19 7"
+            />
+          </svg>
+          {loading ? "Verifying..." : "Verify"}
+        </button>
       </div>
 
       <div className="mt-4 text-center">

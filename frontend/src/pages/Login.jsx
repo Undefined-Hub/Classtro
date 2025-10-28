@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../context/UserContext.jsx";
 import safeToast from "../utils/toastUtils";
 import api from "../utils/api.js";
@@ -7,22 +7,43 @@ import { useSubmitDebounce } from "../hooks/useDebounce.js";
 function Login({ onLogin }) {
   const navigate = useNavigate();
   const { login } = useAuth();
+  const [searchParams] = useSearchParams();
   const BACKEND_URL =
     import.meta.env.VITE_BACKEND_BASE_URL || "http://localhost:3000";
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
 
+  // Handle OAuth error from URL parameters
+  useEffect(() => {
+    const oauthError = searchParams.get("oauth_error");
+    if (oauthError) {
+      safeToast.error(decodeURIComponent(oauthError));
+      // Clean up URL by removing the error parameter
+      const newUrl = new URL(window.location);
+      newUrl.searchParams.delete("oauth_error");
+      window.history.replaceState({}, '', newUrl);
+    }
+  }, [searchParams]);
+
   // Debounced login submission to prevent spam
   const { execute: debouncedLogin } = useSubmitDebounce(async () => {
     const pending = safeToast.loading("Signing in...");
     try {
-      const res = await api.post('/api/auth/login', { email: username, password });
+      const res = await api.post("/api/auth/login", {
+        email: username,
+        password,
+      });
       let data = res.data || {};
       if (res.status === 200 && data.user && data.accessToken) {
         login(data.user, data.accessToken);
         safeToast.dismiss(pending);
         safeToast.success("Logged in successfully");
-        if (data.user?.role === "TEACHER") {
+        
+        // Check for redirect parameter
+        const redirectTo = searchParams.get("redirect");
+        if (redirectTo) {
+          navigate(redirectTo, { replace: true });
+        } else if (data.user?.role === "TEACHER") {
           navigate("/dashboard", { replace: true });
         } else if (data.user?.role === "STUDENT") {
           navigate("/participant/home", { replace: true });
@@ -34,7 +55,7 @@ function Login({ onLogin }) {
         safeToast.dismiss(pending);
         safeToast.error(
           data.message ||
-          "Login failed. Please check your credentials and try again.",
+            "Login failed. Please check your credentials and try again.",
         );
       }
     } catch (err) {
@@ -92,78 +113,21 @@ function Login({ onLogin }) {
     debouncedLogin();
   };
 
-  // Debounced Google login to prevent multiple popup windows
+  // Redirect-based Google login for better mobile compatibility
   const { execute: debouncedGoogleLogin } = useSubmitDebounce(() => {
-    const popup = window.open(
-      `${BACKEND_URL}/api/auth/google?prompt=select_account`,
-      "google-oauth",
-      "width=500,height=600,scrollbars=yes,resizable=yes",
-    );
+    // Store the current page info to return here after OAuth
+    localStorage.setItem("oauth_return_to", "login");
+    localStorage.setItem("oauth_timestamp", Date.now().toString());
 
-    // Listen for messages from the popup
-    const messageListener = (event) => {
-      // Only accept messages from our backend origin (the popup)
-      try {
-        const backendOrigin = new URL(BACKEND_URL).origin;
-        // 
-        // 
-        if (event.origin !== backendOrigin) return;
-      } catch (err) {
-        return;
-      }
+    // Get redirect parameter if it exists
+    const redirectTo = searchParams.get("redirect");
+    if (redirectTo) {
+      localStorage.setItem("oauth_redirect_to", redirectTo);
+    }
 
-      if (event.data.type === "OAUTH_SUCCESS") {
-        const { accessToken, user, isNewUser } = event.data;
-
-        // For existing users with roles, log them in directly
-        if (!isNewUser && user.role && user.role !== "UNKNOWN") {
-          // Persist auth and update app state via context
-          login(user, accessToken);
-          // Navigate to dashboard based on role
-          if (user.role === "TEACHER") {
-            navigate("/dashboard", { replace: true });
-          } else if (user.role === "STUDENT") {
-            navigate("/participant/home", { replace: true });
-          }
-        } else {
-          // For new users or existing users without roles, go to role selection
-          // Note: We don't log them in yet - this happens after role selection
-          navigate("/verify", {
-            replace: true,
-            state: {
-              step: 2,
-              google: true,
-              email: user.email,
-              oauth: true,
-              accessToken, // Pass token to be used after role selection
-              user, // Pass user data
-            },
-          });
-        }
-
-        // Cleanup popup, listener and interval
-        popup.close();
-        window.removeEventListener("message", messageListener);
-        if (checkClosed) clearInterval(checkClosed);
-      } else if (event.data.type === "OAUTH_ERROR") {
-        const errorMessage = event.data.message || "OAuth login failed";
-        safeToast.error(errorMessage);
-        popup.close();
-        window.removeEventListener("message", messageListener);
-        if (checkClosed) clearInterval(checkClosed);
-      }
-    };
-
-    window.addEventListener("message", messageListener);
-
-    // Handle popup being closed manually
-    let checkClosed = setInterval(() => {
-      if (popup.closed) {
-        window.removeEventListener("message", messageListener);
-        clearInterval(checkClosed);
-      }
-    }, 1000);
-  }, 1000); // 1s debounce for Google login to prevent multiple popups
+    // Redirect to Google OAuth (no popup)
+    window.location.href = `${BACKEND_URL}/api/auth/google?redirect_to=login`;
+  }, 1000); // 1s debounce for Google login to prevent multiple redirects
 
   const handleGoogleLogin = () => {
     debouncedGoogleLogin();
