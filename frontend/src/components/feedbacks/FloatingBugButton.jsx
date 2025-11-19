@@ -16,6 +16,7 @@ const FloatingBugButton = () => {
     severity: "medium",
     userEmail: "",
     screenshot: null,
+    rating: 0,
   });
 
   const handleFloatingButtonClick = () => {
@@ -42,6 +43,7 @@ const FloatingBugButton = () => {
       severity: "medium",
       userEmail: "",
       screenshot: null,
+      rating: 0,
     });
   };
 
@@ -62,14 +64,15 @@ const FloatingBugButton = () => {
     }
   };
 
+  const handleRatingChange = (rating) => {
+    setFormData((prev) => ({ ...prev, rating }));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
 
     const formDataToSend = new FormData();
-    formDataToSend.append("type", reportType);
-    formDataToSend.append("title", formData.title.trim());
-    formDataToSend.append("description", formData.description.trim());
 
     const metadata = {
       userAgent: navigator.userAgent,
@@ -80,8 +83,10 @@ const FloatingBugButton = () => {
       console: [],
     };
     formDataToSend.append("metadata", JSON.stringify(metadata));
+    formDataToSend.append("description", formData.description.trim());
 
     if (reportType === "bug") {
+      formDataToSend.append("title", formData.title.trim());
       formDataToSend.append(
         "stepsToReproduce",
         formData.stepsToReproduce.trim(),
@@ -92,6 +97,8 @@ const FloatingBugButton = () => {
         formDataToSend.append("screenshot", formData.screenshot);
       }
     } else {
+      // Feedback - add rating
+      formDataToSend.append("rating", formData.rating);
       if (formData.userEmail.trim()) {
         formDataToSend.append("userEmail", formData.userEmail.trim());
       }
@@ -100,7 +107,8 @@ const FloatingBugButton = () => {
     try {
       const BACKEND_BASE_URL =
         import.meta.env.VITE_BACKEND_BASE_URL || "http://localhost:5000";
-      const response = await fetch(`${BACKEND_BASE_URL}/api/feedback`, {
+      const endpoint = reportType === "bug" ? "systemBug" : "systemFeedback";
+      const response = await fetch(`${BACKEND_BASE_URL}/api/feedback/${endpoint}`, {
         method: "POST",
         body: formDataToSend,
       });
@@ -157,6 +165,7 @@ const FloatingBugButton = () => {
         isSubmitting={isSubmitting}
         onClose={handleCloseModal}
         onInputChange={handleInputChange}
+        onRatingChange={handleRatingChange}
         onSubmit={handleSubmit}
         onRemoveScreenshot={handleRemoveScreenshot}
       />

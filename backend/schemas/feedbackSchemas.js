@@ -6,11 +6,6 @@ const baseFeedbackSchema = z.object({
     required_error: "Type is required",
     invalid_type_error: 'Type must be either "bug" or "feedback"',
   }),
-  title: z
-    .string()
-    .min(3, "Title must be at least 3 characters long")
-    .max(200, "Title must not exceed 200 characters")
-    .trim(),
   description: z
     .string()
     .min(10, "Description must be at least 10 characters long")
@@ -22,7 +17,7 @@ const baseFeedbackSchema = z.object({
       userAgent: z.string().optional().default(""),
       appVersion: z.string().optional().default("1.0.0"),
       viewport: z.string().optional().default(""),
-      url: z.string().url().optional().or(z.literal("")).default(""),
+      url: z.string().optional().default(""), // Accept any string (full URL or relative path)
       timestamp: z.string().optional().default(""),
       console: z.array(z.string()).optional().default([]),
     })
@@ -30,9 +25,14 @@ const baseFeedbackSchema = z.object({
     .default({}),
 });
 
-// Bug report schema - requires email and additional fields
+// Bug report schema - requires title, email and additional fields
 const bugReportSchema = baseFeedbackSchema.extend({
   type: z.literal("bug"),
+  title: z
+    .string()
+    .min(3, "Title must be at least 3 characters long")
+    .max(200, "Title must not exceed 200 characters")
+    .trim(),
   stepsToReproduce: z
     .string()
     .min(5, "Steps to reproduce must be at least 5 characters long")
@@ -47,9 +47,17 @@ const bugReportSchema = baseFeedbackSchema.extend({
     .toLowerCase(),
 });
 
-// Feedback schema - email is optional
+// Feedback schema - email is optional, rating is required
 const feedbackSchema = baseFeedbackSchema.extend({
   type: z.literal("feedback"),
+  rating: z
+    .number({
+      required_error: "Rating is required for feedback",
+      invalid_type_error: "Rating must be a number",
+    })
+    .int("Rating must be a whole number")
+    .min(1, "Rating must be at least 1 star")
+    .max(5, "Rating must be at most 5 stars"),
   userEmail: z
     .union([
       z

@@ -33,6 +33,11 @@ const createFeedback = async (req, res) => {
       }
     }
 
+    // Convert rating from string to number (FormData sends everything as strings)
+    if (parsedBody.rating && typeof parsedBody.rating === "string") {
+      parsedBody.rating = parseInt(parsedBody.rating, 10);
+    }
+
     // Validate input using Zod schema
     const validatedData = validateInput(feedbackValidationSchema, parsedBody);
 
@@ -40,6 +45,7 @@ const createFeedback = async (req, res) => {
     const feedbackData = {
       type: validatedData.type,
       title: validatedData.title,
+      rating: validatedData.rating,
       description: validatedData.description,
       stepsToReproduce: validatedData.stepsToReproduce || null,
       severity:
