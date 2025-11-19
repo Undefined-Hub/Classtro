@@ -107,11 +107,12 @@ const FeedbackModal = ({
             </div>
           ) : (
             <div className="mb-4">
-              <label className="block mb-2 font-semibold text-gray-700 dark:text-gray-200 text-sm">
+              <label className="block mb-2 font-semibold text-gray-700 dark:text-gray-200 text-sm text-center">
                 Rate your experience *
               </label>
-              <StarRating rating={formData.rating || 0} onRatingChange={onRatingChange} />
-              
+              <div className="flex justify-center">
+                <StarRating rating={formData.rating || 0} onRatingChange={onRatingChange} />
+              </div>
             </div>
           )}
 
