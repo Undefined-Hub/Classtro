@@ -53,7 +53,7 @@ const ArchivedRoomsSection = ({
 
 const RoomCard = ({ room, onUnarchive }) => {
   return (
-    <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
+    <div className="bg-gray-50 dark:bg-gray-900/70 rounded-lg p-4 border border-gray-500/10 dark:border-gray-800/70">
       <div className="flex items-start justify-between mb-3">
         <h4 className="font-medium text-gray-900 dark:text-white truncate">
           {room.name}
