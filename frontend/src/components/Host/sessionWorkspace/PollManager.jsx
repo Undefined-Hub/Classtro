@@ -3,7 +3,47 @@ import api from "../../../utils/api";
 import LivePoll from "./LivePoll";
 import PastPolls from "./PastPolls";
 import { useHostSession } from "../../../context/HostSessionContext";
-import { ChartNoAxesColumn } from "lucide-react";
+import { ChartNoAxesColumn, Rocket, SquarePen } from "lucide-react";
+
+// * Poll Templates
+const POLL_TEMPLATES = [
+  {
+    id: 1,
+    question: "How well do you understand today's topic?",
+    options: ["Very well", "Somewhat", "Need more explanation", "Confused"]
+  },
+  {
+    id: 7,
+    question: "Did you understand todays lecture?",
+    options: ["Yes", "Partially", "No"]
+  },
+  {
+    id: 2,
+    question: "What's your preferred learning pace?",
+    options: ["Slower, more examples", "Current pace is good", "Faster, less detail", "Mix of both"]
+  },
+  {
+    id: 3,
+    question: "Which topic should we cover next?",
+    options: ["Topic A", "Topic B", "Topic C", "Topic D"]
+  },
+  {
+    id: 4,
+    question: "Are you able to follow along?",
+    options: ["Yes, perfectly", "Mostly yes", "Having some difficulty", "Need help"]
+  },
+  {
+    id: 5,
+    question: "Should we do more practice problems?",
+    options: ["Yes, many more", "A few more", "Current amount is good", "Less practice, more theory"]
+  },
+  {
+    id: 6,
+    question: "What's your confidence level on this topic?",
+    options: ["Very confident", "Confident", "Somewhat confident", "Not confident"]
+  }
+];
+
 const PollManager = ({ isParticipantListOpen = true }) => {
   // * Context
   const {
@@ -29,6 +69,65 @@ const PollManager = ({ isParticipantListOpen = true }) => {
     options: ["", "", "", ""],
   });
 
+  // * Selected Template State
+  const [selectedTemplate, setSelectedTemplate] = useState(null);
+
+  // * Handle Quick Launch (Direct launch from template)
+  const handleQuickLaunch = async (template) => {
+    // * Prepare Poll Data from Template
+    const pollOptions = template.options.map((option) => ({
+      text: option,
+      votes: 0,
+    }));
+
+    // * Poll Data Object
+    const pollData = {
+      sessionId: sessionData._id,
+      question: template.question,
+      options: pollOptions,
+      isActive: true,
+      createdAt: new Date().toISOString(),
+    };
+
+    try {
+      // * API Call to create the poll
+      const res = await api.post(
+        `/api/sessions/${sessionData._id}/polls`,
+        pollData,
+      );
+
+      // * Set Active Poll
+      setActivePoll(res.data);
+
+      // * Emit Socket Event for New Poll Creation
+      socketRef.current.emit("poll:create", {
+        code: sessionData.code,
+        poll: res.data,
+      });
+
+      // * Close Poll Form Modal
+      setShowPollForm(false);
+    } catch (error) {
+      console.error("Failed to create poll:", error);
+      alert("Failed to create poll. Please try again.");
+    }
+  };
+
+  // * Handle Edit Template (Populate form with template data)
+  const handleEditTemplate = (template) => {
+    setPollFormData({
+      question: template.question,
+      options: [...template.options],
+    });
+    setSelectedTemplate(template.id);
+  };
+
+  // * Handle Clear Template Selection
+  const handleClearTemplate = () => {
+    setPollFormData({ question: "", options: ["", "", "", ""] });
+    setSelectedTemplate(null);
+  };
+
   // * Handle Create New Poll
   const handleCreatePoll = async (e) => {
     e.preventDefault();
@@ -46,6 +145,7 @@ const PollManager = ({ isParticipantListOpen = true }) => {
 
     // * Setting poll form data to initial state
     setPollFormData({ question: "", options: ["", "", "", ""] });
+    setSelectedTemplate(null);
 
     // * Prepare Poll Data
     const pollOptions = validOptions.map((option) => ({
@@ -355,15 +455,19 @@ const PollManager = ({ isParticipantListOpen = true }) => {
 
       {/* Poll Creation Form Modal */}
       {showPollForm && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full">
-            <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-[100]">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-6xl max-h-[90vh] overflow-hidden flex flex-col">
+            {/* Modal Header */}
+            <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                   Create New Poll
                 </h3>
                 <button
-                  onClick={() => setShowPollForm(false)}
+                  onClick={() => {
+                    setShowPollForm(false);
+                    setSelectedTemplate(null);
+                  }}
                   className="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300"
                 >
                   <svg
@@ -382,108 +486,197 @@ const PollManager = ({ isParticipantListOpen = true }) => {
                 </button>
               </div>
             </div>
-            <form onSubmit={handleCreatePoll}>
-              <div className="px-6 py-4">
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Poll Question
-                  </label>
-                  <input
-                    type="text"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                    placeholder="e.g., Which of these is NOT a MongoDB data type?"
-                    value={pollFormData.question}
-                    onChange={(e) =>
-                      setPollFormData({
-                        ...pollFormData,
-                        question: e.target.value,
-                      })
-                    }
-                    required
-                  />
-                </div>
 
-                <div className="mb-1">
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Options
-                  </label>
-                  {pollFormData.options.map((option, index) => (
-                    <div key={index} className="flex items-center mb-2">
-                      <input
-                        type="text"
-                        className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                        placeholder={`Option ${index + 1}`}
-                        value={option}
-                        onChange={(e) =>
-                          handlePollOptionChange(index, e.target.value)
-                        }
-                        required={index < 2} // At least 2 options required
-                      />
-                      {index > 1 && ( // Can remove options beyond the first two
+            {/* Two Column Layout */}
+            <div className="flex flex-1 overflow-hidden">
+              {/* Left Column - Quick Templates */}
+              <div className="w-1/3 border-r border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50 overflow-y-auto custom-scrollbar">
+                <div className="p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center">
+                      <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                      </svg>
+                      Quick Templates
+                    </h4>
+                  </div>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">Click to launch or edit</p>
+                  <div className="space-y-2">
+                    {POLL_TEMPLATES.map((template) => (
+                      <div
+                        key={template.id}
+                        className={`p-3 rounded-lg border-2 transition-all cursor-pointer ${
+                          selectedTemplate === template.id
+                            ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                            : 'border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-500'
+                        }`}
+                      >
+                        <p className="text-sm font-medium text-gray-800 dark:text-gray-200 mb-2">
+                          {template.question}
+                        </p>
+                        <div className="flex flex-wrap gap-1 mb-2">
+                          {template.options.slice(0, 2).map((opt, idx) => (
+                            <span
+                              key={idx}
+                              className="text-xs px-2 py-0.5 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 rounded"
+                            >
+                              {opt.length > 12 ? opt.substring(0, 12) + '...' : opt}
+                            </span>
+                          ))}
+                          {template.options.length > 2 && (
+                            <span className="text-xs px-2 py-0.5 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 rounded">
+                              +{template.options.length - 2}
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex gap-2 justify-end">
+                          <button
+                            type="button"
+                            onClick={() => handleQuickLaunch(template)}
+                            className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white rounded-lg text-xs font-medium hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800"
+                          >
+                            <Rocket className="w-3.5 h-3.5" />
+                            Launch
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleEditTemplate(template)}
+                            className="px-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
+                            title="Edit template"
+                          >
+                            <SquarePen className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Right Column - Custom Poll Form */}
+              <div className="w-2/3 flex flex-col">
+                <form onSubmit={handleCreatePoll} className="flex-1 flex flex-col overflow-hidden">
+                  <div className="flex-1 overflow-y-auto custom-scrollbar px-6 py-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                        {selectedTemplate ? 'Edit Template Poll' : 'Custom Poll'}
+                      </h4>
+                      {selectedTemplate && (
                         <button
                           type="button"
-                          onClick={() => handleRemovePollOption(index)}
-                          className="ml-2 text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
+                          onClick={handleClearTemplate}
+                          className="text-xs text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
                         >
-                          <svg
-                            className="w-5 h-5"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M6 18L18 6M6 6l12 12"
-                            />
-                          </svg>
+                          Clear & Start Fresh
                         </button>
                       )}
                     </div>
-                  ))}
-                </div>
-
-                {pollFormData.options.length < 6 && (
-                  <button
-                    type="button"
-                    onClick={handleAddPollOption}
-                    className="text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 flex items-center"
-                  >
-                    <svg
-                      className="w-4 h-4 mr-1"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                    <div className="mb-4">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Poll Question
+                      </label>
+                      <input
+                        type="text"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                        placeholder="e.g., Which of these is NOT a MongoDB data type?"
+                        value={pollFormData.question}
+                        onChange={(e) =>
+                          setPollFormData({
+                            ...pollFormData,
+                            question: e.target.value,
+                          })
+                        }
+                        required
                       />
-                    </svg>
-                    Add Option
-                  </button>
-                )}
-              </div>
+                    </div>
 
-              <div className="px-6 py-4 bg-gray-50 dark:bg-gray-700 rounded-b-lg flex justify-end space-x-2">
-                <button
-                  type="button"
-                  onClick={() => setShowPollForm(false)}
-                  className="px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-700 text-sm font-medium hover:bg-gray-50 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800"
-                >
-                  Launch Poll
-                </button>
+                    <div className="mb-1">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Options
+                      </label>
+                      {pollFormData.options.map((option, index) => (
+                        <div key={index} className="flex items-center mb-2">
+                          <input
+                            type="text"
+                            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                            placeholder={`Option ${index + 1}`}
+                            value={option}
+                            onChange={(e) =>
+                              handlePollOptionChange(index, e.target.value)
+                            }
+                            required={index < 2} // At least 2 options required
+                          />
+                          {index > 1 && ( // Can remove options beyond the first two
+                            <button
+                              type="button"
+                              onClick={() => handleRemovePollOption(index)}
+                              className="ml-2 text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
+                            >
+                              <svg
+                                className="w-5 h-5"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M6 18L18 6M6 6l12 12"
+                                />
+                              </svg>
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+
+                    {pollFormData.options.length < 6 && (
+                      <button
+                        type="button"
+                        onClick={handleAddPollOption}
+                        className="text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 flex items-center"
+                      >
+                        <svg
+                          className="w-4 h-4 mr-1"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                          />
+                        </svg>
+                        Add Option
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Form Footer */}
+                  <div className="px-6 py-4 bg-gray-50 dark:bg-gray-700 border-t border-gray-200 dark:border-gray-700 flex justify-end space-x-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowPollForm(false);
+                        setSelectedTemplate(null);
+                      }}
+                      className="px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-700 text-sm font-medium hover:bg-gray-50 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800"
+                    >
+                      Launch Poll
+                    </button>
+                  </div>
+                </form>
               </div>
-            </form>
+            </div>
           </div>
         </div>
       )}
