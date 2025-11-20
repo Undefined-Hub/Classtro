@@ -1,7 +1,26 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import FloatingButton from "./FloatingButton";
 import OptionsPanel from "./OptionsPanel";
 import FeedbackModal from "./FeedbackModal";
+
+// Static list of bug report modules
+const BUG_MODULES = [
+  "Authentication",
+  "Room Management",
+  "Session Dashboard",
+  "QR Code Joining",
+  "Polls",
+  "Q&A",
+  "Live Chat",
+  "Attendance Tracking",
+  "Analytics",
+  "Session Feedback",
+  "System Feedback",
+  "User Profile",
+  "Notifications",
+  "File Upload",
+  "Other"
+];
 
 const FloatingBugButton = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -9,7 +28,6 @@ const FloatingBugButton = () => {
   const [reportType, setReportType] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [screenshotPreview, setScreenshotPreview] = useState(null);
-  const [modules, setModules] = useState([]);
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -20,26 +38,6 @@ const FloatingBugButton = () => {
     screenshot: null,
     rating: 0,
   });
-
-  // Fetch bug modules from backend
-  useEffect(() => {
-    const fetchModules = async () => {
-      try {
-        const BACKEND_BASE_URL =
-          import.meta.env.VITE_BACKEND_BASE_URL || "http://localhost:5000";
-        const response = await fetch(`${BACKEND_BASE_URL}/api/feedback/bug-modules`);
-        if (response.ok) {
-          const data = await response.json();
-          setModules(data.modules || []);
-        }
-      } catch (error) {
-        console.error("Error fetching modules:", error);
-        // Fallback to empty array if fetch fails
-        setModules([]);
-      }
-    };
-    fetchModules();
-  }, []);
 
   const handleFloatingButtonClick = () => {
     setIsOpen(!isOpen);
@@ -187,7 +185,7 @@ const FloatingBugButton = () => {
         formData={formData}
         screenshotPreview={screenshotPreview}
         isSubmitting={isSubmitting}
-        modules={modules}
+        modules={BUG_MODULES}
         onClose={handleCloseModal}
         onInputChange={handleInputChange}
         onRatingChange={handleRatingChange}
