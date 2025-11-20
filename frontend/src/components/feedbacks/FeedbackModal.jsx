@@ -1,5 +1,33 @@
 import React from "react";
-import { X, Bug, Heart, Send } from "lucide-react";
+import { X, Bug, Heart, Send, Star } from "lucide-react";
+
+const StarRating = ({ rating, onRatingChange }) => {
+  const [hoverRating, setHoverRating] = React.useState(0);
+
+  return (
+    <div className="flex gap-2">
+      {[1, 2, 3, 4, 5].map((star) => (
+        <button
+          key={star}
+          type="button"
+          onClick={() => onRatingChange(star)}
+          onMouseEnter={() => setHoverRating(star)}
+          onMouseLeave={() => setHoverRating(0)}
+          className="transition-all duration-200 hover:scale-110 focus:outline-none"
+        >
+          <Star
+            size={32}
+            className={`${
+              star <= (hoverRating || rating)
+                ? "fill-yellow-400 text-yellow-400"
+                : "text-gray-300 dark:text-gray-600"
+            } transition-colors duration-200`}
+          />
+        </button>
+      ))}
+    </div>
+  );
+};
 
 const FeedbackModal = ({
   isOpen,
@@ -7,8 +35,10 @@ const FeedbackModal = ({
   formData,
   screenshotPreview,
   isSubmitting,
+  modules = [],
   onClose,
   onInputChange,
+  onRatingChange,
   onSubmit,
   onRemoveScreenshot,
 }) => {
@@ -57,28 +87,35 @@ const FeedbackModal = ({
 
         {/* Form */}
         <form onSubmit={onSubmit} className="p-4">
-          <div className="mb-4">
-            <label
-              htmlFor="title"
-              className="block mb-2 font-semibold text-gray-700 dark:text-gray-200 text-sm"
-            >
-              Title *
-            </label>
-            <input
-              type="text"
-              id="title"
-              name="title"
-              value={formData.title}
-              onChange={onInputChange}
-              placeholder={
-                reportType === "bug"
-                  ? "Brief description of the issue"
-                  : "Feedback title"
-              }
-              className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-xl text-sm bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 transition-all duration-200 focus:outline-none focus:border-blue-500 dark:focus:border-blue-400 focus:ring-4 focus:ring-blue-500/20 dark:focus:ring-blue-400/20"
-              required
-            />
-          </div>
+          {reportType === "bug" ? (
+            <div className="mb-4">
+              <label
+                htmlFor="title"
+                className="block mb-2 font-semibold text-gray-700 dark:text-gray-200 text-sm"
+              >
+                Title *
+              </label>
+              <input
+                type="text"
+                id="title"
+                name="title"
+                value={formData.title}
+                onChange={onInputChange}
+                placeholder="Brief description of the issue"
+                className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-xl text-sm bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 transition-all duration-200 focus:outline-none focus:border-blue-500 dark:focus:border-blue-400 focus:ring-4 focus:ring-blue-500/20 dark:focus:ring-blue-400/20"
+                required
+              />
+            </div>
+          ) : (
+            <div className="mb-4">
+              <label className="block mb-2 font-semibold text-gray-700 dark:text-gray-200 text-sm text-center">
+                Rate your experience *
+              </label>
+              <div className="flex justify-center">
+                <StarRating rating={formData.rating || 0} onRatingChange={onRatingChange} />
+              </div>
+            </div>
+          )}
 
           <div className="mb-4">
             <label
@@ -122,6 +159,30 @@ const FeedbackModal = ({
                   className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-xl text-sm bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 transition-all duration-200 focus:outline-none focus:border-blue-500 dark:focus:border-blue-400 focus:ring-4 focus:ring-blue-500/20 dark:focus:ring-blue-400/20 resize-vertical min-h-[72px]"
                   required
                 />
+              </div>
+
+              <div className="mb-4">
+                <label
+                  htmlFor="module"
+                  className="block mb-2 font-semibold text-gray-700 dark:text-gray-200 text-sm"
+                >
+                  Module *
+                </label>
+                <select
+                  id="module"
+                  name="module"
+                  value={formData.module}
+                  onChange={onInputChange}
+                  className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-xl text-sm bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white transition-all duration-200 focus:outline-none focus:border-blue-500 dark:focus:border-blue-400 focus:ring-4 focus:ring-blue-500/20 dark:focus:ring-blue-400/20"
+                  required
+                >
+                  <option value="">Select affected module</option>
+                  {modules.map((module) => (
+                    <option key={module} value={module}>
+                      {module}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div className="mb-4">

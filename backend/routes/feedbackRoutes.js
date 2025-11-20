@@ -2,12 +2,14 @@ const express = require("express");
 const rateLimit = require("express-rate-limit");
 const { uploadScreenshot, handleUploadError } = require("../config/multer");
 const {
+  getBugModules,
   createFeedback,
   getAllFeedback,
   getFeedbackStats,
   getFeedbackById,
   updateFeedbackStatus,
 } = require("../controllers/feedbackController");
+const { setFeedbackType, setBugType } = require("../middlewares/setFeedbackType");
 
 const router = express.Router();
 
@@ -23,14 +25,30 @@ const submitLimit = rateLimit({
   legacyHeaders: false,
 });
 
-// Routes
+// Get bug report modules
+router.get("/bug-modules", getBugModules);
+
+// Feedback Routes (type: feedback)
 router.post(
-  "/",
+  "/systemFeedback",
   submitLimit,
   uploadScreenshot,
   handleUploadError,
+  setFeedbackType,
   createFeedback,
 );
+
+// Bug Report Routes (type: bug)
+router.post(
+  "/systemBug",
+  submitLimit,
+  uploadScreenshot,
+  handleUploadError,
+  setBugType,
+  createFeedback,
+);
+
+// Common routes for both types
 router.get("/", getAllFeedback);
 router.get("/stats/overview", getFeedbackStats);
 router.get("/:id", getFeedbackById);
