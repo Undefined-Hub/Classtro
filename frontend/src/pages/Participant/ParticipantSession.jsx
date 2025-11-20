@@ -5,10 +5,8 @@ import { STORAGE_KEY } from "../../context/ParticipantSessionContext.jsx";
 import SessionHeader from "../../components/Participant/SessionHeader.jsx";
 import WelcomeContent from "../../components/Participant/WelcomeContent.jsx";
 import ParticipantQnA from "../../components/Participant/ParticipantQnA.jsx";
-import SessionFeedbackModal from "../../components/Participant/SessionFeedbackModal.jsx";
 // AskQuestionModal was replaced by an inline ask panel inside ParticipantQnA
 import api from "../../utils/api.js";
-import toast from "../../utils/toastUtils.js";
 import { useSubmitDebounce } from "../../hooks/useDebounce.js";
 
 const ParticipantSession = () => {
@@ -37,10 +35,6 @@ const ParticipantSession = () => {
   const [questions, setQuestions] = useState([]);
   const [askOpen, setAskOpen] = useState(false);
   const [qnaOpen, setQnaOpen] = useState(false);
-
-  // Session feedback modal state
-  const [showFeedbackModal, setShowFeedbackModal] = useState(false);
-  const [feedbackSubmitting, setFeedbackSubmitting] = useState(false);
 
   // * Fetch session data and participant count
   const fetchSessionData = async (sessionCode) => {
@@ -160,8 +154,9 @@ const ParticipantSession = () => {
     };
 
     const onSessionEnded = (payload) => {
-      // Show feedback modal instead of alert
-      setShowFeedbackModal(true);
+      alert("Session has ended by the host. You will be redirected.");
+      clearSession();
+      navigate("/participant/home");
     };
 
     // * Q&A Handlers
@@ -318,30 +313,6 @@ const ParticipantSession = () => {
     }
   };
 
-  // Handle session feedback submission
-  const handleFeedbackSubmit = async ({ rating, description }) => {
-    setFeedbackSubmitting(true);
-    try {
-      await api.post(`/api/sessions/${sessionData.session._id}/sessionFeedback`, {
-        rating,
-        description
-      });
-      
-      console.log("Feedback submitted:", { rating, description });
-      
-      toast.success("Thank you for your feedback!");
-      clearSession();
-      navigate("/participant/home");
-    } catch (err) {
-      console.error("Failed to submit feedback:", err);
-      toast.error("Failed to submit feedback. You will be redirected.");
-      clearSession();
-      navigate("/participant/home");
-    } finally {
-      setFeedbackSubmitting(false);
-    }
-  };
-
   // * Persist activePoll in sessionStorage to survive page reloads
   useEffect(() => {
     if (activePoll) {
@@ -376,15 +347,6 @@ const ParticipantSession = () => {
           />
         )}
       </div>
-
-      {/* Session Feedback Modal */}
-      <SessionFeedbackModal
-        isOpen={showFeedbackModal}
-        sessionTitle={sessionData?.session?.title}
-        roomName={sessionData?.session?.roomId?.name || sessionData?.roomName}
-        onSubmit={handleFeedbackSubmit}
-        isSubmitting={feedbackSubmitting}
-      />
     </div>
   );
 };

@@ -11,26 +11,9 @@ const FeedbackSchema = new mongoose.Schema(
 
     title: {
       type: String,
-      required: function () {
-        return this.type === "bug"; // Required only for bugs
-      },
+      required: true,
       maxlength: 200,
       trim: true,
-    },
-
-    rating: {
-      type: Number,
-      min: 1,
-      max: 5,
-      required: function () {
-        return this.type === "feedback"; // Required only for feedback
-      },
-      validate: {
-        validator: function (value) {
-          return Number.isInteger(value) && value >= 1 && value <= 5;
-        },
-        message: "Rating must be an integer between 1 and 5",
-      },
     },
 
     description: {
@@ -53,31 +36,6 @@ const FeedbackSchema = new mongoose.Schema(
       default: function () {
         return this.type === "bug" ? "medium" : null;
       },
-    },
-
-    module: {
-      type: String,
-      required: function () {
-        return this.type === "bug"; // Required only for bugs
-      },
-      enum: [
-        "Authentication",
-        "Room Management",
-        "Session Dashboard",
-        "QR Code Joining",
-        "Polls",
-        "Q&A",
-        "Live Chat",
-        "Attendance Tracking",
-        "Analytics",
-        "Session Feedback",
-        "System Feedback",
-        "User Profile",
-        "Notifications",
-        "File Upload",
-        "Other"
-      ],
-      trim: true,
     },
 
     userEmail: {
@@ -191,4 +149,4 @@ const FeedbackSchema = new mongoose.Schema(
   },
 );
 
-module.exports = mongoose.model("Feedback", FeedbackSchema, "systemFeedback");
+module.exports = mongoose.model("Feedback", FeedbackSchema, "feedbacks");

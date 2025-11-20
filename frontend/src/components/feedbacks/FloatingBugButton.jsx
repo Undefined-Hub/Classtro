@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import FloatingButton from "./FloatingButton";
 import OptionsPanel from "./OptionsPanel";
 import FeedbackModal from "./FeedbackModal";
@@ -9,37 +9,14 @@ const FloatingBugButton = () => {
   const [reportType, setReportType] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [screenshotPreview, setScreenshotPreview] = useState(null);
-  const [modules, setModules] = useState([]);
   const [formData, setFormData] = useState({
     title: "",
     description: "",
     stepsToReproduce: "",
-    module: "",
     severity: "medium",
     userEmail: "",
     screenshot: null,
-    rating: 0,
   });
-
-  // Fetch bug modules from backend
-  useEffect(() => {
-    const fetchModules = async () => {
-      try {
-        const BACKEND_BASE_URL =
-          import.meta.env.VITE_BACKEND_BASE_URL || "http://localhost:5000";
-        const response = await fetch(`${BACKEND_BASE_URL}/api/feedback/bug-modules`);
-        if (response.ok) {
-          const data = await response.json();
-          setModules(data.modules || []);
-        }
-      } catch (error) {
-        console.error("Error fetching modules:", error);
-        // Fallback to empty array if fetch fails
-        setModules([]);
-      }
-    };
-    fetchModules();
-  }, []);
 
   const handleFloatingButtonClick = () => {
     setIsOpen(!isOpen);
@@ -62,11 +39,9 @@ const FloatingBugButton = () => {
       title: "",
       description: "",
       stepsToReproduce: "",
-      module: "",
       severity: "medium",
       userEmail: "",
       screenshot: null,
-      rating: 0,
     });
   };
 
@@ -87,15 +62,14 @@ const FloatingBugButton = () => {
     }
   };
 
-  const handleRatingChange = (rating) => {
-    setFormData((prev) => ({ ...prev, rating }));
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
 
     const formDataToSend = new FormData();
+    formDataToSend.append("type", reportType);
+    formDataToSend.append("title", formData.title.trim());
+    formDataToSend.append("description", formData.description.trim());
 
     const metadata = {
       userAgent: navigator.userAgent,
@@ -106,23 +80,18 @@ const FloatingBugButton = () => {
       console: [],
     };
     formDataToSend.append("metadata", JSON.stringify(metadata));
-    formDataToSend.append("description", formData.description.trim());
 
     if (reportType === "bug") {
-      formDataToSend.append("title", formData.title.trim());
       formDataToSend.append(
         "stepsToReproduce",
         formData.stepsToReproduce.trim(),
       );
-      formDataToSend.append("module", formData.module);
       formDataToSend.append("severity", formData.severity);
       formDataToSend.append("userEmail", formData.userEmail.trim());
       if (formData.screenshot) {
         formDataToSend.append("screenshot", formData.screenshot);
       }
     } else {
-      // Feedback - add rating
-      formDataToSend.append("rating", formData.rating);
       if (formData.userEmail.trim()) {
         formDataToSend.append("userEmail", formData.userEmail.trim());
       }
@@ -131,8 +100,7 @@ const FloatingBugButton = () => {
     try {
       const BACKEND_BASE_URL =
         import.meta.env.VITE_BACKEND_BASE_URL || "http://localhost:5000";
-      const endpoint = reportType === "bug" ? "systemBug" : "systemFeedback";
-      const response = await fetch(`${BACKEND_BASE_URL}/api/feedback/${endpoint}`, {
+      const response = await fetch(`${BACKEND_BASE_URL}/api/feedback`, {
         method: "POST",
         body: formDataToSend,
       });
@@ -187,10 +155,8 @@ const FloatingBugButton = () => {
         formData={formData}
         screenshotPreview={screenshotPreview}
         isSubmitting={isSubmitting}
-        modules={modules}
         onClose={handleCloseModal}
         onInputChange={handleInputChange}
-        onRatingChange={handleRatingChange}
         onSubmit={handleSubmit}
         onRemoveScreenshot={handleRemoveScreenshot}
       />
