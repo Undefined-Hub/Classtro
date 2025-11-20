@@ -24,70 +24,70 @@
 }
 
 /* Option 2: Custom Theme-Aware Scrollbars */
-/* .scrollbar-thin {
+.custom-scrollbar {
   scrollbar-width: thin;
+  scrollbar-color: #d1d5db #f3f4f6; /* Firefox - Light mode */
 }
 
-.scrollbar-thin::-webkit-scrollbar {
+.custom-scrollbar::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 
-.scrollbar-track-gray-100::-webkit-scrollbar-track {
+/* Light mode scrollbar */
+.custom-scrollbar::-webkit-scrollbar-track {
   background-color: #f3f4f6;
   border-radius: 3px;
 }
 
-.scrollbar-track-gray-800::-webkit-scrollbar-track {
-  background-color: #1f2937;
-  border-radius: 3px;
-}
-
-.scrollbar-thumb-gray-300::-webkit-scrollbar-thumb {
+.custom-scrollbar::-webkit-scrollbar-thumb {
   background-color: #d1d5db;
   border-radius: 3px;
 }
 
-.scrollbar-thumb-gray-600::-webkit-scrollbar-thumb {
-  background-color: #4b5563;
-  border-radius: 3px;
-}
-
-.scrollbar-thumb-gray-300::-webkit-scrollbar-thumb:hover,
-.hover\:scrollbar-thumb-gray-400:hover::-webkit-scrollbar-thumb {
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background-color: #9ca3af;
 }
 
-.scrollbar-thumb-gray-600::-webkit-scrollbar-thumb:hover,
-.hover\:scrollbar-thumb-gray-500:hover::-webkit-scrollbar-thumb {
-  background-color: #6b7280;
-} */
+/* Dark mode scrollbar - using media query */
+@media (prefers-color-scheme: dark) {
+  .custom-scrollbar {
+    scrollbar-color: #d1d5db #202937; /* Firefox - Dark mode */
+  }
 
-/* Dark mode scrollbar styles */
-/* @media (prefers-color-scheme: dark) {
-  .dark\:scrollbar-track-gray-800::-webkit-scrollbar-track {
-    background-color: #1f2937;
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background-color: #202937;
+    border-radius: 3px;
   }
-  
-  .dark\:scrollbar-thumb-gray-600::-webkit-scrollbar-thumb {
-    background-color: #4b5563;
-  }
-  
-  .dark\:hover\:scrollbar-thumb-gray-500:hover::-webkit-scrollbar-thumb {
-    background-color: #6b7280;
-  }
-} */
 
-/* For Firefox */
-/* .scrollbar-thin {
-  scrollbar-color: #d1d5db #f3f4f6;
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background-color: #d1d5db;
+    border-radius: 3px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background-color: #9ca3af;
+  }
 }
 
-@media (prefers-color-scheme: dark) {
-  .scrollbar-thin {
-    scrollbar-color: #4b5563 #1f2937;
-  }
-} */
+/* Dark mode scrollbar - using class strategy (for manual toggle) */
+.dark .custom-scrollbar {
+  scrollbar-color: #d1d5db #202937; /* Firefox - Dark mode */
+}
+
+.dark .custom-scrollbar::-webkit-scrollbar-track {
+  background-color: #202937;
+  border-radius: 3px;
+}
+
+.dark .custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: #d1d5db;
+  border-radius: 3px;
+}
+
+.dark .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: #9ca3af;
+}
 
 /* Option 3: Minimal Custom Scrollbar */
 /* .scrollbar-minimal {
