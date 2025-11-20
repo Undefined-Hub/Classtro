@@ -11,13 +11,10 @@ const submitSessionFeedback = async (req, res) => {
   try {
     const { sessionId } = req.params;
     const userId = req.user.id;
-    const userName = req.user.name;
-    const userEmail = req.user.email;
 
     console.log("Session feedback submission attempt:", {
       sessionId,
       userId,
-      userName,
       body: req.body,
     });
 
@@ -85,14 +82,12 @@ const submitSessionFeedback = async (req, res) => {
       sessionId,
       roomId: session.roomId,
       userId,
-      userName,
-      userEmail,
       rating: validatedData.rating,
       description: validatedData.description || "",
       submittedAt: new Date(),
     });
 
-    console.log(`Session feedback submitted by ${userName} for session ${sessionId}`);
+    console.log(`Session feedback submitted by user ${userId} for session ${sessionId}`);
 
     res.status(201).json({
       success: true,
@@ -150,9 +145,8 @@ const getSessionFeedback = async (req, res) => {
 
     // Get all feedback for the session
     const feedback = await SessionFeedback.find({ sessionId })
-      .select(
-        "userId userName userEmail rating description submittedAt"
-      )
+      .populate("userId", "name email")
+      .select("userId rating description submittedAt")
       .sort({ submittedAt: -1 })
       .lean();
 

@@ -23,19 +23,6 @@ const SessionFeedbackSchema = new mongoose.Schema(
       index: true,
     },
 
-    userName: {
-      type: String,
-      required: true,
-      trim: true,
-    },
-
-    userEmail: {
-      type: String,
-      required: true,
-      lowercase: true,
-      trim: true,
-    },
-
     rating: {
       type: Number,
       required: true,

@@ -8,6 +8,7 @@ import ParticipantQnA from "../../components/Participant/ParticipantQnA.jsx";
 import SessionFeedbackModal from "../../components/Participant/SessionFeedbackModal.jsx";
 // AskQuestionModal was replaced by an inline ask panel inside ParticipantQnA
 import api from "../../utils/api.js";
+import toast from "../../utils/toastUtils.js";
 import { useSubmitDebounce } from "../../hooks/useDebounce.js";
 
 const ParticipantSession = () => {
@@ -318,14 +319,7 @@ const ParticipantSession = () => {
   };
 
   // Handle session feedback submission
-  const handleFeedbackSubmit = async ({ rating, description, skipped }) => {
-    if (skipped) {
-      // User clicked "Skip for now" - redirect immediately
-      clearSession();
-      navigate("/participant/home");
-      return;
-    }
-
+  const handleFeedbackSubmit = async ({ rating, description }) => {
     setFeedbackSubmitting(true);
     try {
       await api.post(`/api/sessions/${sessionData.session._id}/sessionFeedback`, {
@@ -335,12 +329,12 @@ const ParticipantSession = () => {
       
       console.log("Feedback submitted:", { rating, description });
       
-      alert("Thank you for your feedback!");
+      toast.success("Thank you for your feedback!");
       clearSession();
       navigate("/participant/home");
     } catch (err) {
       console.error("Failed to submit feedback:", err);
-      alert("Failed to submit feedback. You will be redirected.");
+      toast.error("Failed to submit feedback. You will be redirected.");
       clearSession();
       navigate("/participant/home");
     } finally {
@@ -386,8 +380,8 @@ const ParticipantSession = () => {
       {/* Session Feedback Modal */}
       <SessionFeedbackModal
         isOpen={showFeedbackModal}
-        sessionTitle={sessionData?.sessionTitle}
-        roomName={sessionData?.roomName}
+        sessionTitle={sessionData?.session?.title}
+        roomName={sessionData?.session?.roomId?.name || sessionData?.roomName}
         onSubmit={handleFeedbackSubmit}
         isSubmitting={feedbackSubmitting}
       />
