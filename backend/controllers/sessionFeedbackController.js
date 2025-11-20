@@ -126,7 +126,7 @@ const getSessionFeedback = async (req, res) => {
     validateInput(sessionIdParamSchema, { sessionId });
 
     // Check if session exists
-    const session = await Session.findById(sessionId).select("roomId hostId");
+    const session = await Session.findById(sessionId).select("roomId teacherId");
 
     if (!session) {
       return res.status(404).json({
@@ -136,7 +136,7 @@ const getSessionFeedback = async (req, res) => {
     }
 
     // Check if requesting user is the host of the session
-    if (session.hostId.toString() !== req.user.id) {
+    if (session.teacherId.toString() !== req.user.id) {
       return res.status(403).json({
         success: false,
         message: "Only the session host can view feedback",
