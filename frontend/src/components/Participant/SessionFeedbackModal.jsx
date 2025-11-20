@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { X, Send, Star, Heart } from "lucide-react";
+import toast from "../../utils/toastUtils";
 
 const StarRating = ({ rating, onRatingChange }) => {
   const [hoverRating, setHoverRating] = React.useState(0);
@@ -43,7 +44,7 @@ const SessionFeedbackModal = ({
     e.preventDefault();
     
     if (rating === 0) {
-      alert("Please select a rating before submitting");
+      toast.error("Please select a rating before submitting", { duration: 3000 });
       return;
     }
 

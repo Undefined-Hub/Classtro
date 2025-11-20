@@ -322,7 +322,7 @@ const ParticipantSession = () => {
   const handleFeedbackSubmit = async ({ rating, description }) => {
     setFeedbackSubmitting(true);
     try {
-      await api.post(`/api/sessions/${sessionData.session._id}/sessionFeedback`, {
+      await api.post(`/api/feedback/${sessionData.session._id}/sessionFeedback`, {
         rating,
         description
       });
