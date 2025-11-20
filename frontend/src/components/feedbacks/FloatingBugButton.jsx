@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import FloatingButton from "./FloatingButton";
 import OptionsPanel from "./OptionsPanel";
 import FeedbackModal from "./FeedbackModal";
@@ -9,15 +9,37 @@ const FloatingBugButton = () => {
   const [reportType, setReportType] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [screenshotPreview, setScreenshotPreview] = useState(null);
+  const [modules, setModules] = useState([]);
   const [formData, setFormData] = useState({
     title: "",
     description: "",
     stepsToReproduce: "",
+    module: "",
     severity: "medium",
     userEmail: "",
     screenshot: null,
     rating: 0,
   });
+
+  // Fetch bug modules from backend
+  useEffect(() => {
+    const fetchModules = async () => {
+      try {
+        const BACKEND_BASE_URL =
+          import.meta.env.VITE_BACKEND_BASE_URL || "http://localhost:5000";
+        const response = await fetch(`${BACKEND_BASE_URL}/api/feedback/bug-modules`);
+        if (response.ok) {
+          const data = await response.json();
+          setModules(data.modules || []);
+        }
+      } catch (error) {
+        console.error("Error fetching modules:", error);
+        // Fallback to empty array if fetch fails
+        setModules([]);
+      }
+    };
+    fetchModules();
+  }, []);
 
   const handleFloatingButtonClick = () => {
     setIsOpen(!isOpen);
@@ -40,6 +62,7 @@ const FloatingBugButton = () => {
       title: "",
       description: "",
       stepsToReproduce: "",
+      module: "",
       severity: "medium",
       userEmail: "",
       screenshot: null,
@@ -91,6 +114,7 @@ const FloatingBugButton = () => {
         "stepsToReproduce",
         formData.stepsToReproduce.trim(),
       );
+      formDataToSend.append("module", formData.module);
       formDataToSend.append("severity", formData.severity);
       formDataToSend.append("userEmail", formData.userEmail.trim());
       if (formData.screenshot) {
@@ -163,6 +187,7 @@ const FloatingBugButton = () => {
         formData={formData}
         screenshotPreview={screenshotPreview}
         isSubmitting={isSubmitting}
+        modules={modules}
         onClose={handleCloseModal}
         onInputChange={handleInputChange}
         onRatingChange={handleRatingChange}

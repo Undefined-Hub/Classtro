@@ -6,6 +6,24 @@ const {
 } = require("../schemas/feedbackSchemas");
 const { validateInput } = require("../utils/validateInput");
 
+// Get bug report modules from Feedback schema
+const getBugModules = async (req, res) => {
+  try {
+    const moduleEnum = Feedback.schema.path("module").enumValues;
+    
+    return res.status(200).json({
+      success: true,
+      modules: moduleEnum,
+    });
+  } catch (error) {
+    console.error("Error fetching bug modules:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch modules",
+    });
+  }
+};
+
 // Create a new feedback/bug report
 const createFeedback = async (req, res) => {
   try {
@@ -48,6 +66,7 @@ const createFeedback = async (req, res) => {
       rating: validatedData.rating,
       description: validatedData.description,
       stepsToReproduce: validatedData.stepsToReproduce || null,
+      module: validatedData.module || null,
       severity:
         validatedData.severity ||
         (validatedData.type === "bug" ? "medium" : null),
@@ -295,6 +314,7 @@ const getFeedbackStats = async (req, res) => {
 };
 
 module.exports = {
+  getBugModules,
   createFeedback,
   getAllFeedback,
   getFeedbackById,

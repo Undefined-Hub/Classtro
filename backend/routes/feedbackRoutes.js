@@ -2,6 +2,7 @@ const express = require("express");
 const rateLimit = require("express-rate-limit");
 const { uploadScreenshot, handleUploadError } = require("../config/multer");
 const {
+  getBugModules,
   createFeedback,
   getAllFeedback,
   getFeedbackStats,
@@ -23,6 +24,9 @@ const submitLimit = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
 });
+
+// Get bug report modules
+router.get("/bug-modules", getBugModules);
 
 // Feedback Routes (type: feedback)
 router.post(

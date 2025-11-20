@@ -35,6 +35,7 @@ const FeedbackModal = ({
   formData,
   screenshotPreview,
   isSubmitting,
+  modules = [],
   onClose,
   onInputChange,
   onRatingChange,
@@ -158,6 +159,30 @@ const FeedbackModal = ({
                   className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-xl text-sm bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 transition-all duration-200 focus:outline-none focus:border-blue-500 dark:focus:border-blue-400 focus:ring-4 focus:ring-blue-500/20 dark:focus:ring-blue-400/20 resize-vertical min-h-[72px]"
                   required
                 />
+              </div>
+
+              <div className="mb-4">
+                <label
+                  htmlFor="module"
+                  className="block mb-2 font-semibold text-gray-700 dark:text-gray-200 text-sm"
+                >
+                  Module *
+                </label>
+                <select
+                  id="module"
+                  name="module"
+                  value={formData.module}
+                  onChange={onInputChange}
+                  className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-xl text-sm bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white transition-all duration-200 focus:outline-none focus:border-blue-500 dark:focus:border-blue-400 focus:ring-4 focus:ring-blue-500/20 dark:focus:ring-blue-400/20"
+                  required
+                >
+                  <option value="">Select affected module</option>
+                  {modules.map((module) => (
+                    <option key={module} value={module}>
+                      {module}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div className="mb-4">

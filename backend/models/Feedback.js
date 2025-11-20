@@ -55,6 +55,31 @@ const FeedbackSchema = new mongoose.Schema(
       },
     },
 
+    module: {
+      type: String,
+      required: function () {
+        return this.type === "bug"; // Required only for bugs
+      },
+      enum: [
+        "Authentication",
+        "Room Management",
+        "Session Dashboard",
+        "QR Code Joining",
+        "Polls",
+        "Q&A",
+        "Live Chat",
+        "Attendance Tracking",
+        "Analytics",
+        "Session Feedback",
+        "System Feedback",
+        "User Profile",
+        "Notifications",
+        "File Upload",
+        "Other"
+      ],
+      trim: true,
+    },
+
     userEmail: {
       type: String,
       default: null,
