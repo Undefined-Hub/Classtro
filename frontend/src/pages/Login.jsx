@@ -4,6 +4,7 @@ import { useAuth } from "../context/UserContext.jsx";
 import safeToast from "../utils/toastUtils";
 import api from "../utils/api.js";
 import { useSubmitDebounce } from "../hooks/useDebounce.js";
+import { ArrowLeft } from "lucide-react";
 function Login({ onLogin }) {
   const navigate = useNavigate();
   const { login } = useAuth();
@@ -21,7 +22,7 @@ function Login({ onLogin }) {
       // Clean up URL by removing the error parameter
       const newUrl = new URL(window.location);
       newUrl.searchParams.delete("oauth_error");
-      window.history.replaceState({}, '', newUrl);
+      window.history.replaceState({}, "", newUrl);
     }
   }, [searchParams]);
 
@@ -38,7 +39,7 @@ function Login({ onLogin }) {
         login(data.user, data.accessToken);
         safeToast.dismiss(pending);
         safeToast.success("Logged in successfully");
-        
+
         // Check for redirect parameter
         const redirectTo = searchParams.get("redirect");
         if (redirectTo) {
@@ -55,7 +56,7 @@ function Login({ onLogin }) {
         safeToast.dismiss(pending);
         safeToast.error(
           data.message ||
-            "Login failed. Please check your credentials and try again.",
+            "Login failed. Please check your credentials and try again."
         );
       }
     } catch (err) {
@@ -156,7 +157,16 @@ function Login({ onLogin }) {
       <div className="max-w-screen-xl mx-auto px-4 py-16">
         <div className="max-w-md mx-auto">
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8">
-            <div className="text-center mb-8">
+            <div className="text-center mb-8 relative">
+              <div className="flex items-center justify-between mb-8 absolute -top-5 -left-5">
+                <button
+                  onClick={() => navigate("/")}
+                  className="inline-flex items-center px-2 py-2 rounded-lg text-white/90 hover:text-white  hover:bg-white/10 transition-colors"
+                >
+                  <ArrowLeft className="w-5 h-5 mr-2" />
+                  Back
+                </button>
+              </div>
               <div className="mx-auto flex items-center justify-center w-16 h-16 bg-blue-100 dark:bg-blue-900 rounded-full mb-4">
                 <svg
                   className="w-8 h-8 text-blue-600 dark:text-blue-400"
