@@ -3,10 +3,13 @@ import { HostSessionProvider } from "./context/HostSessionContext.jsx";
 import { Routes, Route, useNavigate, Navigate } from "react-router-dom";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import { useAuth } from "./context/UserContext.jsx";
-import FloatingBugButton from "./components/FloatingBugButton.jsx";
+import FloatingBugButton from "./components/feedbacks/FloatingBugButton.jsx";
 
 const Landing = lazy(() => import("./pages/Landing"));
 const Login = lazy(() => import("./pages/Login"));
+const About = lazy(() => import("./pages/About"));
+const Pricing = lazy(() => import("./pages/Pricing"));
+const Contact = lazy(() => import("./pages/Contact"));
 const DashboardPage = lazy(() => import("./pages/Host/DashboardPage.jsx"));
 const DashboardLayout = lazy(() => import("./components/DashboardLayout.jsx"));
 const RoomsPage = lazy(() => import("./pages/Host/RoomsPage.jsx"));
@@ -70,6 +73,9 @@ function App() {
     <>
       <Routes>
         <Route path="/" element={<Landing />} />
+        <Route path="/about" element={<About />} />
+        <Route path="/pricing" element={<Pricing />} />
+        <Route path="/contact" element={<Contact />} />
         <Route path="/login" element={<Login onLogin={handleLogin} />} />
         <Route path="/register" element={<Register />} />
         <Route path="/verify" element={<VerifyAndRole />} />

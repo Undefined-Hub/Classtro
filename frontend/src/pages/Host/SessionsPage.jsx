@@ -101,10 +101,49 @@ function SessionsPage() {
 
   return (
     <>
-      <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6">
-        All Sessions
-      </h2>
-      <AllSessionsTable rooms={rooms} onSessionClick={handleSessionClick} />
+      {/* <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6">
+        Quizes
+      </h2> */}
+      
+      {/* Feature in Development */}
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="text-center max-w-md">
+          {/* Icon Container */}
+          <div className="mx-auto flex items-center justify-center w-20 h-20 bg-blue-100 dark:bg-blue-900/30 rounded-full mb-6">
+            <svg
+              className="w-10 h-10 text-blue-600 dark:text-blue-400"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"
+              />
+            </svg>
+          </div>
+
+          {/* Text Content */}
+          <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-3">
+            Feature In Development
+          </h3>
+          <p className="text-gray-600 dark:text-gray-400 mb-2 leading-relaxed">
+            The quiz feature is currently under development and will be available soon.
+          </p>
+          <p className="text-sm text-gray-500 dark:text-gray-500">
+            Stay tuned for updates!
+          </p>
+
+          {/* Progress Indicator */}
+          <div className="mt-6 flex items-center justify-center gap-2">
+            <div className="w-2 h-2 bg-blue-600 dark:bg-blue-400 rounded-full animate-pulse"></div>
+            <div className="w-2 h-2 bg-blue-600 dark:bg-blue-400 rounded-full animate-pulse" style={{ animationDelay: '0.2s' }}></div>
+            <div className="w-2 h-2 bg-blue-600 dark:bg-blue-400 rounded-full animate-pulse" style={{ animationDelay: '0.4s' }}></div>
+          </div>
+        </div>
+      </div>
     </>
   );
 }

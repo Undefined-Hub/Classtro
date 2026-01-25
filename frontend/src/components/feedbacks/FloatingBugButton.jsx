@@ -1,7 +1,27 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import FloatingButton from "./FloatingButton";
 import OptionsPanel from "./OptionsPanel";
 import FeedbackModal from "./FeedbackModal";
+import toast from "../../utils/toastUtils";
+
+// Static list of bug report modules
+const BUG_MODULES = [
+  "Authentication",
+  "Room Management",
+  "Session Dashboard",
+  "QR Code Joining",
+  "Polls",
+  "Q&A",
+  "Live Chat",
+  "Attendance Tracking",
+  "Analytics",
+  "Session Feedback",
+  "System Feedback",
+  "User Profile",
+  "Notifications",
+  "File Upload",
+  "Other"
+];
 
 const FloatingBugButton = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -9,7 +29,6 @@ const FloatingBugButton = () => {
   const [reportType, setReportType] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [screenshotPreview, setScreenshotPreview] = useState(null);
-  const [modules, setModules] = useState([]);
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -20,26 +39,6 @@ const FloatingBugButton = () => {
     screenshot: null,
     rating: 0,
   });
-
-  // Fetch bug modules from backend
-  useEffect(() => {
-    const fetchModules = async () => {
-      try {
-        const BACKEND_BASE_URL =
-          import.meta.env.VITE_BACKEND_BASE_URL || "http://localhost:5000";
-        const response = await fetch(`${BACKEND_BASE_URL}/api/feedback/bug-modules`);
-        if (response.ok) {
-          const data = await response.json();
-          setModules(data.modules || []);
-        }
-      } catch (error) {
-        console.error("Error fetching modules:", error);
-        // Fallback to empty array if fetch fails
-        setModules([]);
-      }
-    };
-    fetchModules();
-  }, []);
 
   const handleFloatingButtonClick = () => {
     setIsOpen(!isOpen);
@@ -139,27 +138,36 @@ const FloatingBugButton = () => {
 
       if (response.ok) {
         const result = await response.json();
-        alert(
+        toast.success(
           `${reportType === "bug" ? "Bug report" : "Feedback"} submitted successfully! Report #${result.reportNumber || result.id}`,
+          { duration: 4000 }
         );
         handleCloseModal();
       } else {
         const errorData = await response
           .json()
-          .catch(() => ({ error: "Unknown error" }));
-        let errorMessage = "Failed to submit report. ";
+          .catch(() => ({ error: "Unknown error occurred" }));
+        
+        let errorMessage = "";
+        
+        // Handle validation errors from backend
         if (errorData.details && Array.isArray(errorData.details)) {
-          errorMessage += errorData.details.map((d) => d.msg).join(", ");
+          errorMessage = errorData.details.map((d) => d.msg || d.message).join(", ");
         } else if (errorData.error) {
-          errorMessage += errorData.error;
+          errorMessage = errorData.error;
+        } else if (errorData.message) {
+          errorMessage = errorData.message;
         } else {
-          errorMessage += "Please try again.";
+          errorMessage = "Failed to submit report. Please try again.";
         }
-        alert(errorMessage);
+        
+        toast.error(errorMessage, { duration: 5000 });
       }
     } catch (error) {
       console.error("Error submitting report:", error);
-      alert("Network error. Please check your connection and try again.");
+      toast.error("Network error. Please check your connection and try again.", {
+        duration: 5000
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -187,7 +195,7 @@ const FloatingBugButton = () => {
         formData={formData}
         screenshotPreview={screenshotPreview}
         isSubmitting={isSubmitting}
-        modules={modules}
+        modules={BUG_MODULES}
         onClose={handleCloseModal}
         onInputChange={handleInputChange}
         onRatingChange={handleRatingChange}
