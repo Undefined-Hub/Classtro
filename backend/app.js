@@ -5,6 +5,7 @@ const http = require("http");
 const { Server } = require("socket.io");
 const { connectDB } = require("./config/db");
 const { errorHandler } = require("./middlewares/errorHandler");
+const { getIOInstance } = require("./socket");
 const cookieParser = require("cookie-parser");
 const passport = require("passport");
 const router = require("./routes");
@@ -76,6 +77,12 @@ app.use(errorHandler);
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(passport.initialize());
+
+// Middleware to attach Socket.IO instance to requests
+app.use((req, res, next) => {
+  req.io = getIOInstance();
+  next();
+});
 
 // Serve uploaded screenshots statically
 app.use("/uploads", express.static("uploads"));
