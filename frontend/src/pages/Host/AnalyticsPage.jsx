@@ -1,6 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { AnalyticsProvider } from "../../context/AnalyticsContext";
+import { AnalyticsProvider, useAnalyticsData } from "../../context/AnalyticsContext";
 import SessionHeader from "../../components/Analytics/SessionHeader";
 import OverviewCards from "../../components/Analytics/OverviewCards";
 import ParticipantTimeline from "../../components/Analytics/ParticipantTimeline";
@@ -9,17 +9,18 @@ import QandAInsights from "../../components/Analytics/QandAInsights";
 import FeedbackSection from "../../components/Analytics/FeedbackSection";
 import AISummary from "../../components/Analytics/AISummary";
 import AttendanceTable from "../../components/Analytics/AttendanceTable";
+import { AlertTriangle } from "lucide-react";
 
-function AnalyticsPage() {
+function AnalyticsPageContent() {
   const navigate = useNavigate();
+  const { isGenerated, error } = useAnalyticsData();
 
   const handleBackToDashboard = () => {
     navigate("/dashboard");
   };
 
   return (
-    <AnalyticsProvider>
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
         {/* Navigation Header */}
         <div className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -56,6 +57,23 @@ function AnalyticsPage() {
 
         {/* Main Content */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {/* Warning Banner for Mock Data */}
+          {!isGenerated && (
+            <div className="mb-6 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-xl p-4">
+              <div className="flex items-start space-x-3">
+                <AlertTriangle className="w-5 h-5 text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <h3 className="text-sm font-semibold text-yellow-800 dark:text-yellow-300 mb-1">
+                    Preview Mode - Mock Data
+                  </h3>
+                  <p className="text-sm text-yellow-700 dark:text-yellow-400">
+                    {error || "Analytics have not been generated for this session yet. The data shown below is for preview purposes only. Generate analytics to see real data."}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Perfect 3-Column Bento Grid Layout */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Row 1: Session Header - Full Width */}
@@ -128,6 +146,13 @@ function AnalyticsPage() {
           </div>
         </div>
       </div>
+  );
+}
+
+function AnalyticsPage() {
+  return (
+    <AnalyticsProvider>
+      <AnalyticsPageContent />
     </AnalyticsProvider>
   );
 }

@@ -304,47 +304,93 @@ export const AnalyticsProvider = ({ children }) => {
   const [analyticsData, setAnalyticsData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const testSessionId = "68fb9207f3e9b38471f19b8e";
+  const [isGenerated, setIsGenerated] = useState(false);
 
   useEffect(() => {
-    // Simulate API call delay
     const loadData = async () => {
       try {
         setLoading(true);
-        // Simulate network delay
-        await new Promise((resolve) => setTimeout(resolve, 1000));
+        setError(null);
 
+        // Get session ID from location state
+        const sessionId = location.state?.sessionId;
+        
+        if (!sessionId) {
+          setError("No session ID provided");
+          setLoading(false);
+          return;
+        }
+
+        console.log("📊 Fetching analytics for session:", sessionId);
+
+        // Fetch analytics from backend
+        const response = await api.get(
+          `/api/analytics/frontend/${sessionId}`,
+        );
+
+        console.log("Analytics API response:", response.data);
+
+        if (response.data?.success) {
+          if (response.data.generated) {
+            // Analytics exist - use them
+            setAnalyticsData(response.data.data);
+            setIsGenerated(true);
+            console.log("✅ Analytics loaded from cache");
+          } else {
+            // Analytics not generated yet
+            setIsGenerated(false);
+            setError(response.data.message || "Analytics have not been generated yet");
+            console.log("⚠️ Analytics not generated yet");
+            
+            // Use mock data as fallback for UI preview
+            const sessionData = location.state?.sessionData;
+            const mockData = generateMockData(sessionData);
+            setAnalyticsData(mockData);
+          }
+        } else {
+          throw new Error(response.data?.message || "Failed to load analytics");
+        }
+      } catch (err) {
+        console.error("❌ Failed to load analytics:", err);
+        setError(err.response?.data?.message || "Failed to load analytics data");
+        
+        // Use mock data as fallback
         const sessionData = location.state?.sessionData;
         const mockData = generateMockData(sessionData);
         setAnalyticsData(mockData);
-
-        const response = await api.get(
-          `/api/analytics/frontend/${testSessionId}`,
-        );
-        console.log("Analytics API response:", response.data);
-
-        if (response.data?.success && response.data?.data) {
-          setAnalyticsData(response.data.data);
-        }
-      } catch (err) {
-        setError("Failed to load analytics data");
       } finally {
         setLoading(false);
       }
     };
 
     loadData();
-  }, [location.state, testSessionId]);
+  }, [location.state]);
+
+  const refetch = async () => {
+    const sessionId = location.state?.sessionId;
+    if (!sessionId) return;
+
+    setLoading(true);
+    try {
+      const response = await api.get(`/api/analytics/frontend/${sessionId}`);
+      if (response.data?.success && response.data.generated) {
+        setAnalyticsData(response.data.data);
+        setIsGenerated(true);
+        setError(null);
+      }
+    } catch (err) {
+      console.error("Refetch error:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const value = {
     analyticsData,
     loading,
     error,
-    refetch: () => {
-      const sessionData = location.state?.sessionData;
-      const mockData = generateMockData(sessionData);
-      setAnalyticsData(mockData);
-    },
+    isGenerated,
+    refetch,
   };
 
   return (

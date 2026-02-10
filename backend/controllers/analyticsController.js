@@ -1,6 +1,6 @@
 // controllers/analyticsController.js
 const SessionAnalytics = require("../models/SessionAnalytics");
-const { buildAnalytics, buildFrontendAnalytics, generateParticipantStats } = require("../services/analyticsBuilder");
+const { buildAnalytics, buildFrontendAnalytics, formatStoredAnalytics, generateParticipantStats, generateFeedbackStats } = require("../services/analyticsBuilder");
 const {validateInput} = require("../utils/validateInput");
 const {
   generateAnalyticsSchema,
@@ -72,6 +72,10 @@ const getAnalytics = async (req, res, next) => {
         message: "Analytics not generated yet",
       });
     }
+
+    // Refresh feedback section to include any new submissions
+    const latestFeedback = await generateFeedbackStats(sessionId);
+    analytics.sections.feedback = latestFeedback;
 
     return res.status(200).json({
       success: true,
@@ -147,19 +151,45 @@ const getParticipantStatsTest = async (req, res, next) => {
   }
 };
 
-// Get analytics in frontend-compatible format
+// Get analytics in frontend-compatible format (cache-first approach)
 const getFrontendAnalytics = async (req, res, next) => {
   try {
     const params = validateInput(sessionIdSchema, req.params);
     const { sessionId } = params;
 
-    // Get frontend-compatible analytics data
-    const analyticsData = await buildFrontendAnalytics(sessionId);
+    // Check if analytics are already generated and cached
+    const cachedAnalytics = await SessionAnalytics.findOne({ sessionId })
+      .populate("sessionId", "title startAt endAt")
+      .populate("roomId", "name");
 
+    if (cachedAnalytics) {
+      // Analytics exist - format from cached sections
+      console.log("📊 Serving analytics from cache for session:", sessionId);
+      
+      // Refresh feedback section to include any new submissions
+      const latestFeedback = await generateFeedbackStats(sessionId);
+      cachedAnalytics.sections.feedback = latestFeedback;
+      
+      const analyticsData = await formatStoredAnalytics(cachedAnalytics);
+      
+      return res.status(200).json({
+        success: true,
+        generated: true,
+        fromCache: true,
+        generatedAt: cachedAnalytics.generatedAt,
+        data: analyticsData,
+      });
+    }
+
+    // Analytics not generated yet - return not-generated state
+    console.log("⚠️ Analytics not generated yet for session:", sessionId);
     return res.status(200).json({
       success: true,
-      data: analyticsData,
+      generated: false,
+      message: "Analytics have not been generated yet. Please generate analytics first.",
+      data: null,
     });
+    
   } catch (error) {
     console.error("Get frontend analytics error:", error);
     if (error.name === 'ValidationError') {

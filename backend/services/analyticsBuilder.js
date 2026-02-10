@@ -158,7 +158,7 @@ const formatPollsForFrontend = (polls) => {
 const formatQuestionsForFrontend = (questions) => {
   return questions.map(question => ({
     id: question._id,
-    askedBy: question.isAnonymous ? "Anonymous" : (question.authorId?.name || "Anonymous"),
+    author: question.isAnonymous ? "Anonymous" : (question.authorId?.name || "Anonymous"),
     text: question.text,
     upvotes: question.upvotes || 0,
     answered: question.isAnswered || false,
@@ -179,8 +179,8 @@ const formatFeedbackForFrontend = async (feedbacks) => {
   const averageRating = totalRating / feedbacks.length;
   
   const comments = feedbacks
-    .filter(feedback => feedback.comment)
-    .map(feedback => feedback.comment);
+    .filter(feedback => feedback.description && feedback.description.trim())
+    .map(feedback => feedback.description);
 
   // Simple sentiment analysis based on rating
   let sentiment = "neutral";
@@ -264,60 +264,68 @@ const generateParticipantStats = async (sessionId) => {
 const calculatePeakConcurrency = (participants, activities, session) => {
   const events = [];
   
-  // Create join/leave events from participant data (fallback)
-  participants.forEach(participant => {
-    events.push({
-      time: participant.joinedAt,
-      change: 1,
-      type: 'join',
-      participantId: participant._id
-    });
-    
-    if (participant.leftAt) {
+  // Prefer activity-based tracking if available
+  if (activities.length > 0) {
+    activities.forEach(activity => {
+      const change = activity.activityType === 'join' || activity.activityType === 'reconnect' ? 1 : -1;
       events.push({
-        time: participant.leftAt,
-        change: -1,
-        type: 'leave',
+        time: activity.timestamp,
+        change,
+        type: activity.activityType,
+        participantId: activity.participantId
+      });
+    });
+  } else {
+    // Fallback: Create join/leave events from participant data
+    participants.forEach(participant => {
+      events.push({
+        time: participant.joinedAt,
+        change: 1,
+        type: 'join',
         participantId: participant._id
       });
-    }
-  });
-
-  // Add activity events (more accurate if available)
-  activities.forEach(activity => {
-    const change = activity.activityType === 'join' || activity.activityType === 'reconnect' ? 1 : -1;
-    events.push({
-      time: activity.timestamp,
-      change,
-      type: activity.activityType,
-      participantId: activity.participantId
+      
+      if (participant.leftAt) {
+        events.push({
+          time: participant.leftAt,
+          change: -1,
+          type: 'leave',
+          participantId: participant._id
+        });
+      }
     });
-  });
+  }
 
-  // Sort events by time
-  events.sort((a, b) => new Date(a.time) - new Date(b.time));
+  // Sort events by time using getTime() for proper comparison
+  events.sort((a, b) => new Date(a.time).getTime() - new Date(b.time).getTime());
 
   let currentCount = 0;
   let peakCount = 0;
   let totalTime = 0;
   let weightedSum = 0;
-  let lastTime = session.startAt;
+  let lastTime = new Date(session.startAt).getTime();
 
   events.forEach(event => {
-    const timeDiff = new Date(event.time) - new Date(lastTime);
+    const eventTime = new Date(event.time).getTime();
+    const timeDiff = Math.max(0, eventTime - lastTime);
     weightedSum += currentCount * timeDiff;
     totalTime += timeDiff;
     
-    currentCount += event.change;
+    currentCount = Math.max(0, currentCount + event.change);
     peakCount = Math.max(peakCount, currentCount);
-    lastTime = event.time;
+    lastTime = eventTime;
   });
 
   // Handle remaining time until session end
-  const sessionEnd = session.endAt || new Date();
-  const finalTimeDiff = new Date(sessionEnd) - new Date(lastTime);
+  const sessionEnd = new Date(session.endAt || new Date()).getTime();
+  const finalTimeDiff = Math.max(0, sessionEnd - lastTime);
   weightedSum += currentCount * finalTimeDiff;
   totalTime += finalTimeDiff;
+
+  // Ensure peak count is at least 1 if there are participants
+  if (participants.length > 0 && peakCount === 0) {
+    peakCount = 1;
+  }
 
   const averageConcurrent = totalTime > 0 ? weightedSum / totalTime : 0;
 
@@ -458,13 +466,32 @@ const generateTimeline = async (sessionId) => {
     const sessionStart = new Date(session.startAt);
     const sessionEnd = session.endAt ? new Date(session.endAt) : new Date();
     
-    // Generate minute-by-minute timeline
+    // Generate timeline with 5-minute intervals
     const timeline = [];
-    const intervalMinutes = 15; // 5-minute intervals
+    const intervalMinutes = 5; // 5-minute intervals
+    const maxPoints = 100;
     
     let currentTime = new Date(sessionStart);
+    let pointCount = 0;
     
-    while (currentTime <= sessionEnd) {
+    // Always add start point
+    const startActiveCount = calculateActiveParticipantsAtTime(
+      currentTime, 
+      participants, 
+      activities
+    );
+    
+    timeline.push({
+      timestamp: new Date(currentTime),
+      activeParticipants: startActiveCount,
+      minute: 0,
+    });
+    pointCount++;
+    
+    // Generate intermediate points up to max limit
+    currentTime = new Date(currentTime.getTime() + intervalMinutes * 60 * 1000);
+    
+    while (currentTime < sessionEnd && pointCount < maxPoints - 1) {
       const activeCount = calculateActiveParticipantsAtTime(
         currentTime, 
         participants, 
@@ -476,9 +503,25 @@ const generateTimeline = async (sessionId) => {
         activeParticipants: activeCount,
         minute: Math.floor((currentTime - sessionStart) / (1000 * 60)),
       });
+      pointCount++;
       
-      // Move to next minute
+      // Move to next interval
       currentTime = new Date(currentTime.getTime() + intervalMinutes * 60 * 1000);
+    }
+    
+    // Always add end point if not already added and not at limit
+    if (pointCount < maxPoints && (timeline.length === 0 || Math.abs(timeline[timeline.length - 1].timestamp - sessionEnd) > 1000)) {
+      const endActiveCount = calculateActiveParticipantsAtTime(
+        sessionEnd, 
+        participants, 
+        activities
+      );
+      
+      timeline.push({
+        timestamp: new Date(sessionEnd),
+        activeParticipants: endActiveCount,
+        minute: Math.floor((sessionEnd - sessionStart) / (1000 * 60)),
+      });
     }
 
     return timeline;
@@ -536,44 +579,304 @@ const calculateActiveParticipantsAtTime = (targetTime, participants, activities)
 };
 
 const generatePollStats = async (sessionId) => {
-  // TODO: Implement poll statistics
-  return [];
+  try {
+    const polls = await Poll.find({ sessionId }).lean();
+    
+    return polls.map(poll => {
+      const totalResponses = poll.options?.reduce((sum, option) => sum + (option.votes || 0), 0) || 0;
+      
+      return {
+        pollId: poll._id,
+        question: poll.question,
+        options: poll.options?.map(option => ({
+          text: option.text,
+          votes: option.votes || 0,
+          percentage: totalResponses > 0 ? Math.round((option.votes || 0) / totalResponses * 100) : 0,
+        })) || [],
+        totalResponses,
+        createdAt: poll.createdAt,
+      };
+    });
+  } catch (error) {
+    console.error("Error generating poll stats:", error);
+    return [];
+  }
 };
 
 const generateQnaStats = async (sessionId) => {
-  // TODO: Implement Q&A statistics
-  return {
-    totalQuestions: 0,
-    answeredQuestions: 0,
-    // More stats to be implemented
-  };
+  try {
+    const questions = await Question.find({ sessionId })
+      .populate("authorId", "name")
+      .sort({ createdAt: -1 })
+      .lean();
+    
+    const totalQuestions = questions.length;
+    const answeredQuestions = questions.filter(q => q.isAnswered).length;
+    const totalUpvotes = questions.reduce((sum, q) => sum + (q.upvotes || 0), 0);
+    const answerRate = totalQuestions > 0 ? Math.round((answeredQuestions / totalQuestions) * 100) : 0;
+    
+    return {
+      totalQuestions,
+      answeredQuestions,
+      unansweredQuestions: totalQuestions - answeredQuestions,
+      answerRate,
+      totalUpvotes,
+      averageUpvotes: totalQuestions > 0 ? Math.round((totalUpvotes / totalQuestions) * 10) / 10 : 0,
+      questions: questions.map(q => ({
+        questionId: q._id,
+        text: q.text,
+        author: q.isAnonymous ? "Anonymous" : (q.authorId?.name || "Anonymous"),
+        upvotes: q.upvotes || 0,
+        answered: q.isAnswered || false,
+        createdAt: q.createdAt,
+      })),
+    };
+  } catch (error) {
+    console.error("Error generating Q&A stats:", error);
+    return {
+      totalQuestions: 0,
+      answeredQuestions: 0,
+      unansweredQuestions: 0,
+      answerRate: 0,
+      totalUpvotes: 0,
+      averageUpvotes: 0,
+      questions: [],
+    };
+  }
 };
 
 const generateAttendance = async (sessionId) => {
-  // TODO: Implement attendance tracking
-  return [];
+  try {
+    const participants = await Participant.find({ sessionId })
+      .populate("userId", "name email")
+      .sort({ joinedAt: 1 })
+      .lean();
+    
+    const session = await Session.findById(sessionId).lean();
+    if (!session) {
+      return [];
+    }
+    
+    // Calculate session duration using milliseconds for accuracy
+    const sessionStart = new Date(session.startAt);
+    const sessionEnd = session.endAt ? new Date(session.endAt) : new Date();
+    const sessionDurationMs = sessionEnd - sessionStart;
+    
+    return participants.map(participant => {
+      const joinTime = new Date(participant.joinedAt);
+      const leaveTime = participant.leftAt ? new Date(participant.leftAt) : sessionEnd;
+      
+      // Calculate actual milliseconds attended (for percentage calculation)
+      const durationMs = leaveTime - joinTime;
+      
+      // Display duration in minutes (rounded)
+      const duration = Math.round(durationMs / (1000 * 60));
+      
+      // Determine attendance status based on ACTUAL percentage (not rounded)
+      // Calculate percentage using raw milliseconds for accuracy
+      const attendancePercentage = (durationMs / sessionDurationMs) * 100;
+      
+      // Fair logic:
+      // Full: attended >= 75% of session OR (joined at start AND stayed to end)
+      // Partial: attended < 75% of session
+      const minutesAfterStart = (joinTime - sessionStart) / (1000 * 60);
+      const minutesBeforeEnd = (sessionEnd - leaveTime) / (1000 * 60);
+      
+      const attendanceStatus = 
+        (attendancePercentage >= 75) || (minutesAfterStart <= 1 && minutesBeforeEnd <= 1)
+          ? "full" 
+          : "partial";
+      
+      // Determine status: kicked, left, or active
+      let status;
+      if (participant.kicked) {
+        status = "kicked";
+      } else if (participant.leftAt) {
+        status = "left";
+      } else {
+        status = "active";
+      }
+      
+      return {
+        participantId: participant._id,
+        name: participant.userId?.name || participant.name || "Anonymous",
+        email: participant.userId?.email || null,
+        joinedAt: participant.joinedAt,
+        leftAt: participant.leftAt || null,
+        duration, // in minutes
+        status,
+        attendanceStatus,
+        attendancePercentage: Math.round(attendancePercentage), // for debugging
+      };
+    });
+  } catch (error) {
+    console.error("Error generating attendance:", error);
+    return [];
+  }
 };
 
 const generateFeedbackStats = async (sessionId) => {
-  // TODO: Implement feedback statistics
-  return {
-    totalFeedbacks: 0,
-    averageRating: 0,
-    // More stats to be implemented
-  };
+  try {
+    const feedbacks = await SessionFeedback.find({ sessionId })
+      .populate("userId", "name")
+      .sort({ submittedAt: -1 })
+      .lean();
+    
+    const totalFeedbacks = feedbacks.length;
+    
+    if (totalFeedbacks === 0) {
+      return {
+        totalFeedbacks: 0,
+        averageRating: 0,
+        ratingDistribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 },
+        sentiment: "neutral",
+        feedbacks: [],
+      };
+    }
+    
+    const totalRating = feedbacks.reduce((sum, f) => sum + (f.rating || 0), 0);
+    const averageRating = totalRating / totalFeedbacks;
+    
+    // Rating distribution
+    const ratingDistribution = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+    feedbacks.forEach(f => {
+      if (f.rating >= 1 && f.rating <= 5) {
+        ratingDistribution[f.rating]++;
+      }
+    });
+    
+    // Simple sentiment analysis
+    let sentiment = "neutral";
+    if (averageRating >= 4) sentiment = "positive";
+    else if (averageRating <= 2) sentiment = "negative";
+    
+    return {
+      totalFeedbacks,
+      averageRating: Math.round(averageRating * 10) / 10,
+      ratingDistribution,
+      sentiment,
+      feedbacks: feedbacks.map(f => ({
+        feedbackId: f._id,
+        userName: f.userId?.name || "Anonymous",
+        rating: f.rating,
+        description: f.description || "",
+        submittedAt: f.submittedAt,
+      })),
+    };
+  } catch (error) {
+    console.error("Error generating feedback stats:", error);
+    return {
+      totalFeedbacks: 0,
+      averageRating: 0,
+      ratingDistribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 },
+      sentiment: "neutral",
+      feedbacks: [],
+    };
+  }
 };
 
 const generateAiInsights = async (sessionId) => {
-  // TODO: Implement AI insights (optional)
+  // Placeholder for AI insights - premium feature
   return {
+    available: false,
+    message: "AI insights are a premium feature. Upgrade to unlock detailed AI-powered analytics.",
     insights: [],
     recommendations: [],
   };
 };
 
+// Helper to format stored analytics into frontend format
+const formatStoredAnalytics = async (storedAnalytics) => {
+  try {
+    const session = await Session.findById(storedAnalytics.sessionId)
+      .populate('roomId')
+      .lean();
+    
+    if (!session) {
+      throw new Error("Session not found");
+    }
+    
+    const sections = storedAnalytics.sections || {};
+    const participantStats = sections.participants || {};
+    
+    // Build frontend structure from cached sections
+    return {
+      sessionInfo: {
+        title: session.title || "Session Analytics",
+        roomName: session.roomId?.name || "Unknown Room",
+        startAt: session.startAt,
+        endAt: session.endAt,
+        totalParticipants: participantStats.totalParticipants || 0,
+        peakParticipants: participantStats.peakConcurrentUsers || 0,
+        pollsConducted: sections.polls?.length || 0,
+        questionsAsked: sections.qna?.totalQuestions || 0,
+      },
+      participants: await formatStoredParticipants(storedAnalytics.sessionId, sections.attendance),
+      participantsTimeline: formatStoredTimeline(sections.timeline),
+      polls: sections.polls || [],
+      questions: sections.qna?.questions || [],
+      feedback: sections.feedback ? {
+        averageRating: sections.feedback.averageRating || 0,
+        comments: sections.feedback.feedbacks?.map(f => f.description).filter(Boolean) || [],
+        sentiment: sections.feedback.sentiment || "neutral",
+      } : {
+        averageRating: 0,
+        comments: [],
+        sentiment: "neutral",
+      },
+    };
+  } catch (error) {
+    console.error("Error formatting stored analytics:", error);
+    throw new Error(`Failed to format stored analytics: ${error.message}`);
+  }
+};
+
+// Helper to format stored participants for frontend
+const formatStoredParticipants = async (sessionId, attendance) => {
+  if (!attendance || attendance.length === 0) {
+    // Fallback to fetching participants
+    const participants = await Participant.find({ sessionId })
+      .populate("userId", "name")
+      .lean();
+    
+    return participants.map(p => ({
+      id: p._id,
+      name: p.userId?.name || p.name || "Anonymous",
+      joinAt: p.joinedAt,
+      leaveAt: p.leftAt,
+      duration: p.leftAt ? 
+        Math.round((new Date(p.leftAt) - new Date(p.joinedAt)) / (1000 * 60)) : 0,
+    }));
+  }
+  
+  return attendance.map(a => ({
+    id: a.participantId,
+    name: a.name,
+    joinAt: a.joinedAt,
+    leaveAt: a.leftAt,
+    duration: a.duration,
+  }));
+};
+
+// Helper to format stored timeline for frontend
+const formatStoredTimeline = (timeline) => {
+  if (!timeline || timeline.length === 0) {
+    return [];
+  }
+  
+  return timeline.map(point => ({
+    time: new Date(point.timestamp).toLocaleTimeString('en-US', { 
+      hour: '2-digit', 
+      minute: '2-digit' 
+    }),
+    activeCount: point.activeParticipants,
+  }));
+};
+
 module.exports = {
   buildAnalytics,
   buildFrontendAnalytics,
+  formatStoredAnalytics,
   generateParticipantStats,
   generateTimeline,
   generatePollStats,
