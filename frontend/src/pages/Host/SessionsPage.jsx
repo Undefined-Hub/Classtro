@@ -20,10 +20,24 @@ function SessionsPage() {
   const [editingQuiz, setEditingQuiz] = useState(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [quizToDelete, setQuizToDelete] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // Load quizzes from localStorage
-  const loadQuizzes = () => {
-    setQuizzes(JSON.parse(localStorage.getItem('quizzes') || '[]'));
+  // Load quizzes from API
+  const loadQuizzes = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      const response = await api.get('/api/quiz-templates');
+      setQuizzes(response.data);
+    } catch (err) {
+      console.error('Error loading quizzes:', err);
+      setError('Failed to load quizzes. Please try again.');
+      // Fallback to localStorage if API fails
+      setQuizzes(JSON.parse(localStorage.getItem('quizzes') || '[]'));
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -60,11 +74,21 @@ function SessionsPage() {
     }
   };
 
-  const handleEditQuiz = (quiz) => {
-    setEditingQuiz(quiz);
-    setQuizName(quiz.title);
-    setQuizDescription(quiz.description || "");
-    setIsQuizCreated(true);
+  const handleEditQuiz = async (quiz) => {
+    try {
+      // Fetch full quiz details from API
+      const response = await api.get(`/api/quiz-templates/${quiz._id}`);
+      const fullQuiz = response.data;
+      
+      setEditingQuiz(fullQuiz);
+          console.log("Updating existing quiz...",fullQuiz);
+      setQuizName(fullQuiz.title);
+      setQuizDescription(fullQuiz.description || "");
+      setIsQuizCreated(true);
+    } catch (err) {
+      console.error('Error loading quiz details:', err);
+      alert('Failed to load quiz details. Please try again.');
+    }
   };
 
   const handleDeleteQuiz = (quiz) => {
@@ -72,18 +96,22 @@ function SessionsPage() {
     setShowDeleteConfirm(true);
   };
 
-  const confirmDeleteQuiz = () => {
+  const confirmDeleteQuiz = async () => {
     if (!quizToDelete) return;
 
-    // Remove the quiz from localStorage
-    const existingQuizzes = JSON.parse(localStorage.getItem('quizzes') || '[]');
-    const updatedQuizzes = existingQuizzes.filter(q => q._id !== quizToDelete._id);
-    localStorage.setItem('quizzes', JSON.stringify(updatedQuizzes));
-
-    // Update state
-    setQuizzes(updatedQuizzes);
-    setShowDeleteConfirm(false);
-    setQuizToDelete(null);
+    try {
+      // Delete from API
+      await api.delete(`/api/quiz-templates/${quizToDelete._id}`);
+      
+      
+      // Update local state
+      setQuizzes(quizzes.filter(q => q._id !== quizToDelete._id));
+      setShowDeleteConfirm(false);
+      setQuizToDelete(null);
+    } catch (err) {
+      console.error('Error deleting quiz:', err);
+      alert('Failed to delete quiz. Please try again.');
+    }
   };
 
   const handleBackToList = () => {
@@ -91,12 +119,13 @@ function SessionsPage() {
     setQuizName("");
     setQuizDescription("");
     setEditingQuiz(null);
-    loadQuizzes(); // Reload quizzes after returning from creation
+    loadQuizzes(); // Reload quizzes from API after returning from creation/editing
   };
   
   return (
     <>
       {isQuizCreated ? (
+
         <QuizCreation 
           quizName={quizName} 
           quizDescription={quizDescription} 
@@ -114,7 +143,37 @@ function SessionsPage() {
             <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6">
               Your Quizzes
             </h2>
-            {quizzes.length === 0 ? (
+            
+            {/* Loading State */}
+            {isLoading && (
+              <div className="flex items-center justify-center py-12">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                <span className="ml-3 text-gray-600 dark:text-gray-400">Loading quizzes...</span>
+              </div>
+            )}
+
+            {/* Error State */}
+            {error && !isLoading && (
+              <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 mb-6">
+                <div className="flex items-center">
+                  <svg className="w-5 h-5 text-red-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.732 15.5C3.962 16.333 4.924 18 6.464 18z" />
+                  </svg>
+                  <div>
+                    <p className="text-red-700 dark:text-red-300 font-medium">{error}</p>
+                    <button 
+                      onClick={loadQuizzes}
+                      className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 text-sm underline mt-1"
+                    >
+                      Try again
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Quizzes Content */}
+            {!isLoading && !error && quizzes.length === 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {/* Create Quiz Card */}
                 <div
@@ -132,7 +191,7 @@ function SessionsPage() {
                   </p>
                 </div>
               </div>
-            ) : (
+            ) : !isLoading && !error && (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {/* Create Quiz Card */}
                 <div
@@ -200,7 +259,7 @@ function SessionsPage() {
                           <Target className="text-slate-500 dark:text-slate-400 flex-shrink-0" size={16} />
                           <div className="min-w-0">
                             <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Questions</p>
-                            <p className="text-sm font-bold text-slate-900 dark:text-white">{quiz.questions.length}</p>
+                            <p className="text-sm font-bold text-slate-900 dark:text-white">{quiz.questionsCount || 0}</p>
                           </div>
                         </div>
                         

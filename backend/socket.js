@@ -191,4 +191,8 @@ function getSessionNamespace() {
   return ioInstance.of("/sessions");
 }
 
-module.exports = { setupSockets, getSessionNamespace };
+function getIOInstance() {
+  return ioInstance;
+}
+
+module.exports = { setupSockets, getSessionNamespace, getIOInstance };

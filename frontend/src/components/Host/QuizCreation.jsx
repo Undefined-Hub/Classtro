@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { ArrowLeft, Save, PlusCircle, Plus, PlusSquare, Edit, Trash2, BarChart3, MessageCircle, CircleDot, Circle, CheckCircle, X, HelpCircle } from "lucide-react";
+import api from "../../utils/api";
 
 function QuizCreation({ quizName, quizDescription, onBack, existingQuiz }) {
   const [questions, setQuestions] = useState(existingQuiz ? existingQuiz.questions : []);
@@ -9,19 +10,19 @@ function QuizCreation({ quizName, quizDescription, onBack, existingQuiz }) {
   const [points, setPoints] = useState(1);
   const [negativePoints, setNegativePoints] = useState(0);
   const [showNegativePoints, setShowNegativePoints] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   const handleAddQuestion = () => {
     if (currentQuestion.trim() && options.every(opt => opt.trim())) {
       const optionObjects = options.map((text, index) => ({
-        _id: `opt_${Date.now()}_${index}`,
+        optionId: `opt_${Date.now()}_${index}`,
         text,
       }));
       const newQuestion = {
-        _id: `q_${Date.now()}`,
         type: "MCQ",
         questionText: currentQuestion,
         options: optionObjects,
-        correctAnswers: [optionObjects[correctIndex]._id],
+        correctAnswers: [optionObjects[correctIndex].optionId],
         points,
         negativePoints: negativePoints || undefined,
       };
@@ -62,7 +63,7 @@ function QuizCreation({ quizName, quizDescription, onBack, existingQuiz }) {
     const q = questions[index];
     setCurrentQuestion(q.questionText);
     setOptions(q.options.map(opt => opt.text));
-    setCorrectIndex(q.options.findIndex(opt => q.correctAnswers.includes(opt._id)));
+    setCorrectIndex(q.options.findIndex(opt => q.correctAnswers.includes(opt.optionId)));
     setPoints(q.points);
     setNegativePoints(q.negativePoints || 0);
     setQuestions(questions.filter((_, i) => i !== index));
@@ -74,37 +75,122 @@ function QuizCreation({ quizName, quizDescription, onBack, existingQuiz }) {
 
   const totalPoints = questions.reduce((sum, q) => sum + q.points, 0);
 
-  const handleSaveQuiz = () => {
-    const quizObject = {
-      _id: existingQuiz ? existingQuiz._id : `quiz_${Date.now()}`,
-      title: quizName,
-      description: quizDescription,
-      createdBy: existingQuiz ? existingQuiz.createdBy : "teacherId_placeholder",
-      roomId: existingQuiz ? existingQuiz.roomId : null,
-      questions,
-      totalPoints,
-      createdAt: existingQuiz ? existingQuiz.createdAt : new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
+  const handleSaveQuiz = async () => {
+    setIsSaving(true);
     
-    // Save to localStorage
-    const existingQuizzes = JSON.parse(localStorage.getItem('quizzes') || '[]');
+    try {
+      if (existingQuiz) {
+        // For editing existing quizzes, just update localStorage for now
+        // TODO: Implement update API endpoint when available
     
-    if (existingQuiz) {
-      // Update existing quiz
-      const index = existingQuizzes.findIndex(q => q._id === existingQuiz._id);
-      if (index !== -1) {
-        existingQuizzes[index] = quizObject;
+        const quizObject = {
+          _id: existingQuiz._id,
+          title: quizName,
+          description: quizDescription,
+          createdBy: existingQuiz.createdBy,
+          roomId: existingQuiz.roomId,
+          questions,
+          totalPoints,
+          createdAt: existingQuiz.createdAt,
+          updatedAt: new Date().toISOString(),
+        };
+        console.log("QUIZ DATA : ",quizObject);
+        const res = await api.post('/api/quiz-templates', quizObject); // Placeholder for actual update API call
+        const existingQuizzes = JSON.parse(localStorage.getItem('quizzes') || '[]');
+        const index = existingQuizzes.findIndex(q => q._id === existingQuiz._id);
+        if (index !== -1) {
+          existingQuizzes[index] = quizObject;
+        }
+        localStorage.setItem('quizzes', JSON.stringify(existingQuizzes));
+        
+        alert("Quiz updated successfully!");
+        onBack();
+        return;
       }
-    } else {
-      // Add new quiz
-      existingQuizzes.push(quizObject);
+
+      // Transform questions to match API format for new quizzes
+      const timestamp = Date.now();
+      const transformedQuestions = questions.map(question => ({
+        type: question.type,
+        questionText: question.questionText,
+        options: question.options.map((option, index) => ({
+          optionId: `opt${timestamp}_${index}`,
+          text: option.text
+        })),
+        correctAnswers: question.correctAnswers.map(answerId => {
+          // Find the option and get its new optionId
+          const optionIndex = question.options.findIndex(opt => opt.optionId === answerId);
+          return `opt${timestamp}_${optionIndex}`;
+        }),
+        points: question.points,
+        negativePoints: question.negativePoints || 0
+      }));
+
+      const quizPayload = {
+        title: quizName,
+        description: quizDescription,
+        roomId: null, // Will be set when creating a session
+        questions: transformedQuestions
+      };
+
+      // Make API call
+      const response = await api.post('/api/quiz-templates', quizPayload);
+      
+      if (response.status === 201) {
+        // Save to localStorage as backup
+        const quizObject = {
+          _id: response.data._id || `quiz_${Date.now()}`,
+          title: quizName,
+          description: quizDescription,
+          createdBy: response.data.createdBy || "teacherId_placeholder",
+          roomId: response.data.roomId || null,
+          questions,
+          totalPoints,
+          createdAt: response.data.createdAt || new Date().toISOString(),
+          updatedAt: response.data.updatedAt || new Date().toISOString(),
+        };
+        
+        const existingQuizzes = JSON.parse(localStorage.getItem('quizzes') || '[]');
+        existingQuizzes.push(quizObject);
+        localStorage.setItem('quizzes', JSON.stringify(existingQuizzes));
+        
+        alert("Quiz saved successfully!");
+        onBack();
+      } else {
+        throw new Error('Failed to save quiz');
+      }
+    } catch (error) {
+      console.error('Error saving quiz:', error);
+      
+      // Fallback to localStorage only
+      const quizObject = {
+        _id: existingQuiz ? existingQuiz._id : `quiz_${Date.now()}`,
+        title: quizName,
+        description: quizDescription,
+        createdBy: existingQuiz ? existingQuiz.createdBy : "teacherId_placeholder",
+        roomId: existingQuiz ? existingQuiz.roomId : null,
+        questions,
+        totalPoints,
+        createdAt: existingQuiz ? existingQuiz.createdAt : new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+      
+      const existingQuizzes = JSON.parse(localStorage.getItem('quizzes') || '[]');
+      if (existingQuiz) {
+        const index = existingQuizzes.findIndex(q => q._id === existingQuiz._id);
+        if (index !== -1) {
+          existingQuizzes[index] = quizObject;
+        }
+      } else {
+        existingQuizzes.push(quizObject);
+      }
+      localStorage.setItem('quizzes', JSON.stringify(existingQuizzes));
+      
+      alert(`API call failed, but quiz saved locally. ${existingQuiz ? "Quiz updated successfully!" : "Quiz saved successfully!"}`);
+      onBack();
+    } finally {
+      setIsSaving(false);
     }
-    
-    localStorage.setItem('quizzes', JSON.stringify(existingQuizzes));
-    
-    alert(existingQuiz ? "Quiz updated successfully!" : "Quiz saved successfully!");
-    onBack();
   };
 
   const handleDiscard = () => {
@@ -183,10 +269,11 @@ function QuizCreation({ quizName, quizDescription, onBack, existingQuiz }) {
             </button>
             <button 
               onClick={handleSaveQuiz} 
-              className="bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-500 dark:hover:bg-emerald-600 text-white px-6 py-2.5 rounded-lg font-semibold shadow-lg shadow-emerald-500/30 dark:shadow-emerald-500/20 transition-all hover:shadow-xl hover:shadow-emerald-500/40 flex items-center gap-2"
+              disabled={isSaving}
+              className="bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-500 dark:hover:bg-emerald-600 text-white px-6 py-2.5 rounded-lg font-semibold shadow-lg shadow-emerald-500/30 dark:shadow-emerald-500/20 transition-all hover:shadow-xl hover:shadow-emerald-500/40 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Save size={18} />
-              Save Quiz
+              {isSaving ? "Saving..." : "Save Quiz"}
             </button>
           </div>
         </div>
@@ -376,12 +463,12 @@ function QuizCreation({ quizName, quizDescription, onBack, existingQuiz }) {
                           <li 
                             key={opt._id} 
                             className={`text-xs flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
-                              q.correctAnswers.includes(opt._id)
+                              q.correctAnswers.includes(opt.optionId)
                                 ? "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300 font-semibold border border-emerald-200 dark:border-emerald-800"
                                 : "text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-800/50"
                             }`}
                           >
-                            {q.correctAnswers.includes(opt._id) ? (
+                            {q.correctAnswers.includes(opt.optionId) ? (
                               <CheckCircle size={14} className="flex-shrink-0" />
                             ) : (
                               <Circle size={14} className="flex-shrink-0" />
