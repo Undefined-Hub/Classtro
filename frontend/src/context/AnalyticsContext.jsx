@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
+import api from "../utils/api";
 
 const AnalyticsContext = createContext();
 
@@ -303,6 +304,7 @@ export const AnalyticsProvider = ({ children }) => {
   const [analyticsData, setAnalyticsData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const testSessionId = "68fb9207f3e9b38471f19b8e";
 
   useEffect(() => {
     // Simulate API call delay
@@ -315,6 +317,15 @@ export const AnalyticsProvider = ({ children }) => {
         const sessionData = location.state?.sessionData;
         const mockData = generateMockData(sessionData);
         setAnalyticsData(mockData);
+
+        const response = await api.get(
+          `/api/analytics/frontend/${testSessionId}`,
+        );
+        console.log("Analytics API response:", response.data);
+
+        if (response.data?.success && response.data?.data) {
+          setAnalyticsData(response.data.data);
+        }
       } catch (err) {
         setError("Failed to load analytics data");
       } finally {
@@ -323,7 +334,7 @@ export const AnalyticsProvider = ({ children }) => {
     };
 
     loadData();
-  }, [location.state]);
+  }, [location.state, testSessionId]);
 
   const value = {
     analyticsData,

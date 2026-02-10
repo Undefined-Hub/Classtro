@@ -1,12 +1,20 @@
 // controllers/analyticsController.js
 const SessionAnalytics = require("../models/SessionAnalytics");
-const { buildAnalytics } = require("../services/analyticsBuilder");
+const { buildAnalytics, buildFrontendAnalytics, generateParticipantStats } = require("../services/analyticsBuilder");
+const {validateInput} = require("../utils/validateInput");
+const {
+  generateAnalyticsSchema,
+  sessionIdSchema,
+} = require("../schemas/analyticsSchemas");
 
 // Generate analytics for a session
-const generateAnalytics = async (req, res) => {
+const generateAnalytics = async (req, res, next) => {
   try {
-    const { sessionId } = req.params;
-    const { sections = {} } = req.body;
+    const params = validateInput(sessionIdSchema, req.params);
+    const body = validateInput(generateAnalyticsSchema, req.body);
+    
+    const { sessionId } = params;
+    const { sections = {} } = body;
 
     // Set default sections if not provided
     const defaultSections = {
@@ -37,18 +45,22 @@ const generateAnalytics = async (req, res) => {
     });
   } catch (error) {
     console.error("Generate analytics error:", error);
-    return res.status(500).json({
-      success: false,
-      message: "Failed to generate analytics",
-      error: error.message,
-    });
+    if (error.name === 'ValidationError') {
+      return res.status(400).json({
+        success: false,
+        message: "Validation failed",
+        error: error.message,
+      });
+    }
+    next(error);
   }
 };
 
 // Get analytics for a session
-const getAnalytics = async (req, res) => {
+const getAnalytics = async (req, res, next) => {
   try {
-    const { sessionId } = req.params;
+    const params = validateInput(sessionIdSchema, req.params);
+    const { sessionId } = params;
 
     const analytics = await SessionAnalytics.findOne({ sessionId })
       .populate("sessionId", "title startAt endAt")
@@ -67,18 +79,22 @@ const getAnalytics = async (req, res) => {
     });
   } catch (error) {
     console.error("Get analytics error:", error);
-    return res.status(500).json({
-      success: false,
-      message: "Failed to fetch analytics",
-      error: error.message,
-    });
+    if (error.name === 'ValidationError') {
+      return res.status(400).json({
+        success: false,
+        message: "Validation failed",
+        error: error.message,
+      });
+    }
+    next(error);
   }
 };
 
 // Delete analytics (for regeneration)
-const deleteAnalytics = async (req, res) => {
+const deleteAnalytics = async (req, res, next) => {
   try {
-    const { sessionId } = req.params;
+    const params = validateInput(sessionIdSchema, req.params);
+    const { sessionId } = params;
 
     const deleted = await SessionAnalytics.findOneAndDelete({ sessionId });
 
@@ -95,16 +111,72 @@ const deleteAnalytics = async (req, res) => {
     });
   } catch (error) {
     console.error("Delete analytics error:", error);
-    return res.status(500).json({
-      success: false,
-      message: "Failed to delete analytics",
-      error: error.message,
+    if (error.name === 'ValidationError') {
+      return res.status(400).json({
+        success: false,
+        message: "Validation failed",
+        error: error.message,
+      });
+    }
+    next(error);
+  }
+};
+
+// Test endpoint - Get participant stats only (for development/testing)
+const getParticipantStatsTest = async (req, res, next) => {
+  try {
+    const params = validateInput(sessionIdSchema, req.params);
+    const { sessionId } = params;
+
+    const participantStats = await generateParticipantStats(sessionId);
+
+    return res.status(200).json({
+      success: true,
+      data: participantStats,
     });
+  } catch (error) {
+    console.error("Get participant stats test error:", error);
+    if (error.name === 'ValidationError') {
+      return res.status(400).json({
+        success: false,
+        message: "Validation failed",
+        error: error.message,
+      });
+    }
+    next(error);
+  }
+};
+
+// Get analytics in frontend-compatible format
+const getFrontendAnalytics = async (req, res, next) => {
+  try {
+    const params = validateInput(sessionIdSchema, req.params);
+    const { sessionId } = params;
+
+    // Get frontend-compatible analytics data
+    const analyticsData = await buildFrontendAnalytics(sessionId);
+
+    return res.status(200).json({
+      success: true,
+      data: analyticsData,
+    });
+  } catch (error) {
+    console.error("Get frontend analytics error:", error);
+    if (error.name === 'ValidationError') {
+      return res.status(400).json({
+        success: false,
+        message: "Validation failed",
+        error: error.message,
+      });
+    }
+    next(error);
   }
 };
 
 module.exports = {
   generateAnalytics,
   getAnalytics,
+  getFrontendAnalytics,
   deleteAnalytics,
+  getParticipantStatsTest,
 };
