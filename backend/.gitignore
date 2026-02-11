@@ -63,6 +63,9 @@ temp/
 *.swagger
 *.apidoc
 
+# Trash folder
+trash/
+
 # Miscellaneous
 *.bak
 *.swp

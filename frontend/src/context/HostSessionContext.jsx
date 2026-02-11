@@ -26,6 +26,12 @@ export const HostSessionProvider = ({ children }) => {
   const [showBroadcastForm, setShowBroadcastForm] = useState(false);
   const [activeParticipantsCount, setActiveParticipantsCount] = useState(0);
   const socketRef = useRef(null);
+  
+  // Quiz state
+  const [activeQuiz, setActiveQuiz] = useState(null);
+  const [quizSubmissions, setQuizSubmissions] = useState([]);
+  const [showQuizImport, setShowQuizImport] = useState(false);
+  const [pastQuizzes, setPastQuizzes] = useState([]);
 
   const calculateDuration = () => {
     const startTime = new Date(sessionData.startAt);
@@ -51,6 +57,11 @@ export const HostSessionProvider = ({ children }) => {
     setBroadcastStatus("");
     setShowBroadcastForm(false);
     setActiveParticipantsCount(0);
+    // Reset quiz state
+    setActiveQuiz(null);
+    setQuizSubmissions([]);
+    setShowQuizImport(false);
+    setPastQuizzes([]);
     if (socketRef.current) {
       socketRef.current.disconnect();
       console.log("Socket disconnected from resetHostSession");
@@ -96,6 +107,19 @@ export const HostSessionProvider = ({ children }) => {
       activeParticipantsCount,
       setActiveParticipantsCount,
 
+      // Quiz context
+      activeQuiz,
+      setActiveQuiz,
+      
+      quizSubmissions,
+      setQuizSubmissions,
+
+      showQuizImport,
+      setShowQuizImport,
+      
+      pastQuizzes,
+      setPastQuizzes,
+
       socketRef,
       resetHostSession,
       calculateDuration,
@@ -112,6 +136,10 @@ export const HostSessionProvider = ({ children }) => {
       broadcastMessage,
       broadcastStatus,
       showBroadcastForm,
+      activeQuiz,
+      quizSubmissions,
+      showQuizImport,
+      pastQuizzes,
     ],
   );
 

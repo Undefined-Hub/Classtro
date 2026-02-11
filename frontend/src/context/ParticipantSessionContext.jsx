@@ -39,6 +39,19 @@ export const ParticipantSessionProvider = ({ children }) => {
       return null;
     }
   });
+  
+  // Quiz state
+  const [activeQuiz, setActiveQuiz] = useState(() => {
+    try {
+      const raw = sessionStorage.getItem("activeQuiz");
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      return null;
+    }
+  });
+  const [quizAnswers, setQuizAnswers] = useState({});
+  const [quizSubmitted, setQuizSubmitted] = useState(false);
+  const [quizResult, setQuizResult] = useState(null);
   useEffect(() => {
     try {
       if (sessionData) {
@@ -57,10 +70,15 @@ export const ParticipantSessionProvider = ({ children }) => {
     try {
       sessionStorage.removeItem(STORAGE_KEY);
       sessionStorage.removeItem("activePoll");
+      sessionStorage.removeItem("activeQuiz");
     } catch {}
 
     setSessionData(null);
     setActivePoll(null);
+    setActiveQuiz(null);
+    setQuizAnswers({});
+    setQuizSubmitted(false);
+    setQuizResult(null);
   }, []);
 
   // Socket lifecycle - create once per provider when sessionData exists
@@ -74,7 +92,7 @@ export const ParticipantSessionProvider = ({ children }) => {
     const token = localStorage.getItem("accessToken");
     const socket = io(SOCKET_URL, {
       withCredentials: true,
-      extraHeaders: token ? { Authorization: `Bearer ${token}` } : undefined,
+      auth: token ? { token } : undefined,
     });
     socketRef.current = socket;
     setSocketReady(true);
@@ -139,8 +157,18 @@ export const ParticipantSessionProvider = ({ children }) => {
 
       pollId,
       setPollId,
+
+      // Quiz context
+      activeQuiz,
+      setActiveQuiz,
+      quizAnswers,
+      setQuizAnswers,
+      quizSubmitted,
+      setQuizSubmitted,
+      quizResult,
+      setQuizResult,
     }),
-    [sessionData, activePoll, socketReady],
+    [sessionData, activePoll, socketReady, activeQuiz, quizAnswers, quizSubmitted, quizResult],
   );
 
   return (

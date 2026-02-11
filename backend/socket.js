@@ -5,9 +5,44 @@ const voteMap = {}; // { [pollId]: { [participantId]: optionIndex } }
 const pollCounts = {}; // { [pollId]: [count, count, ...] }
 
 const { Server } = require("socket.io");
+const { registerQuizSocket } = require("./socket/quizSocket");
+const jwt = require("jsonwebtoken");
 
 let ioInstance = null;
 const Poll = require("./models/Polls");
+
+// Socket authentication middleware
+const authenticateSocket = (socket, next) => {
+  try {
+    const token = socket.handshake.auth?.token;
+    
+    if (!token) {
+      socket.user = null;
+      return next();
+    }
+
+    jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
+      if (err) {
+        console.error("❌ JWT verification failed:", err.message);
+        socket.user = null;
+        return next();
+      }
+      
+      // JWT payload is { user: { id: ... } }
+      socket.user = {
+        id: decoded.user?.id || decoded.id,
+        email: decoded.user?.email || decoded.email,
+        name: decoded.user?.name || decoded.name,
+      };
+      console.log("✅ Socket authenticated for user:", socket.user.id);
+      next();
+    });
+  } catch (error) {
+    socket.user = null;
+    next();
+  }
+};
+
 function setupSockets(server) {
   const io = new Server(server, {
     cors: {
@@ -19,6 +54,9 @@ function setupSockets(server) {
   ioInstance = io;
 
   const sessionNamespace = io.of("/sessions");
+  
+  // Apply authentication middleware to the namespace
+  sessionNamespace.use(authenticateSocket);
 
   function emitRoomUpdate(namespace, code) {
     const roomName = `session:${code}`;
@@ -36,6 +74,10 @@ function setupSockets(server) {
 
   sessionNamespace.on("connection", (socket) => {
     console.log("🔌 Socket connected:", socket.id);
+    
+    // Register quiz socket handlers
+    registerQuizSocket(sessionNamespace, socket);
+    
     socket.on("poll:close", ({ code, pollId }) => {
       // Optionally: mark poll as closed in DB here
       sessionNamespace.to(`session:${code}`).emit("poll:closed", { pollId });

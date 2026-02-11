@@ -5,7 +5,7 @@ const http = require("http");
 const { Server } = require("socket.io");
 const { connectDB } = require("./config/db");
 const { errorHandler } = require("./middlewares/errorHandler");
-const { getIOInstance } = require("./socket");
+const { getSessionNamespace } = require("./socket");
 const cookieParser = require("cookie-parser");
 const passport = require("passport");
 const router = require("./routes");
@@ -78,9 +78,9 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(passport.initialize());
 
-// Middleware to attach Socket.IO instance to requests
+// Middleware to attach Socket.IO /sessions namespace to requests
 app.use((req, res, next) => {
-  req.io = getIOInstance();
+  req.io = getSessionNamespace();
   next();
 });
 

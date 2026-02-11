@@ -8,6 +8,7 @@ import SessionHeader from "../../components/Host/sessionWorkspace/SessionHeader"
 import MainContent from "../../components/Host/sessionWorkspace/MainContent";
 import PollManager from "../../components/Host/sessionWorkspace/PollManager";
 import QAManager from "../../components/Host/sessionWorkspace/QAManager";
+import QuizManager from "../../components/Host/sessionWorkspace/QuizManager";
 import ParticipantList from "../../components/Host/sessionWorkspace/ParticipantList";
 import QuickActions from "../../components/Host/sessionWorkspace/QuickActions";
 import QRJoinView from "../../components/Host/sessionWorkspace/QRJoinView";
@@ -101,6 +102,12 @@ const SessionWorkspace = () => {
 
     showBroadcastForm,
     setShowBroadcastForm,
+
+    // Quiz state
+    activeQuiz,
+    setActiveQuiz,
+    quizSubmissions,
+    setQuizSubmissions,
 
     resetHostSession,
   } = useHostSession();
@@ -218,7 +225,7 @@ const SessionWorkspace = () => {
       socketRef.current = io(SOCKET_URL, {
         autoConnect: true,
         withCredentials: true,
-        extraHeaders: token ? { Authorization: `Bearer ${token}` } : undefined,
+        auth: token ? { token } : undefined,
       });
     }
     const socket = socketRef.current;
@@ -299,6 +306,26 @@ const SessionWorkspace = () => {
     socket.on("qna:question:deleted", onDeleted);
     socket.on("qna:question:upvoted", onUpvoted);
     socket.on("qna:question:answered", onAnswered);
+
+    // Quiz socket listeners
+    const onQuizNewSubmission = (payload) => {
+      // When a student submits a quiz, add their submission to the list
+      const { participantId, participantName, score, total, percentage, submittedAt } = payload;
+      setQuizSubmissions((prev) => [
+        ...prev,
+        {
+          participantId,
+          participantName,
+          score,
+          total,
+          percentage,
+          submittedAt,
+        },
+      ]);
+    };
+
+    socket.on("quiz:new:submission", onQuizNewSubmission);
+
     // Listen for room members
     socket.on("room:members", (data) => {});
     // Listen for participant count updates
@@ -326,6 +353,7 @@ const SessionWorkspace = () => {
       socket.off("qna:question:deleted", onDeleted);
       socket.off("qna:question:upvoted", onUpvoted);
       socket.off("qna:question:answered", onAnswered);
+      socket.off("quiz:new:submission", onQuizNewSubmission);
       socket.off("connect");
       socket.off("connect_error");
       socket.off("disconnect");
@@ -579,6 +607,9 @@ const SessionWorkspace = () => {
 
           {/* Poll Manager */}
           <PollManager isParticipantListOpen={isParticipantListOpen} />
+
+          {/* Quiz Manager */}
+          {activeView === "quiz" && <QuizManager isParticipantListOpen={isParticipantListOpen} />}
 
           {/* Q&A Manager */}
           <QAManager

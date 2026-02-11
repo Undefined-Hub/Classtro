@@ -5,6 +5,7 @@ import { STORAGE_KEY } from "../../context/ParticipantSessionContext.jsx";
 import SessionHeader from "../../components/Participant/SessionHeader.jsx";
 import WelcomeContent from "../../components/Participant/WelcomeContent.jsx";
 import ParticipantQnA from "../../components/Participant/ParticipantQnA.jsx";
+import ParticipantLiveQuiz from "../../components/Participant/ParticipantLiveQuiz.jsx";
 import SessionFeedbackModal from "../../components/Participant/SessionFeedbackModal.jsx";
 // AskQuestionModal was replaced by an inline ask panel inside ParticipantQnA
 import api from "../../utils/api.js";
@@ -29,6 +30,13 @@ const ParticipantSession = () => {
     setPollSubmitted,
 
     setPollId,
+
+    // Quiz context
+    activeQuiz,
+    setActiveQuiz,
+    setQuizAnswers,
+    setQuizSubmitted,
+    setQuizResult,
   } = useParticipantSession();
 
   const [broadcastMsg, setBroadcastMsg] = useState(null);
@@ -217,6 +225,35 @@ const ParticipantSession = () => {
       );
     };
 
+    // * Quiz Handlers
+    const onQuizLaunched = (quizData) => {
+      console.log("📝 Quiz launched:", quizData);
+      // Normalize quiz data - backend sends quizId, but we store it as _id for consistency
+      const normalizedQuiz = {
+        ...quizData,
+        _id: quizData.quizId || quizData._id,
+      };
+      setActiveQuiz(normalizedQuiz);
+      setQuizAnswers({});
+      setQuizSubmitted(false);
+      setQuizResult(null);
+      sessionStorage.setItem("activeQuiz", JSON.stringify(normalizedQuiz));
+    };
+
+    const onQuizClosed = ({ quizId }) => {
+      setActiveQuiz((prev) => {
+        if (prev && (prev.quizId === quizId || prev._id === quizId)) {
+          sessionStorage.removeItem("activeQuiz");
+          return null; // Close the quiz view
+        }
+        return prev;
+      });
+      // Also clear quiz state
+      setQuizAnswers({});
+      setQuizSubmitted(false);
+      setQuizResult(null);
+    };
+
     // * ------------------- Socket Listeners -------------------
     try {
       socket.on("polls:new-poll", onNewPollReceived);
@@ -232,6 +269,10 @@ const ParticipantSession = () => {
       socket.on("qna:question:deleted", onDeleted);
       socket.on("qna:question:upvoted", onUpvoted);
       socket.on("qna:question:answered", onAnswered);
+
+      // Quiz listeners
+      socket.on("quiz:launched", onQuizLaunched);
+      socket.on("quiz:closed", onQuizClosed);
     } catch (err) {
       console.error("Failed to register socket listeners", err);
     }
@@ -251,6 +292,10 @@ const ParticipantSession = () => {
         socket.off("qna:question:deleted", onDeleted);
         socket.off("qna:question:upvoted", onUpvoted);
         socket.off("qna:question:answered", onAnswered);
+
+        // Quiz listeners
+        socket.off("quiz:launched", onQuizLaunched);
+        socket.off("quiz:closed", onQuizClosed);
       } catch (err) {
         /* ignore */
       }
@@ -351,12 +396,24 @@ const ParticipantSession = () => {
     }
   }, [activePoll]);
 
+  // * Persist activeQuiz in sessionStorage to survive page reloads
+  useEffect(() => {
+    if (activeQuiz) {
+      sessionStorage.setItem("activeQuiz", JSON.stringify(activeQuiz));
+    } else {
+      sessionStorage.removeItem("activeQuiz");
+    }
+  }, [activeQuiz]);
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <SessionHeader sessionData={sessionData} onLeave={handleLeaveSession} />
 
       <div className="pt-6 sm:pt-8 lg:pt-12">
-        {!qnaOpen ? (
+        {/* Quiz takes priority when active */}
+        {activeQuiz ? (
+          <ParticipantLiveQuiz />
+        ) : !qnaOpen ? (
           <WelcomeContent
             sessionData={sessionData}
             broadcastMsg={broadcastMsg}
