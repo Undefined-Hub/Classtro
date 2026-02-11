@@ -71,8 +71,7 @@ app.use(
 );
 
 app.use(express.json());
-app.use(morgan("dev"));
-app.use(errorHandler);
+  app.use(morgan("dev"));
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(passport.initialize());
@@ -91,6 +90,9 @@ app.get("/test-error", (req, res, next) => {
   error.status = 400;
   next(error);
 });
+
+// Error handler must be AFTER all routes
+app.use(errorHandler);
 
 // ✅ Export the server instead of app
 module.exports = { server };

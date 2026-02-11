@@ -8,6 +8,8 @@ const qnaRoutes = require("./qnaRoutes");
 const pollRoutes = require("./pollRoutes");
 const feedbackRoutes = require("./feedbackRoutes");
 const userRoutes = require("./userRoutes");
+const aiRoutes = require("./aiRoutes");
+
 const router = Router();
 
 router.use("/api/auth", authRoutes);
@@ -18,4 +20,6 @@ router.use("/api/sessions", sessionRoutes);
 router.use("/api/questions", authenticateJWT, qnaRoutes);
 router.use("/api/polls", pollRoutes);
 router.use("/api/feedback", feedbackRoutes);
+router.use("/api/ai", aiRoutes);
+
 module.exports = router;
