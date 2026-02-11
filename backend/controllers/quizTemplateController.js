@@ -144,9 +144,66 @@ const updateQuizTemplate = async (req, res) => {
       return res.status(403).json({ error: "Access denied" });
     }
 
-    // Recalculate total points if questions are updated
+    // Process questions to handle both new and existing options
+    let updateData = { ...req.body };
+    
     if (req.body.questions) {
-      req.body.totalPoints = req.body.questions.reduce(
+      const processedQuestions = req.body.questions.map((question) => {
+        const optionIdMap = {};
+        
+        // Process options: keep existing MongoDB IDs, create new ones for temp IDs
+        const processedOptions = question.options.map((option) => {
+          // If option already has MongoDB ObjectId (from existing quiz), keep it
+          if (option._id && mongoose.Types.ObjectId.isValid(option._id)) {
+            return {
+              _id: option._id,
+              text: option.text,
+            };
+          }
+          
+          // For new options (with temp optionId), create a new MongoDB ObjectId
+          const mongoId = new mongoose.Types.ObjectId();
+          
+          if (option.optionId) {
+            optionIdMap[option.optionId] = mongoId;
+          }
+          
+          return {
+            _id: mongoId,
+            text: option.text,
+          };
+        });
+
+        // Map correctAnswers, handling all ID types
+        let processedCorrectAnswers = [];
+        if (question.correctAnswers && Array.isArray(question.correctAnswers)) {
+          processedCorrectAnswers = question.correctAnswers.map((answerId) => {
+            // Handle mapped temporary IDs
+            if (optionIdMap[answerId]) {
+              return optionIdMap[answerId];
+            }
+            
+            // Handle ObjectId strings (existing options)
+            if (mongoose.Types.ObjectId.isValid(answerId)) {
+              return answerId;
+            }
+            
+            throw new Error(`Invalid correctAnswer: ${answerId}`);
+          });
+        }
+
+        return {
+          type: question.type,
+          questionText: question.questionText,
+          options: processedOptions,
+          correctAnswers: processedCorrectAnswers,
+          points: question.points || 1,
+          negativePoints: question.negativePoints || 0,
+        };
+      });
+
+      updateData.questions = processedQuestions;
+      updateData.totalPoints = processedQuestions.reduce(
         (sum, q) => sum + (q.points || 1),
         0
       );
@@ -154,7 +211,7 @@ const updateQuizTemplate = async (req, res) => {
 
     const updatedTemplate = await QuizTemplate.findByIdAndUpdate(
       req.params.id,
-      req.body,
+      updateData,
       { new: true, runValidators: true }
     );
 

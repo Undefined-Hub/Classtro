@@ -1,12 +1,15 @@
-import React, { useState } from "react";
-import { ArrowLeft, Save, PlusCircle, Plus, PlusSquare, Edit, Trash2, BarChart3, MessageCircle, CircleDot, Circle, CheckCircle, X, HelpCircle } from "lucide-react";
+import { useState } from "react";
+import { ArrowLeft, Save, PlusCircle, Plus, PlusSquare, Edit, Trash2, BarChart3, Circle, CheckCircle, X, HelpCircle } from "lucide-react";
 import api from "../../utils/api";
 
 function QuizCreation({ quizName, quizDescription, onBack, existingQuiz }) {
   const [questions, setQuestions] = useState(existingQuiz ? existingQuiz.questions : []);
   const [currentQuestion, setCurrentQuestion] = useState("");
   const [options, setOptions] = useState(["", ""]);
+  const [optionIds, setOptionIds] = useState([null, null]); // Store _ids alongside options
+  const [questionType, setQuestionType] = useState("MCQ");
   const [correctIndex, setCorrectIndex] = useState(0);
+  const [correctIndices, setCorrectIndices] = useState([0]); // For MULTI_SELECT
   const [points, setPoints] = useState(1);
   const [negativePoints, setNegativePoints] = useState(0);
   const [showNegativePoints, setShowNegativePoints] = useState(false);
@@ -14,22 +17,45 @@ function QuizCreation({ quizName, quizDescription, onBack, existingQuiz }) {
 
   const handleAddQuestion = () => {
     if (currentQuestion.trim() && options.every(opt => opt.trim())) {
-      const optionObjects = options.map((text, index) => ({
-        optionId: `opt_${Date.now()}_${index}`,
-        text,
-      }));
+      const optionObjects = options.map((text, index) => {
+        // Preserve existing _id if available, otherwise create temp optionId
+        if (optionIds[index]) {
+          return {
+            _id: optionIds[index],
+            text,
+          };
+        }
+        return {
+          optionId: `opt_${Date.now()}_${index}`,
+          text,
+        };
+      });
+      
+      // Determine correct answers based on question type
+      let correctAnswerIndices = [];
+      if (questionType === "MULTI_SELECT") {
+        correctAnswerIndices = correctIndices;
+      } else {
+        correctAnswerIndices = [correctIndex];
+      }
+      
       const newQuestion = {
-        type: "MCQ",
+        type: questionType,
         questionText: currentQuestion,
         options: optionObjects,
-        correctAnswers: [optionObjects[correctIndex].optionId],
+        correctAnswers: correctAnswerIndices.map(idx => 
+          optionObjects[idx]._id || optionObjects[idx].optionId
+        ),
         points,
         negativePoints: negativePoints || undefined,
       };
       setQuestions([...questions, newQuestion]);
       setCurrentQuestion("");
       setOptions(["", ""]);
+      setOptionIds([null, null]);
+      setQuestionType("MCQ");
       setCorrectIndex(0);
+      setCorrectIndices([0]);
       setPoints(1);
       setNegativePoints(0);
     } else {
@@ -46,13 +72,16 @@ function QuizCreation({ quizName, quizDescription, onBack, existingQuiz }) {
   const handleAddOption = () => {
     if (options.length < 6) {
       setOptions([...options, ""]);
+      setOptionIds([...optionIds, null]); // New option has no _id yet
     }
   };
 
   const handleRemoveOption = (index) => {
     if (options.length > 2) {
       const newOptions = options.filter((_, i) => i !== index);
+      const newOptionIds = optionIds.filter((_, i) => i !== index);
       setOptions(newOptions);
+      setOptionIds(newOptionIds);
       if (correctIndex >= newOptions.length) {
         setCorrectIndex(newOptions.length - 1);
       }
@@ -63,7 +92,23 @@ function QuizCreation({ quizName, quizDescription, onBack, existingQuiz }) {
     const q = questions[index];
     setCurrentQuestion(q.questionText);
     setOptions(q.options.map(opt => opt.text));
-    setCorrectIndex(q.options.findIndex(opt => q.correctAnswers.includes(opt.optionId)));
+    setOptionIds(q.options.map(opt => opt._id || null)); // Preserve _ids
+    setQuestionType(q.type || "MCQ");
+    
+    // Set correct indices based on question type
+    const correctIndicesArray = q.options
+      .map((opt, idx) => {
+        const optionId = opt._id || opt.optionId;
+        return q.correctAnswers.includes(optionId) ? idx : -1;
+      })
+      .filter(idx => idx !== -1);
+    
+    if (q.type === "MULTI_SELECT") {
+      setCorrectIndices(correctIndicesArray.length > 0 ? correctIndicesArray : [0]);
+    } else {
+      setCorrectIndex(correctIndicesArray.length > 0 ? correctIndicesArray[0] : 0);
+    }
+    
     setPoints(q.points);
     setNegativePoints(q.negativePoints || 0);
     setQuestions(questions.filter((_, i) => i !== index));
@@ -80,32 +125,39 @@ function QuizCreation({ quizName, quizDescription, onBack, existingQuiz }) {
     
     try {
       if (existingQuiz) {
-        // For editing existing quizzes, just update localStorage for now
-        // TODO: Implement update API endpoint when available
-    
+        // Update existing quiz template
         const quizObject = {
-          _id: existingQuiz._id,
           title: quizName,
           description: quizDescription,
-          createdBy: existingQuiz.createdBy,
-          roomId: existingQuiz.roomId,
           questions,
           totalPoints,
-          createdAt: existingQuiz.createdAt,
           updatedAt: new Date().toISOString(),
         };
-        console.log("QUIZ DATA : ",quizObject);
-        const res = await api.post('/api/quiz-templates', quizObject); // Placeholder for actual update API call
-        const existingQuizzes = JSON.parse(localStorage.getItem('quizzes') || '[]');
-        const index = existingQuizzes.findIndex(q => q._id === existingQuiz._id);
-        if (index !== -1) {
-          existingQuizzes[index] = quizObject;
-        }
-        localStorage.setItem('quizzes', JSON.stringify(existingQuizzes));
         
-        alert("Quiz updated successfully!");
-        onBack();
-        return;
+        const res = await api.put(`/api/quiz-templates/${existingQuiz._id}`, quizObject);
+        
+        if (res.status === 200 || res.status === 204) {
+          // Update localStorage as backup
+          const existingQuizzes = JSON.parse(localStorage.getItem('quizzes') || '[]');
+          const index = existingQuizzes.findIndex(q => q._id === existingQuiz._id);
+          if (index !== -1) {
+            existingQuizzes[index] = {
+              ...existingQuiz,
+              title: quizName,
+              description: quizDescription,
+              questions,
+              totalPoints,
+              updatedAt: new Date().toISOString(),
+            };
+          }
+          localStorage.setItem('quizzes', JSON.stringify(existingQuizzes));
+          
+          alert("Quiz updated successfully!");
+          onBack();
+          return;
+        } else {
+          throw new Error('Failed to update quiz');
+        }
       }
 
       // Transform questions to match API format for new quizzes
@@ -129,7 +181,7 @@ function QuizCreation({ quizName, quizDescription, onBack, existingQuiz }) {
       const quizPayload = {
         title: quizName,
         description: quizDescription,
-        roomId: null, // Will be set when creating a session
+        roomId: null,
         questions: transformedQuestions
       };
 
@@ -161,6 +213,7 @@ function QuizCreation({ quizName, quizDescription, onBack, existingQuiz }) {
       }
     } catch (error) {
       console.error('Error saving quiz:', error);
+      console.error('Error response:', error.response?.data);
       
       // Fallback to localStorage only
       const quizObject = {
@@ -270,7 +323,7 @@ function QuizCreation({ quizName, quizDescription, onBack, existingQuiz }) {
             <button 
               onClick={handleSaveQuiz} 
               disabled={isSaving}
-              className="bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-500 dark:hover:bg-emerald-600 text-white px-6 py-2.5 rounded-lg font-semibold shadow-lg shadow-emerald-500/30 dark:shadow-emerald-500/20 transition-all hover:shadow-xl hover:shadow-emerald-500/40 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-500 dark:hover:bg-emerald-600 text-white px-6 py-2.5 rounded-lg font-semibold transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Save size={18} />
               {isSaving ? "Saving..." : "Save Quiz"}
@@ -290,10 +343,35 @@ function QuizCreation({ quizName, quizDescription, onBack, existingQuiz }) {
               </div>
 
               <form className="space-y-6">
+                {/* Question Type Selector */}
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Question Type</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {["MCQ", "MULTI_SELECT"].map(type => (
+                      <button
+                        key={type}
+                        type="button"
+                        onClick={() => {
+                          setQuestionType(type);
+                          setCorrectIndex(0);
+                          setCorrectIndices([0]);
+                        }}
+                        className={`px-4 py-2.5 rounded-lg font-semibold transition-all ${
+                          questionType === type
+                            ? "bg-blue-600 dark:bg-blue-500 text-white"
+                            : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
+                        }`}
+                      >
+                        {type === "MULTI_SELECT" ? "Multi-Select" : type}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
                 {/* Question Text */}
                 <div>
                   <div className="flex items-center justify-between mb-2">
-                    <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 pt-1 flex items-center gap-2">
+                    <label className="text-sm font-semibold text-slate-700 dark:text-slate-300 pt-1 flex items-center gap-2">
                       <HelpCircle size={16} className="text-blue-600 dark:text-blue-400" />
                       Question Text
                     </label>
@@ -338,44 +416,59 @@ function QuizCreation({ quizName, quizDescription, onBack, existingQuiz }) {
                 {/* Options */}
                 <div className="space-y-3">
                   <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
-                    Answer Options
+                    Answer Options {questionType === "MULTI_SELECT" && <span className="text-xs text-blue-600 dark:text-blue-400">(select all correct)</span>}
                   </label>
                   <div className="space-y-3">
-                    {options.map((option, index) => (
-                      <div key={index} className="relative group">
-                        <div className="flex items-center gap-3">
-                          <button
-                            type="button"
-                            onClick={() => setCorrectIndex(index)}
-                            className={`flex-shrink-0 w-6 h-6 rounded-full border-2 transition-all ${
-                              correctIndex === index
-                                ? "bg-emerald-500 border-emerald-500 dark:bg-emerald-400 dark:border-emerald-400"
-                                : "bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600 hover:border-emerald-400 dark:hover:border-emerald-500"
-                            }`}
-                          >
-                            {correctIndex === index && (
-                              <CheckCircle className="w-5 h-5 text-white" />
-                            )}
-                          </button>
-                          <input
-                            value={option}
-                            onChange={(e) => handleOptionChange(index, e.target.value)}
-                            className="flex-1 rounded-lg border-2 border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white px-3 py-2 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 transition-all"
-                            placeholder={`Option ${index + 1}`}
-                            type="text"
-                          />
-                          {options.length > 2 && (
+                    {options.map((option, index) => {
+                      const isMulti = questionType === "MULTI_SELECT";
+                      const isSelected = isMulti ? correctIndices.includes(index) : correctIndex === index;
+                      return (
+                        <div key={index} className="relative group">
+                          <div className="flex items-center gap-3">
                             <button
                               type="button"
-                              onClick={() => handleRemoveOption(index)}
-                              className="flex-shrink-0 p-2 text-slate-400 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all"
+                              onClick={() => {
+                                if (isMulti) {
+                                  const newIndices = correctIndices.includes(index)
+                                    ? correctIndices.filter(i => i !== index)
+                                    : [...correctIndices, index];
+                                  setCorrectIndices(newIndices.length > 0 ? newIndices : [0]);
+                                } else {
+                                  setCorrectIndex(index);
+                                }
+                              }}
+                              className={`flex-shrink-0 w-6 h-6 border-2 flex items-center justify-center transition-all ${
+                                isMulti ? "rounded-lg" : "rounded-full"
+                              } ${
+                                isSelected
+                                  ? "bg-emerald-500 border-emerald-500 dark:bg-emerald-400 dark:border-emerald-400"
+                                  : "bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600 hover:border-emerald-400 dark:hover:border-emerald-500"
+                              }`}
                             >
-                              <X size={18} />
+                              {isSelected && (
+                                <CheckCircle className="w-5 h-5 text-white" />
+                              )}
                             </button>
-                          )}
+                            <input
+                              value={option}
+                              onChange={(e) => handleOptionChange(index, e.target.value)}
+                              className="flex-1 rounded-lg border-2 border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white px-3 py-2 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 transition-all"
+                              placeholder={`Option ${index + 1}`}
+                              type="text"
+                            />
+                            {options.length > 2 && (
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveOption(index)}
+                                className="flex-shrink-0 p-2 text-slate-400 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all"
+                              >
+                                <X size={18} />
+                              </button>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                   {options.length < 6 && (
                     <button
@@ -393,7 +486,7 @@ function QuizCreation({ quizName, quizDescription, onBack, existingQuiz }) {
                   <button
                     type="button"
                     onClick={handleAddQuestion}
-                    className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white px-6 py-2.5 rounded-lg font-bold shadow-lg shadow-blue-500/30 dark:shadow-blue-500/20 transition-all transform active:scale-95 hover:shadow-xl hover:shadow-blue-500/40 flex items-center gap-2"
+                    className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white px-6 py-2.5 rounded-lg font-bold transition-all transform active:scale-95 flex items-center gap-2"
                   >
                     <PlusSquare size={20} />
                     Add Question
@@ -436,7 +529,7 @@ function QuizCreation({ quizName, quizDescription, onBack, existingQuiz }) {
                     >
                       <div className="flex justify-between items-start mb-2">
                         <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-lg">
-                          Question {index + 1}
+                          {q.type || "MCQ"} • Q{index + 1}
                         </span>
                         <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                           <button 
@@ -494,11 +587,6 @@ function QuizCreation({ quizName, quizDescription, onBack, existingQuiz }) {
           </aside>
         </div>
       </main>
-
-      {/* Floating Chat Button */}
-      <button className="fixed bottom-6 right-6 w-14 h-14 bg-blue-600 dark:bg-blue-500 hover:bg-blue-700 dark:hover:bg-blue-600 text-white rounded-xl shadow-2xl flex items-center justify-center hover:scale-110 transition-all active:scale-95 border-4 border-white dark:border-slate-900">
-        <MessageCircle size={28} />
-      </button>
     </div>
   );
 }
