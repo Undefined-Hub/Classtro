@@ -30,6 +30,7 @@ const generateMockData = (sessionData) => {
         joinAt: startTime.toISOString(),
         leaveAt: endTime.toISOString(),
         duration: 55,
+        attendanceStatus: "full",
       },
       {
         id: 2,
@@ -37,6 +38,7 @@ const generateMockData = (sessionData) => {
         joinAt: new Date(startTime.getTime() + 300000).toISOString(),
         leaveAt: endTime.toISOString(),
         duration: 50,
+        attendanceStatus: "full",
       },
       {
         id: 3,
@@ -44,6 +46,7 @@ const generateMockData = (sessionData) => {
         joinAt: startTime.toISOString(),
         leaveAt: new Date(endTime.getTime() - 600000).toISOString(),
         duration: 45,
+        attendanceStatus: "full",
       },
       {
         id: 4,
@@ -51,6 +54,7 @@ const generateMockData = (sessionData) => {
         joinAt: new Date(startTime.getTime() + 600000).toISOString(),
         leaveAt: endTime.toISOString(),
         duration: 40,
+        attendanceStatus: "partial",
       },
       {
         id: 5,
@@ -58,6 +62,7 @@ const generateMockData = (sessionData) => {
         joinAt: startTime.toISOString(),
         leaveAt: endTime.toISOString(),
         duration: 55,
+        attendanceStatus: "full",
       },
       {
         id: 6,
@@ -65,6 +70,7 @@ const generateMockData = (sessionData) => {
         joinAt: new Date(startTime.getTime() + 900000).toISOString(),
         leaveAt: new Date(endTime.getTime() - 300000).toISOString(),
         duration: 35,
+        attendanceStatus: "partial",
       },
       {
         id: 7,
@@ -72,6 +78,7 @@ const generateMockData = (sessionData) => {
         joinAt: startTime.toISOString(),
         leaveAt: endTime.toISOString(),
         duration: 55,
+        attendanceStatus: "full",
       },
       {
         id: 8,
@@ -79,6 +86,7 @@ const generateMockData = (sessionData) => {
         joinAt: new Date(startTime.getTime() + 1200000).toISOString(),
         leaveAt: endTime.toISOString(),
         duration: 35,
+        attendanceStatus: "partial",
       },
       {
         id: 9,
@@ -86,6 +94,7 @@ const generateMockData = (sessionData) => {
         joinAt: new Date(startTime.getTime() + 150000).toISOString(),
         leaveAt: new Date(endTime.getTime() - 900000).toISOString(),
         duration: 40,
+        attendanceStatus: "partial",
       },
       {
         id: 10,
@@ -93,6 +102,7 @@ const generateMockData = (sessionData) => {
         joinAt: startTime.toISOString(),
         leaveAt: new Date(endTime.getTime() - 1200000).toISOString(),
         duration: 35,
+        attendanceStatus: "partial",
       },
       {
         id: 11,
@@ -100,6 +110,7 @@ const generateMockData = (sessionData) => {
         joinAt: new Date(startTime.getTime() + 450000).toISOString(),
         leaveAt: endTime.toISOString(),
         duration: 47,
+        attendanceStatus: "full",
       },
       {
         id: 12,
@@ -107,6 +118,7 @@ const generateMockData = (sessionData) => {
         joinAt: startTime.toISOString(),
         leaveAt: endTime.toISOString(),
         duration: 55,
+        attendanceStatus: "full",
       },
       {
         id: 13,
@@ -114,6 +126,7 @@ const generateMockData = (sessionData) => {
         joinAt: new Date(startTime.getTime() + 750000).toISOString(),
         leaveAt: new Date(endTime.getTime() - 450000).toISOString(),
         duration: 42,
+        attendanceStatus: "full",
       },
       {
         id: 14,
@@ -121,6 +134,7 @@ const generateMockData = (sessionData) => {
         joinAt: new Date(startTime.getTime() + 1800000).toISOString(),
         leaveAt: endTime.toISOString(),
         duration: 25,
+        attendanceStatus: "partial",
       },
       {
         id: 15,
@@ -128,6 +142,7 @@ const generateMockData = (sessionData) => {
         joinAt: startTime.toISOString(),
         leaveAt: new Date(endTime.getTime() - 1500000).toISOString(),
         duration: 30,
+        attendanceStatus: "partial",
       },
     ],
     participantsTimeline: [

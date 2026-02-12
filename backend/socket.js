@@ -94,7 +94,7 @@ function setupSockets(server) {
     });
 
     // --- TEACHER BROADCAST MESSAGE ---
-    socket.on("broadcast:teacher", ({ code, message, teacherId }) => {
+    socket.on("broadcast:teacher", ({ code, message, urls = [], urlMetadata = null, files = [], teacherId, broadcastId }) => {
       console.log(
         `📢 Teacher ${teacherId} broadcast in session ${code}: ${message}`,
       );
@@ -103,8 +103,12 @@ function setupSockets(server) {
       sessionNamespace.to(`session:${code}`).emit("broadcast:message", {
         from: "teacher",
         message,
+        urls,
+        urlMetadata,
+        files,
         code,
-        time: new Date(),
+        broadcastId,
+        timestamp: new Date(),
       });
     });
 
@@ -151,6 +155,24 @@ function setupSockets(server) {
 
     socket.on("disconnect", () => {
       console.log("❌ Socket disconnected:", socket.id);
+    });
+
+    // --- BROADCAST REACTIONS ---
+    socket.on("broadcast:reaction", ({ code, broadcastId, emoji, userId, userName, action }) => {
+      console.log(
+        `${action === "added" ? "👍" : "🚫"} User ${userName} ${action} reaction ${emoji} to broadcast ${broadcastId}`
+      );
+      console.log(`[SOCKET:reaction] Emitting to room: session:${code}`);
+
+      // Notify all participants in the session about the reaction update
+      sessionNamespace.to(`session:${code}`).emit("broadcast:reaction-update", {
+        broadcastId,
+        emoji,
+        userId,
+        userName,
+        action, // "added" or "removed"
+        timestamp: new Date(),
+      });
     });
 
     socket.on("poll:create", async ({ code, poll }) => {

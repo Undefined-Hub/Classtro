@@ -125,8 +125,8 @@ function App() {
         <Route path="*" element={<NotFound />} />
       </Routes>
 
-      {/* Floating Bug Report Button - appears on all pages */}
-      <FloatingBugButton />
+      {/* Floating Bug Report Button - appears on all pages except participant session */}
+      {location.pathname !== "/participant/session" && <FloatingBugButton />}
     </>
   );
 }

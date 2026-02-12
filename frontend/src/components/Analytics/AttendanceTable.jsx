@@ -9,6 +9,11 @@ const AttendanceTable = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
+  // Calculate session duration for progress bar
+  const sessionDuration = analyticsData?.sessionInfo?.startAt && analyticsData?.sessionInfo?.endAt
+    ? Math.round((new Date(analyticsData.sessionInfo.endAt) - new Date(analyticsData.sessionInfo.startAt)) / (1000 * 60))
+    : 60; // fallback to 60 minutes
+
   if (loading) {
     return (
       <div className="p-4 sm:p-6 h-full">
@@ -210,9 +215,13 @@ const AttendanceTable = () => {
             </span>
             <div className="flex-1 bg-gray-200 dark:bg-gray-700 rounded-full h-2 max-w-20">
               <div
-                className="bg-blue-500 h-2 rounded-full transition-all duration-300"
+                className={`h-2 rounded-full transition-all duration-300 ${
+                  participant.attendanceStatus === "full"
+                    ? "bg-blue-500"
+                    : "bg-yellow-500"
+                }`}
                 style={{
-                  width: `${Math.min((participant.duration / 60) * 100, 100)}%`,
+                  width: `${Math.min((participant.duration / sessionDuration) * 100, 100)}%`,
                 }}
               ></div>
             </div>
@@ -225,14 +234,14 @@ const AttendanceTable = () => {
             className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
               isStillActive
                 ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
-                : participant.duration >= 45
+                : participant.attendanceStatus === "full"
                   ? "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400"
                   : "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400"
             }`}
           >
             {isStillActive
               ? "Active"
-              : participant.duration >= 45
+              : participant.attendanceStatus === "full"
                 ? "Full"
                 : "Partial"}
           </span>
@@ -538,7 +547,7 @@ const AttendanceTable = () => {
         <div className="grid grid-cols-3 gap-4 text-center">
           <div>
             <p className="text-lg font-semibold text-gray-900 dark:text-white">
-              {participants.filter((p) => p.duration >= 45).length}
+              {participants.filter((p) => p.attendanceStatus === "full").length}
             </p>
             <p className="text-xs text-gray-500 dark:text-gray-400">
               Full Attendance

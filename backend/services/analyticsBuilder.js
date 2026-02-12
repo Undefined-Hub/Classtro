@@ -674,6 +674,7 @@ const generateAttendance = async (sessionId) => {
       
       // Determine attendance status based on ACTUAL percentage (not rounded)
       // Calculate percentage using raw milliseconds for accuracy
+      console.log(`Calculating attendance for participant ${participant._id}: durationMs=${durationMs}, sessionDurationMs=${sessionDurationMs}`);
       const attendancePercentage = (durationMs / sessionDurationMs) * 100;
       
       // Fair logic:
@@ -833,6 +834,9 @@ const formatStoredAnalytics = async (storedAnalytics) => {
 
 // Helper to format stored participants for frontend
 const formatStoredParticipants = async (sessionId, attendance) => {
+  // Get session info for calculating attendance status
+  const session = await Session.findById(sessionId).lean();
+  
   if (!attendance || attendance.length === 0) {
     // Fallback to fetching participants
     const participants = await Participant.find({ sessionId })
@@ -846,16 +850,43 @@ const formatStoredParticipants = async (sessionId, attendance) => {
       leaveAt: p.leftAt,
       duration: p.leftAt ? 
         Math.round((new Date(p.leftAt) - new Date(p.joinedAt)) / (1000 * 60)) : 0,
+      attendanceStatus: "partial", // fallback when no attendance data
     }));
   }
   
-  return attendance.map(a => ({
-    id: a.participantId,
-    name: a.name,
-    joinAt: a.joinedAt,
-    leaveAt: a.leftAt,
-    duration: a.duration,
-  }));
+  return attendance.map(a => {
+    let attendanceStatus = a.attendanceStatus;
+    
+    // Calculate attendanceStatus on-the-fly for old cached data (backward compatibility)
+    if (!attendanceStatus && session) {
+      const sessionStart = new Date(session.startAt);
+      const sessionEnd = session.endAt ? new Date(session.endAt) : new Date();
+      const sessionDurationMs = sessionEnd - sessionStart;
+      
+      const joinTime = new Date(a.joinedAt);
+      const leaveTime = a.leftAt ? new Date(a.leftAt) : sessionEnd;
+      const durationMs = leaveTime - joinTime;
+      
+      const attendancePercentage = (durationMs / sessionDurationMs) * 100;
+      const minutesAfterStart = (joinTime - sessionStart) / (1000 * 60);
+      const minutesBeforeEnd = (sessionEnd - leaveTime) / (1000 * 60);
+      
+      attendanceStatus = 
+        (attendancePercentage >= 75) || (minutesAfterStart <= 1 && minutesBeforeEnd <= 1)
+          ? "full" 
+          : "partial";
+    }
+    
+    return {
+      id: a.participantId,
+      name: a.name,
+      joinAt: a.joinedAt,
+      leaveAt: a.leftAt,
+      duration: a.duration,
+      attendanceStatus: attendanceStatus || "partial",
+      status: a.status, // kicked, left, or active
+    };
+  });
 };
 
 // Helper to format stored timeline for frontend
