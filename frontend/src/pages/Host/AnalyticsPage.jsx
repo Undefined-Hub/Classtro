@@ -9,14 +9,68 @@ import QandAInsights from "../../components/Analytics/QandAInsights";
 import FeedbackSection from "../../components/Analytics/FeedbackSection";
 import AISummary from "../../components/Analytics/AISummary";
 import AttendanceTable from "../../components/Analytics/AttendanceTable";
-import { AlertTriangle } from "lucide-react";
+import { exportAnalyticsToPdf } from "../../utils/analyticsPdfExport";
+import {
+  AlertTriangle,
+  Activity,
+  BarChart3,
+  HelpCircle,
+  MessageSquare,
+  Users,
+} from "lucide-react";
 
 function AnalyticsPageContent() {
   const navigate = useNavigate();
-  const { isGenerated, error } = useAnalyticsData();
+  const { analyticsData, isGenerated, error } = useAnalyticsData();
+
+  const defaultSections = {
+    participants: true,
+    timeline: true,
+    polls: true,
+    qna: true,
+    attendance: true,
+    feedback: true,
+    ai: true,
+  };
+
+  const includedSections =
+    analyticsData?.includedSections || (isGenerated ? {} : defaultSections);
+
+  const hasTimelineData = (analyticsData?.participantsTimeline || []).length > 0;
+  const hasPollData = (analyticsData?.polls || []).length > 0;
+  const hasQnaData = (analyticsData?.questions || []).length > 0;
+  const hasAttendanceData = (analyticsData?.participants || []).length > 0;
+  const hasFeedbackData =
+    (analyticsData?.feedback?.comments || []).length > 0 ||
+    (analyticsData?.feedback?.averageRating || 0) > 0;
+
+  const timelineColSpan = includedSections.qna ? "lg:col-span-2" : "lg:col-span-3";
+  const timelineHeight = includedSections.qna ? "h-[420px]" : "min-h-[320px]";
+  const pollColSpan = includedSections.qna ? "lg:col-span-2" : "lg:col-span-3";
+  const feedbackColSpan = includedSections.ai ? "lg:col-span-2" : "lg:col-span-3";
+  const qnaRowSpan = includedSections.polls ? "lg:row-span-2" : "";
+  const qnaHeight = includedSections.polls ? "h-[856px]" : "min-h-[420px]";
+
+  const SectionFallback = ({ title, description, icon: Icon, className = "" }) => (
+    <div className={`h-full w-full flex items-center justify-center p-6 text-center ${className}`}>
+      <div className="max-w-xs">
+        <Icon className="w-8 h-8 text-gray-400 dark:text-gray-500 mx-auto mb-3" />
+        <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">
+          {title}
+        </p>
+        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+          {description}
+        </p>
+      </div>
+    </div>
+  );
 
   const handleBackToDashboard = () => {
     navigate("/dashboard");
+  };
+
+  const handleExportPdf = () => {
+    exportAnalyticsToPdf(analyticsData);
   };
 
   return (
@@ -88,48 +142,152 @@ function AnalyticsPageContent() {
               <OverviewCards />
             </div>
 
-            {/* Row 3: Main Analytics Row - Different Heights */}
-            {/* Participant Timeline - 2 Columns */}
-            <div className="lg:col-span-2">
-              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 h-[420px]">
-                <ParticipantTimeline />
+            {/* Participant Timeline */}
+            {includedSections.timeline !== undefined && (
+              <div className={timelineColSpan}>
+                <div className={`bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 ${timelineHeight}`}>
+                  {includedSections.timeline ? (
+                    hasTimelineData ? (
+                    <ParticipantTimeline />
+                    ) : (
+                      <SectionFallback
+                        icon={Activity}
+                        title="No participant timeline"
+                        description="No activity was recorded for this session."
+                      />
+                    )
+                  ) : (
+                    <SectionFallback
+                      icon={Activity}
+                      title="Timeline not generated"
+                      description="This section was not selected during analytics generation."
+                    />
+                  )}
+                </div>
               </div>
-            </div>
+            )}
 
-            {/* Q&A Insights - 1 Column, 2 Rows */}
-            <div className="lg:col-span-1 lg:row-span-2">
-              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 h-[856px]">
-                <QandAInsights />
+            {/* Q&A Insights */}
+            {includedSections.qna !== false && (
+              <div className={`lg:col-span-1 ${qnaRowSpan}`}>
+                <div className={`bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 ${qnaHeight}`}>
+                  {includedSections.qna ? (
+                    hasQnaData ? (
+                    <QandAInsights />
+                    ) : (
+                      <SectionFallback
+                        icon={HelpCircle}
+                        title="No questions asked"
+                        description="There were no Q&A submissions for this session."
+                      />
+                    )
+                  ) : (
+                    <SectionFallback
+                      icon={HelpCircle}
+                      title="Q&A not generated"
+                      description="This section was not selected during analytics generation."
+                    />
+                  )}
+                </div>
               </div>
-            </div>
+            )}
 
-            {/* Row 4: Poll Analytics - 2 Columns */}
-            <div className="lg:col-span-2">
-              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 h-[420px]">
-                <PollAnalytics />
+            {/* Poll Analytics */}
+            {includedSections.polls !== undefined && (
+              <div className={pollColSpan}>
+                <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 h-[420px]">
+                  {includedSections.polls ? (
+                    hasPollData ? (
+                    <PollAnalytics />
+                    ) : (
+                      <SectionFallback
+                        icon={BarChart3}
+                        title="No polls taken"
+                        description="No polls were created or answered for this session."
+                      />
+                    )
+                  ) : (
+                    <SectionFallback
+                      icon={BarChart3}
+                      title="Polls not generated"
+                      description="This section was not selected during analytics generation."
+                    />
+                  )}
+                </div>
               </div>
-            </div>
+            )}
 
-            {/* Row 5: Feedback Section and AI Summary */}
-            {/* AI Summary - 1 Column */}
-            <div className="lg:col-span-1">
-              <div className="bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-2xl shadow-lg border border-blue-200 dark:border-blue-800 min-h-[320px] ">
-                <AISummary />
+            {/* AI Summary */}
+            {includedSections.ai !== undefined && (
+              <div className="lg:col-span-1">
+                <div className="bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-2xl shadow-lg border border-blue-200 dark:border-blue-800 min-h-[320px]">
+                  {includedSections.ai ? (
+                    <AISummary />
+                  ) : (
+                    <SectionFallback
+                      icon={Activity}
+                      className="min-h-[320px]"
+                      title="AI summary not generated"
+                      description="This section was not selected during analytics generation."
+                    />
+                  )}
+                </div>
               </div>
-            </div>
-            {/* Feedback Section - 2 Columns */}
-            <div className="lg:col-span-2">
-              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 min-h-[320px]">
-                <FeedbackSection />
-              </div>
-            </div>
+            )}
 
-            {/* Row 6: Attendance Table - Full Width */}
-            <div className="lg:col-span-3">
-              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 min-h-[400px]">
-                <AttendanceTable />
+            {/* Feedback Section */}
+            {includedSections.feedback !== undefined && (
+              <div className={feedbackColSpan}>
+                <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 min-h-[320px]">
+                  {includedSections.feedback ? (
+                    hasFeedbackData ? (
+                    <FeedbackSection />
+                    ) : (
+                      <SectionFallback
+                        icon={MessageSquare}
+                        className="min-h-[320px]"
+                        title="No feedback yet"
+                        description="No ratings or comments were submitted."
+                      />
+                    )
+                  ) : (
+                    <SectionFallback
+                      icon={MessageSquare}
+                      className="min-h-[320px]"
+                      title="Feedback not generated"
+                      description="This section was not selected during analytics generation."
+                    />
+                  )}
+                </div>
               </div>
-            </div>
+            )}
+
+            {/* Attendance Table */}
+            {includedSections.attendance !== undefined && (
+              <div className="lg:col-span-3">
+                <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 min-h-[400px]">
+                  {includedSections.attendance ? (
+                    hasAttendanceData ? (
+                    <AttendanceTable />
+                    ) : (
+                      <SectionFallback
+                        icon={Users}
+                        className="min-h-[400px]"
+                        title="No attendance recorded"
+                        description="No participant attendance data is available."
+                      />
+                    )
+                  ) : (
+                    <SectionFallback
+                      icon={Users}
+                      className="min-h-[400px]"
+                      title="Attendance not generated"
+                      description="This section was not selected during analytics generation."
+                    />
+                  )}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Footer */}
@@ -138,7 +296,10 @@ function AnalyticsPageContent() {
               <p className="text-sm text-gray-500 dark:text-gray-400">
                 Session analytics generated on {new Date().toLocaleDateString()}{" "}
                 •
-                <button className="ml-1 text-blue-600 dark:text-blue-400 hover:underline">
+                <button
+                  onClick={handleExportPdf}
+                  className="ml-1 text-blue-600 dark:text-blue-400 hover:underline"
+                >
                   Download Full Report
                 </button>
               </p>

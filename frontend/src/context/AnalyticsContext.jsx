@@ -13,6 +13,15 @@ const generateMockData = (sessionData) => {
   const endTime = new Date(now.getTime() - 300000); // 5 minutes ago
 
   return {
+    includedSections: {
+      participants: true,
+      timeline: true,
+      polls: true,
+      qna: true,
+      attendance: true,
+      feedback: true,
+      ai: true,
+    },
     sessionInfo: {
       title: sessionData?.title || "Introduction to Web Development",
       roomName: sessionData?.roomName || "Computer Science 101",

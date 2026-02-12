@@ -37,6 +37,16 @@ const SessionAnalyticsSchema = new mongoose.Schema(
       feedback: { type: mongoose.Schema.Types.Mixed, default: null },
       ai: { type: mongoose.Schema.Types.Mixed, default: null }, // Optional AI insights
     },
+
+    includedSections: {
+      participants: { type: Boolean, default: null },
+      timeline: { type: Boolean, default: null },
+      polls: { type: Boolean, default: null },
+      qna: { type: Boolean, default: null },
+      attendance: { type: Boolean, default: null },
+      feedback: { type: Boolean, default: null },
+      ai: { type: Boolean, default: null },
+    },
   },
   {
     timestamps: true,

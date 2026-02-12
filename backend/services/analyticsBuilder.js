@@ -20,6 +20,7 @@ const buildAnalytics = async (sessionId, sections) => {
       sessionId,
       roomId: session.roomId,
       generatedAt: new Date(),
+      includedSections: { ...sections },
       sections: {},
     };
 
@@ -88,6 +89,15 @@ const buildFrontendAnalytics = async (sessionId) => {
     
     // Build frontend-compatible structure
     return {
+      includedSections: {
+        participants: true,
+        timeline: true,
+        polls: true,
+        qna: true,
+        attendance: true,
+        feedback: true,
+        ai: true,
+      },
       sessionInfo: {
         title: session.title || "Session Analytics",
         roomName: session.roomId?.name || "Unknown Room",
@@ -799,9 +809,33 @@ const formatStoredAnalytics = async (storedAnalytics) => {
     
     const sections = storedAnalytics.sections || {};
     const participantStats = sections.participants || {};
+    const includedSections = {
+      participants:
+        storedAnalytics.includedSections?.participants ??
+        (sections.participants !== null && sections.participants !== undefined),
+      timeline:
+        storedAnalytics.includedSections?.timeline ??
+        (sections.timeline !== null && sections.timeline !== undefined),
+      polls:
+        storedAnalytics.includedSections?.polls ??
+        (sections.polls !== null && sections.polls !== undefined),
+      qna:
+        storedAnalytics.includedSections?.qna ??
+        (sections.qna !== null && sections.qna !== undefined),
+      attendance:
+        storedAnalytics.includedSections?.attendance ??
+        (sections.attendance !== null && sections.attendance !== undefined),
+      feedback:
+        storedAnalytics.includedSections?.feedback ??
+        (sections.feedback !== null && sections.feedback !== undefined),
+      ai:
+        storedAnalytics.includedSections?.ai ??
+        (sections.ai !== null && sections.ai !== undefined),
+    };
     
     // Build frontend structure from cached sections
     return {
+      includedSections,
       sessionInfo: {
         title: session.title || "Session Analytics",
         roomName: session.roomId?.name || "Unknown Room",

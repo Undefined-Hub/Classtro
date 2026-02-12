@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useAnalyticsData } from "../../context/AnalyticsContext";
+import { exportAnalyticsToPdf } from "../../utils/analyticsPdfExport";
 
 const AttendanceTable = () => {
   const { analyticsData, loading } = useAnalyticsData();
@@ -33,6 +34,10 @@ const AttendanceTable = () => {
   }
 
   const { participants } = analyticsData;
+
+  const handleExportPdf = () => {
+    exportAnalyticsToPdf(analyticsData);
+  };
 
   const handleSort = (field) => {
     if (sortBy === field) {
@@ -462,8 +467,9 @@ const AttendanceTable = () => {
             </button>
           )} */}
           <button
+            onClick={handleExportPdf}
             className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-            title="Download attendance report"
+            title="Export PDF"
           >
             <svg
               className="w-5 h-5"
@@ -476,24 +482,6 @@ const AttendanceTable = () => {
                 strokeLinejoin="round"
                 strokeWidth={2}
                 d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-              />
-            </svg>
-          </button>
-          <button
-            className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-            title="Export to CSV"
-          >
-            <svg
-              className="w-5 h-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
               />
             </svg>
           </button>
