@@ -1,30 +1,35 @@
-/**
- * Chatbot Prompt Builder
- * 
- * Generates context-aware prompts for the Classtro AI Chatbot Assistant.
- * The chatbot helps teachers and students navigate the platform and
- * understand features like polls, sessions, and analytics.
- * 
- * Security Rules:
- * - No quiz/poll answer leaking
- * - Role-based response filtering
- * - No unauthorized action suggestions
- */
 
-/**
- * Build a contextualized prompt for the chatbot
- * 
- * @param {Object} params - Prompt building parameters
- * @param {string} params.role - User role: 'teacher' or 'student'
- * @param {string} params.page - Current page/context (e.g., 'dashboard', 'session', 'analytics')
- * @param {string} params.message - User's question/message
- * @param {Object} params.knowledge - Additional context (optional)
- * @param {string} params.knowledge.sessionInfo - Current session details
- * @param {string} params.knowledge.userHistory - Recent user actions
- * @returns {string} Complete prompt for AI
- */
-function buildChatPrompt({ role, page, message, knowledge = {} }) {
-  // Validate required parameters
+function buildChatPrompt({ role, page, message, knowledge = {}, isAuthenticated = false }) {
+  // Guest users (not authenticated) - no role restrictions
+  if (!isAuthenticated || role === 'guest') {
+    if (!message || typeof message !== 'string' || message.trim().length === 0) {
+      throw new Error("Invalid message: must be a non-empty string");
+    }
+
+    const guestContext = `You are Classtro AI Assistant for a real-time classroom engagement platform.
+
+**Platform:** Live polling, Q&A, feedback, session analytics for educational institutions
+
+**User:** Guest visitor | Page: ${page || 'home'}
+
+**Guidelines:**
+- Provide helpful information about Classtro platform
+- Answer general educational or learning questions
+- Encourage the user to sign up/login for full features
+- Keep responses concise (2-3 sentences)
+- Be welcoming and informative
+
+**Topics you can help with:**
+- Explaining what Classtro is and its features
+- General educational topics and learning concepts
+- How online classroom engagement works
+- Benefits of interactive learning tools
+- Any general knowledge questions`;
+
+    return `${guestContext}\n\nUser Question: "${message}"`;
+  }
+
+  // Authenticated users - enforce role restrictions
   if (!role || !['teacher', 'student'].includes(role.toLowerCase())) {
     throw new Error("Invalid role: must be 'teacher' or 'student'");
   }
@@ -36,72 +41,40 @@ function buildChatPrompt({ role, page, message, knowledge = {} }) {
   const normalizedRole = role.toLowerCase();
   const currentPage = page || 'general';
 
-  // Build the system context
-  const systemContext = `You are Classtro AI Assistant, a helpful guide for a real-time classroom polling and engagement platform.
+  // Build the system context for authenticated users
+  const systemContext = `You are Classtro AI Assistant for a real-time classroom engagement platform.
 
-**Platform Overview:**
-Classtro enables interactive learning through:
-- Live polling and quizzes
-- Q&A sessions
-- Real-time feedback
-- Session analytics
-- Attendance tracking
+**Platform:** Live polling, Q&A, feedback, session analytics
 
-**Current User Context:**
-- Role: ${normalizedRole === 'teacher' ? 'Teacher/Instructor' : 'Student/Participant'}
-- Current Page: ${currentPage}
-${knowledge.sessionInfo ? `- Session Info: ${knowledge.sessionInfo}` : ''}
-${knowledge.userHistory ? `- Recent Activity: ${knowledge.userHistory}` : ''}
+**User:** ${normalizedRole === 'teacher' ? 'Teacher' : 'Student'} (Authenticated) | Page: ${currentPage}
+${knowledge.sessionInfo ? `Session: ${knowledge.sessionInfo}` : ''}
+${knowledge.userHistory ? `Activity: ${knowledge.userHistory}` : ''}
 
-**Response Guidelines:**
-1. Be concise and helpful (2-3 sentences max unless complex explanation needed)
-2. Use friendly, professional tone
-3. Focus on actionable guidance
-4. Reference specific UI elements when relevant
+**Guidelines:**
+- Concise, helpful responses (2-3 sentences)
+- Actionable guidance
+- Only answer questions relevant to ${normalizedRole} role
 
-**CRITICAL SECURITY RULES:**
-${normalizedRole === 'student' ? `
-- NEVER reveal answers to quizzes, polls, or questions
-- NEVER suggest ways to cheat or bypass restrictions
-- DO NOT provide teacher-only information
-- Guide students to learn and participate honestly
-` : `
-- Help teachers create effective polls and sessions
-- Explain analytics and insights
-- Guide on session management
-- Suggest engagement strategies
-`}
+**Role Restrictions:**
+${normalizedRole === 'student' 
+  ? '- Answer ONLY student-related questions (joining sessions, participating in polls, asking questions, providing feedback)\n- If asked about teacher features, politely explain: "That\'s a teacher-specific feature. As a student, you can [mention relevant student features]"\n- NEVER reveal quiz/poll answers\n- Guide honest participation' 
+  : '- Answer ONLY teacher-related questions (creating sessions, managing polls, viewing analytics, managing Q&A)\n- If asked about student-only features, politely explain: "That\'s from the student perspective. As a teacher, you can [mention relevant teacher features]"\n- Help create effective sessions\n- Explain analytics and features'}
 
-**Feature-Specific Help:**
-${getRoleSpecificFeatures(normalizedRole)}
+${getRoleSpecificFeatures(normalizedRole)}`;
 
-**Tone:** ${normalizedRole === 'teacher' ? 'Professional and empowering' : 'Encouraging and educational'}`;
-
-  // Build the user message with context
-  const userPrompt = `User Question: "${message}"
-
-Please provide a helpful response based on their role and current context.`;
-
-  // Combine system context and user message
-  const completePrompt = `${systemContext}
-
-${userPrompt}`;
+  const completePrompt = `${systemContext}\n\nUser Question: "${message}"`;
 
   return completePrompt;
 }
 
-/**
- * Get role-specific feature descriptions
- * 
- * @param {string} role - User role
- * @returns {string} Feature descriptions
- */
 function getRoleSpecificFeatures(role) {
   if (role === 'teacher') {
     return `
 For Teachers:
-- Creating and managing sessions
+- Creating and managing rooms
+- Starting and ending sessions
 - Creating polls and quizzes
+- Broadcasting messages to students
 - Viewing real-time responses
 - Analyzing session feedback
 - Tracking student engagement
@@ -111,53 +84,39 @@ For Teachers:
   } else {
     return `
 For Students:
-- Joining sessions with room codes
+- Joining sessions with session codes
 - Participating in polls and quizzes
-- Asking questions in Q&A
+- Asking questions (anonymous or identified)
+- Upvoting other questions
 - Providing session feedback
-- Viewing personal response history
+- Viewing response history
 `;
   }
 }
 
-/**
- * Build a follow-up prompt for clarification
- * 
- * @param {string} previousMessage - Previous user message
- * @param {string} previousResponse - AI's previous response
- * @param {string} clarificationRequest - User's clarification request
- * @returns {string} Follow-up prompt
- */
-function buildFollowUpPrompt(previousMessage, previousResponse, clarificationRequest) {
-  return `Previous conversation:
-User: "${previousMessage}"
-Assistant: "${previousResponse}"
+// function buildFollowUpPrompt(previousMessage, previousResponse, clarificationRequest) {
+//   return `Previous conversation:
+// User: "${previousMessage}"
+// Assistant: "${previousResponse}"
 
-User now asks: "${clarificationRequest}"
+// User now asks: "${clarificationRequest}"
 
-Please provide clarification or additional details.`;
-}
+// Please provide clarification or additional details.`;
+// }
 
-/**
- * Build a prompt for feature-specific help
- * 
- * @param {string} featureName - Name of the feature (e.g., 'polls', 'analytics')
- * @param {string} role - User role
- * @returns {string} Feature help prompt
- */
-function buildFeatureHelpPrompt(featureName, role) {
-  return `Explain how to use the "${featureName}" feature in Classtro for a ${role}.
+// function buildFeatureHelpPrompt(featureName, role) {
+//   return `Explain how to use the "${featureName}" feature in Classtro for a ${role}.
 
-Provide:
-1. Brief overview (1 sentence)
-2. Step-by-step guide (3-5 steps)
-3. Pro tip or best practice
+// Provide:
+// 1. Brief overview (1 sentence)
+// 2. Step-by-step guide (3-5 steps)
+// 3. Pro tip or best practice
 
-Keep it concise and actionable.`;
-}
+// Keep it concise and actionable.`;
+// }
 
 module.exports = {
   buildChatPrompt,
-  buildFollowUpPrompt,
-  buildFeatureHelpPrompt,
+  // buildFollowUpPrompt,
+  // buildFeatureHelpPrompt,
 };

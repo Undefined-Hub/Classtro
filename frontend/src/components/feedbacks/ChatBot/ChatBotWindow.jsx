@@ -1,14 +1,51 @@
 import React, { useState, useRef, useEffect } from "react";
 import { X, Send, Bot, Minimize2, Maximize2 } from "lucide-react";
+import { useLocation } from "react-router-dom";
 import ChatMessage from "./ChatMessage";
+import { useAuth } from "../../../context/UserContext";
+import api from "../../../utils/api";
+import toast from "../../../utils/toastUtils";
 
 const ChatBotWindow = ({ isOpen, onClose }) => {
+  const { user } = useAuth();
+  const location = useLocation();
+  
+  // Determine if user is logged in
+  const isAuthenticated = !!user;
+  
+  // Get initial suggestions based on auth status and role
+  const getInitialSuggestions = () => {
+    if (!isAuthenticated) {
+      // Guest suggestions (before login)
+      return [
+        "What is Classtro?",
+        "Explain machine learning basics",
+        "How does online learning work?"
+      ];
+    } else if (user.role === 'TEACHER') {
+      // Teacher suggestions
+      return [
+        "How do I create a room?",
+        "What's the session workflow?",
+        "How to manage student questions?"
+      ];
+    } else {
+      // Student suggestions
+      return [
+        "How do I join a session?",
+        "What features are available?",
+        "How to ask questions anonymously?"
+      ];
+    }
+  };
+
   const [messages, setMessages] = useState([
     {
       id: 1,
       text: "How can I help you today?",
       isBot: true,
       timestamp: new Date(),
+      suggestions: getInitialSuggestions(),
     },
   ]);
   const [inputMessage, setInputMessage] = useState("");
@@ -32,6 +69,52 @@ const ChatBotWindow = ({ isOpen, onClose }) => {
     }
   }, [isOpen, isMinimized]);
 
+  // Update suggestions when authentication status or role changes
+  useEffect(() => {
+    setMessages((prev) => {
+      if (prev.length > 0 && prev[0].id === 1) {
+        // Update only the first message's suggestions
+        return [
+          {
+            ...prev[0],
+            suggestions: getInitialSuggestions(),
+          },
+          ...prev.slice(1),
+        ];
+      }
+      return prev;
+    });
+  }, [isAuthenticated, user?.role]);
+
+  // Function to send message to AI and get response
+  const sendMessageToAI = async (message, role, page, isAuthenticated) => {
+    try {
+      const response = await api.post('/api/ai/chat', {
+        role: isAuthenticated ? role : 'guest',
+        page,
+        message,
+        isAuthenticated
+      });
+      
+      if (response.data.success) {
+        return {
+          message: response.data.data.message,
+          timestamp: response.data.data.timestamp
+        };
+      }
+    } catch (error) {
+      console.error('Error sending message to AI:', error);
+      throw error;
+    }
+  };
+
+  // Handle suggestion click
+  const handleSuggestionClick = (suggestion) => {
+    setInputMessage(suggestion);
+    inputRef.current?.focus();
+  };
+
+  // Function to handle sending message
   const handleSendMessage = async (e) => {
     e.preventDefault();
     if (!inputMessage.trim()) return;
@@ -44,21 +127,38 @@ const ChatBotWindow = ({ isOpen, onClose }) => {
     };
 
     setMessages((prev) => [...prev, userMessage]);
+    const userInput = inputMessage.trim();
     setInputMessage("");
     setIsTyping(true);
 
-    // TODO: Replace with actual Gemini API call
-    // Simulating bot response for now
-    setTimeout(() => {
+    try {
+      const currentPage = location.pathname.split('/')[1] || 'home';
+      const aiResponse = await sendMessageToAI(
+        userInput,
+        user?.role || 'student',
+        currentPage,
+        isAuthenticated
+      );
+      
       const botMessage = {
         id: messages.length + 2,
-        text: "I'm here to help! This is a placeholder response. The Gemini API integration will be added soon.",
+        text: aiResponse.message,
+        isBot: true,
+        timestamp: new Date(aiResponse.timestamp),
+      };
+      setMessages((prev) => [...prev, botMessage]);
+    } catch (error) {
+      const errorMessage = {
+        id: messages.length + 2,
+        text: error.response?.data?.message || "Sorry, I'm having trouble responding right now. Please try again.",
         isBot: true,
         timestamp: new Date(),
       };
-      setMessages((prev) => [...prev, botMessage]);
+      setMessages((prev) => [...prev, errorMessage]);
+      toast.error('Failed to get AI response');
+    } finally {
       setIsTyping(false);
-    }, 1000);
+    }
   };
 
   const toggleMinimize = () => {
@@ -114,7 +214,24 @@ const ChatBotWindow = ({ isOpen, onClose }) => {
           {/* Messages Container */}
           <div className="h-[calc(100%-140px)] overflow-y-auto p-4 bg-gray-50 dark:bg-gray-900">
             {messages.map((msg) => (
-              <ChatMessage key={msg.id} message={msg.text} isBot={msg.isBot} />
+              <div key={msg.id}>
+                <ChatMessage message={msg.text} isBot={msg.isBot} />
+                
+                {/* Show suggestions only for first bot message */}
+                {msg.isBot && msg.suggestions && msg.id === 1 && (
+                  <div className="flex flex-wrap gap-2 mb-4 ml-11">
+                    {msg.suggestions.map((suggestion, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => handleSuggestionClick(suggestion)}
+                        className="px-3 py-1.5 text-xs bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-full text-gray-700 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-gray-600 hover:border-blue-400 transition-all duration-200"
+                      >
+                        {suggestion}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
             ))}
 
             {isTyping && (
