@@ -635,7 +635,7 @@ const SessionWorkspace = () => {
           <div className="group relative">
             <button
               onClick={() => setIsParticipantListOpen(!isParticipantListOpen)}
-              className="absolute left-0 top-1/2 transform -translate-y-1/2 -translate-x-1/2 z-50 p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-lg transition-all duration-200"
+              className="absolute left-0 top-1/2 transform -translate-y-1/2 -translate-x-1/2 z-20 p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-lg transition-all duration-200"
             >
               <svg
                 className={`w-4 h-4 transition-transform duration-300 ${
@@ -655,7 +655,7 @@ const SessionWorkspace = () => {
             </button>
 
             {/* Custom Tooltip */}
-            <div className="absolute right-full mr-3 top-1/2 transform -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-all duration-300 delay-300 pointer-events-none z-[60] group-hover:scale-100 scale-95">
+            <div className="absolute right-full mr-3 top-1/2 transform -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-all duration-300 delay-300 pointer-events-none z-30 group-hover:scale-100 scale-95">
               <div className="bg-black text-white text-xs px-3 py-2 rounded-lg whitespace-nowrap shadow-lg border border-gray-800">
                 {isParticipantListOpen ? "Hide Participants" : "Show Participants"}
                 {/* Tooltip Arrow */}

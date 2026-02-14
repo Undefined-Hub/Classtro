@@ -270,7 +270,7 @@ const QuizManager = ({ isParticipantListOpen = true }) => {
                   <div className="flex items-center gap-4 mt-3">
                     <span className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
                       <Target className="w-3.5 h-3.5" />
-                      {template.questions?.length || 0} questions
+                      {(template.questionsCount ?? template.questions?.length ?? 0)} questions
                     </span>
                     <span className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
                       <Award className="w-3.5 h-3.5" />
