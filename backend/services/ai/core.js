@@ -5,12 +5,18 @@ const ai = new GoogleGenAI({
   apiKey: process.env.GEMINI_API_KEY,
 });
 
+/**
+ * Generate AI response - Provider-agnostic design for future AWS Bedrock migration
+ * @param {string} prompt - The formatted prompt
+ * @param {object} options - Generation configuration
+ * @returns {Promise<string>} AI response text
+ */
 async function generateAIResponse(prompt, options = {}) {
   try {
     const {
       model = "gemini-3-flash-preview",
-      maxTokens = 2048,
-      temperature = 0.7,
+      maxTokens = 300, // Optimized for concise responses
+      temperature = 0.3, // Lower temperature for consistency
     } = options;
 
     if (!prompt || typeof prompt !== "string") {
@@ -20,6 +26,8 @@ async function generateAIResponse(prompt, options = {}) {
     if (!process.env.GEMINI_API_KEY) {
       throw new Error("GEMINI_API_KEY not configured");
     }
+
+    // Call Gemini with optimized config
     const response = await ai.models.generateContent({
       model,
       contents: prompt,

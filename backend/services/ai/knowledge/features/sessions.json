@@ -1,0 +1,156 @@
+{
+  "feature": "sessions",
+  "title": "Live Interactive Sessions",
+  "description": "Real-time classroom sessions where teachers and students interact through polls, Q&A, and feedback",
+  
+  "teacher": {
+    "overview": "Sessions are live interactive classes where you engage students with polls, Q&A, and real-time feedback. Each session is conducted within a room.",
+    
+    "howTo": {
+      "start": [
+        "Open the room where you want to conduct session",
+        "Click 'Start Session' button",
+        "Session goes live - students can now join",
+        "Session code is generated for students to join",
+        "Begin your class and use interactive features"
+      ],
+      "manage": [
+        "See real-time count of joined students",
+        "Create and launch polls during session",
+        "Answer student questions from Q&A panel",
+        "Broadcast important messages to all students",
+        "Monitor student engagement metrics"
+      ],
+      "end": [
+        "Click 'End Session' button when class is over",
+        "Confirm to end the session",
+        "Session summary is generated automatically",
+        "Review session analytics and feedback",
+        "Session data is saved to room history"
+      ]
+    },
+    
+    "tips": [
+      "Start session 5 minutes before class for students to join",
+      "Use polls every 10-15 minutes to maintain engagement",
+      "Check Q&A panel regularly for student questions",
+      "End session properly to save all data",
+      "Review session analytics after class to improve teaching"
+    ],
+    
+    "canDo": [
+      "Start unlimited sessions in your rooms",
+      "See all joined students in real-time",
+      "Create polls, Q&A, and gather feedback during session",
+      "Broadcast messages to all students",
+      "End session anytime",
+      "View detailed session analytics after session ends",
+      "Download session reports as PDF/CSV"
+    ],
+    
+    "cannotDo": [
+      "Run multiple sessions simultaneously in the same room",
+      "Edit session data after it ends",
+      "Restart a session after ending it",
+      "Force students to stay in session"
+    ],
+    
+    "bestPractices": [
+      "Share session code before class starts",
+      "Keep sessions under 90 minutes for best engagement",
+      "Use mix of polls, Q&A, and discussions",
+      "Monitor student count to ensure everyone joined",
+      "Always end session properly to save data"
+    ],
+    
+    "analytics": {
+      "available": [
+        "Total students joined",
+        "Average session duration per student",
+        "Poll participation rates",
+        "Questions asked count",
+        "Feedback ratings and comments",
+        "Engagement timeline graph",
+        "Student-wise participation breakdown"
+      ],
+      "howToAccess": [
+        "Go to room's session history",
+        "Click on completed session",
+        "View analytics dashboard",
+        "Download reports if needed"
+      ]
+    }
+  },
+  
+  "student": {
+    "overview": "Sessions are live classes where you participate in polls, ask questions, and give feedback. Join using the session code from your teacher.",
+    
+    "howTo": {
+      "join": [
+        "Get session code from teacher",
+        "Go to 'Join Session' page (or click from room)",
+        "Enter the session code",
+        "Click 'Join' - you're now in the live session",
+        "Participate in polls, Q&A, and feedback"
+      ],
+      "participate": [
+        "Answer polls when teacher launches them",
+        "Ask questions in Q&A section",
+        "Upvote questions you want answered",
+        "Provide session feedback when requested",
+        "Stay connected throughout the session"
+      ],
+      "leave": [
+        "Click 'Leave Session' button anytime",
+        "Confirm to exit",
+        "You can rejoin using same session code if session is still active",
+        "Your participation data is saved even if you leave early"
+      ]
+    },
+    
+    "tips": [
+      "Join sessions on time to not miss important content",
+      "Keep internet connection stable throughout session",
+      "Participate actively in polls and Q&A",
+      "Ask questions when you don't understand",
+      "Provide honest feedback to help teacher improve"
+    ],
+    
+    "canDo": [
+      "Join multiple sessions",
+      "Participate in all polls and Q&A",
+      "Ask anonymous questions (if teacher enables)",
+      "Leave and rejoin active sessions",
+      "View your response history after session",
+      "Access session recordings if teacher shares them"
+    ],
+    
+    "cannotDo": [
+      "Join session without valid code",
+      "See other students' poll answers in real-time",
+      "Delete your responses after submission",
+      "Join sessions from rooms you haven't joined"
+    ],
+    
+    "commonIssues": [
+      {
+        "problem": "Session code not working",
+        "solution": "Verify code with teacher, check for extra spaces, ensure session is still active"
+      },
+      {
+        "problem": "Got disconnected from session",
+        "solution": "Rejoin using same session code, check internet connection, refresh page"
+      },
+      {
+        "problem": "Cannot see polls or Q&A",
+        "solution": "Refresh page, ensure you're in correct session, check if teacher launched the feature"
+      },
+      {
+        "problem": "Accidentally left session",
+        "solution": "Rejoin immediately using same session code if still active"
+      }
+    ]
+  },
+  
+  "relatedFeatures": ["rooms", "polls", "qna", "feedback"]
+}

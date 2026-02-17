@@ -1,11 +1,11 @@
 const { generateAIResponse, checkAIHealth } = require('../services/ai/core');
-const { buildChatPrompt, buildFollowUpPrompt, buildFeatureHelpPrompt } = require('../services/ai/prompts/chatPrompt');
-const { buildInsightsPrompt } = require('../services/ai/prompts/insightsPrompt');
+const { buildChatPrompt } = require('../services/ai/prompts/chatPrompt');
+// const { buildInsightsPrompt } = require('../services/ai/prompts/insightsPrompt'); // TODO: Use when implementing insights
 
-// Chat endpoint for both teachers and students
+// chatbot controller
 const handleChatRequest = async (req, res, next) => {
   try {
-    const { message, role, page, knowledge, isAuthenticated } = req.body;
+    const { message, role, page, isAuthenticated } = req.body;
 
     if (!message) {
       return res.status(400).json({
@@ -27,22 +27,21 @@ const handleChatRequest = async (req, res, next) => {
       });
     }
 
-    // build an ai prompt
+    // Build optimized prompt with minimal knowledge injection
     const prompt = buildChatPrompt({
       role: effectiveRole,
       page: page || 'general',
       message,
-      knowledge: knowledge || {},
       isAuthenticated: isUserAuthenticated,
     });
 
-    // call ai service 
+    // Call AI service with optimized settings
     const aiResponse = await generateAIResponse(prompt, {
-      temperature: 0.7, // Balanced creativity & consistency - behavior variability
-      maxTokens: 1024, //750-800 words
+      temperature: 0.3, // Low temperature for consistent, focused responses
+      maxTokens: 300, // Concise responses only
     });
 
-    // return ai response
+    // Return AI response
     res.status(200).json({
       success: true,
       data: {
@@ -57,32 +56,12 @@ const handleChatRequest = async (req, res, next) => {
   }
 };
 
-// Example endpoint for teammate - Session Insights (to be implemented)
+// Session Insights - TODO: Implement later
 const handleInsightsRequest = async (req, res, next) => {
-  try {
-    const { sessionData, focusArea } = req.body;
-
-    if (!sessionData) {
-      return res.status(400).json({
-        success: false,
-        error: 'Session data is required',
-      });
-    }
-
-    // TODO: Teammate implementation
-    // const prompt = buildInsightsPrompt({ sessionData, focusArea });
-    // const aiInsights = await generateAIResponse(prompt, { temperature: 0.5, maxTokens: 2048 });
-    // return res.json({ success: true, data: { insights: aiInsights } });
-
-    res.status(501).json({
-      success: false,
-      message: 'Insights feature pending implementation',
-    });
-
-  } catch (error) {
-    console.error('Insights Error:', error);
-    next(error);
-  }
+  res.status(501).json({
+    success: false,
+    message: 'Insights feature coming soon',
+  });
 };
 
 const handleHealthCheck = async (req, res, next) => {

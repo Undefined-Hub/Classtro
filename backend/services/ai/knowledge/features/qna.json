@@ -1,0 +1,172 @@
+{
+  "feature": "qna",
+  "title": "Live Q&A System",
+  "description": "Interactive question and answer system where students ask questions and teachers respond in real-time",
+  
+  "teacher": {
+    "overview": "Manage student questions during live sessions. Students can ask questions, upvote others' questions, and you can answer them in real-time or after session.",
+    
+    "howTo": {
+      "access": [
+        "During active session, open Q&A panel",
+        "See all questions from students in chronological order",
+        "Questions show upvote counts",
+        "Filter by answered/unanswered/all questions"
+      ],
+      "answer": [
+        "Click on a question to answer it",
+        "Type your response in the answer box",
+        "Click 'Post Answer' to send reply",
+        "Answer appears below the question for all students",
+        "Question is marked as 'Answered'"
+      ],
+      "manage": [
+        "Sort questions by time or upvotes",
+        "Mark questions as answered without replying (if answered verbally)",
+        "Delete inappropriate or duplicate questions",
+        "Pin important questions to top",
+        "Export Q&A session as PDF for reference"
+      ]
+    },
+    
+    "tips": [
+      "Answer high-upvoted questions first - they interest multiple students",
+      "Encourage students to upvote instead of asking duplicates",
+      "Use anonymous mode to get honest questions from shy students",
+      "Address common questions verbally and mark as answered",
+      "Save complex questions for end-of-session Q&A time",
+      "Export Q&A after session for study material"
+    ],
+    
+    "canDo": [
+      "See all questions from students",
+      "Answer questions with text responses",
+      "See which student asked (unless anonymous)",
+      "Delete inappropriate questions",
+      "Mark questions as answered",
+      "Pin important questions",
+      "Enable/disable anonymous questions",
+      "Sort by time or upvotes",
+      "Export Q&A session data"
+    ],
+    
+    "cannotDo": [
+      "Force students to ask questions",
+      "See who upvoted questions",
+      "Edit student questions (can only delete)",
+      "Prevent students from upvoting"
+    ],
+    
+    "bestPractices": [
+      "Allocate specific Q&A time during session",
+      "Acknowledge all questions even if you can't answer immediately",
+      "Use Q&A insights to improve future sessions",
+      "Encourage questions by responding promptly",
+      "Make Q&A part of grading to increase participation"
+    ],
+    
+    "anonymousMode": {
+      "description": "Students can ask questions without revealing their identity",
+      "whenToUse": "Sensitive topics, shy students, encourage honest questions",
+      "howToEnable": "Toggle 'Allow Anonymous Questions' in session settings",
+      "limitations": "Cannot identify who asked, harder to follow up individually"
+    }
+  },
+  
+  "student": {
+    "overview": "Ask questions during sessions and upvote questions from classmates. Get answers from your teacher in real-time.",
+    
+    "howTo": {
+      "askQuestion": [
+        "During session, open Q&A section",
+        "Click 'Ask Question' button",
+        "Type your question clearly",
+        "Choose to post as yourself or anonymously (if enabled)",
+        "Click 'Submit' to post",
+        "Your question appears in Q&A feed"
+      ],
+      "upvote": [
+        "Browse through questions in Q&A feed",
+        "If someone already asked your question, upvote it instead of posting duplicate",
+        "Click upvote icon next to the question",
+        "Upvote count increases by 1",
+        "Help teacher prioritize important questions"
+      ],
+      "viewAnswers": [
+        "Answered questions show teacher's response below",
+        "Get notification when your question is answered",
+        "View all Q&A in session history after class"
+      ]
+    },
+    
+    "tips": [
+      "Ask clear, specific questions",
+      "Check if someone already asked your question - upvote instead",
+      "Use anonymous mode if you're hesitant",
+      "Upvote questions you also want answered",
+      "Make sure questions are relevant to current topic",
+      "Be respectful and appropriate"
+    ],
+    
+    "canDo": [
+      "Ask unlimited questions during session",
+      "Post anonymously if teacher enables it",
+      "Upvote other students' questions",
+      "Edit your question before teacher answers",
+      "Delete your own questions",
+      "View all Q&A from the session",
+      "See when teacher answers your question"
+    ],
+    
+    "cannotDo": [
+      "Edit question after teacher answers it",
+      "See who asked anonymous questions",
+      "Delete your question after teacher answered",
+      "Ask questions in sessions you haven't joined",
+      "Downvote questions"
+    ],
+    
+    "questionTips": {
+      "good": [
+        "\"Could you explain the difference between X and Y?\"",
+        "\"I didn't understand the step where we...\"",
+        "\"Can you provide another example of...?\"",
+        "\"What's the real-world application of this concept?\""
+      ],
+      "avoid": [
+        "\"I don't get it\" (too vague)",
+        "\"Will this be on the test?\" (ask teacher directly)",
+        "Off-topic questions",
+        "Duplicate questions already asked"
+      ]
+    },
+    
+    "commonIssues": [
+      {
+        "problem": "Cannot submit question",
+        "solution": "Check character limit, ensure you're still in session, verify internet connection, try refreshing"
+      },
+      {
+        "problem": "Question not appearing in feed",
+        "solution": "Refresh page, check if it was flagged, ensure session is active"
+      },
+      {
+        "problem": "Cannot upvote questions",
+        "solution": "Verify you're logged in, refresh page, check if you already upvoted"
+      },
+      {
+        "problem": "Want to delete question but can't",
+        "solution": "You can only delete unanswered questions. Contact teacher if needed"
+      }
+    ],
+    
+    "anonymousTips": [
+      "Use anonymous mode for sensitive or potentially embarrassing questions",
+      "Still be respectful and appropriate even when anonymous",
+      "Teacher cannot see who asked anonymous questions",
+      "Great for getting honest clarifications"
+    ]
+  },
+  
+  "relatedFeatures": ["sessions", "polls", "feedback"]
+}

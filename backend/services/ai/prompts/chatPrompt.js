@@ -1,32 +1,38 @@
+const { buildKnowledgeContext } = require('../knowledge');
 
-function buildChatPrompt({ role, page, message, knowledge = {}, isAuthenticated = false }) {
-  // Guest users (not authenticated) - no role restrictions
+/**
+ * Build optimized chat prompt with minimal knowledge injection
+ * Role-aware with security guardrails
+ */
+function buildChatPrompt({ role, page, message, isAuthenticated = false }) {
+  // Guest users (not authenticated)
   if (!isAuthenticated || role === 'guest') {
     if (!message || typeof message !== 'string' || message.trim().length === 0) {
       throw new Error("Invalid message: must be a non-empty string");
     }
 
+    // No knowledge base for guests - keep responses general
     const guestContext = `You are Classtro AI Assistant for a real-time classroom engagement platform.
 
 **Platform:** Live polling, Q&A, feedback, session analytics for educational institutions
 
 **User:** Guest visitor | Page: ${page || 'home'}
 
+**Response Style:**
+- Short & precise: 2-3 sentences max
+- Conversational & friendly tone
+- Easy to understand
+- Engaging & helpful
+
 **Guidelines:**
-- Provide helpful information about Classtro platform
-- Answer general educational or learning questions
-- Encourage the user to sign up/login for full features
-- Keep responses concise (2-3 sentences)
-- Be welcoming and informative
+- Explain Classtro features briefly
+- Answer general education questions
+- Encourage sign up for full features
+- Be welcoming
 
-**Topics you can help with:**
-- Explaining what Classtro is and its features
-- General educational topics and learning concepts
-- How online classroom engagement works
-- Benefits of interactive learning tools
-- Any general knowledge questions`;
+User Question: "${message}"`;
 
-    return `${guestContext}\n\nUser Question: "${message}"`;
+    return guestContext;
   }
 
   // Authenticated users - enforce role restrictions
@@ -41,82 +47,30 @@ function buildChatPrompt({ role, page, message, knowledge = {}, isAuthenticated 
   const normalizedRole = role.toLowerCase();
   const currentPage = page || 'general';
 
-  // Build the system context for authenticated users
-  const systemContext = `You are Classtro AI Assistant for a real-time classroom engagement platform.
+  // Get compressed, relevant knowledge only
+  const knowledgeContext = buildKnowledgeContext(message, normalizedRole, currentPage);
 
-**Platform:** Live polling, Q&A, feedback, session analytics
+  // Build minimal, focused system prompt
+  const systemContext = `You are Classtro AI Assistant - a real-time classroom engagement platform.
 
-**User:** ${normalizedRole === 'teacher' ? 'Teacher' : 'Student'} (Authenticated) | Page: ${currentPage}
-${knowledge.sessionInfo ? `Session: ${knowledge.sessionInfo}` : ''}
-${knowledge.userHistory ? `Activity: ${knowledge.userHistory}` : ''}
+**User:** ${normalizedRole === 'teacher' ? 'Teacher' : 'Student'} | Page: ${currentPage}
 
-**Guidelines:**
-- Concise, helpful responses (2-3 sentences)
-- Actionable guidance
-- Only answer questions relevant to ${normalizedRole} role
+**Response Rules:**
+- Maximum 2-3 sentences
+- Concise, actionable advice
+- Match user's ${normalizedRole} role only
+${knowledgeContext}
 
 **Role Restrictions:**
 ${normalizedRole === 'student' 
-  ? '- Answer ONLY student-related questions (joining sessions, participating in polls, asking questions, providing feedback)\n- If asked about teacher features, politely explain: "That\'s a teacher-specific feature. As a student, you can [mention relevant student features]"\n- NEVER reveal quiz/poll answers\n- Guide honest participation' 
-  : '- Answer ONLY teacher-related questions (creating sessions, managing polls, viewing analytics, managing Q&A)\n- If asked about student-only features, politely explain: "That\'s from the student perspective. As a teacher, you can [mention relevant teacher features]"\n- Help create effective sessions\n- Explain analytics and features'}
+  ? '- Answer ONLY student questions (joining sessions, polls, Q&A, feedback)\n- If asked about teacher features: "That\'s a teacher feature. As a student, you can join sessions and participate."\n- NEVER reveal quiz/poll answers\n- Guide honest participation' 
+  : '- Answer ONLY teacher questions (creating sessions, managing rooms, polls, analytics)\n- If asked about student features: "That\'s from student view. As a teacher, you manage sessions and view analytics."\n- Help create engaging sessions'}
 
-${getRoleSpecificFeatures(normalizedRole)}`;
+User Question: "${message}"`;
 
-  const completePrompt = `${systemContext}\n\nUser Question: "${message}"`;
-
-  return completePrompt;
+  return systemContext;
 }
-
-function getRoleSpecificFeatures(role) {
-  if (role === 'teacher') {
-    return `
-For Teachers:
-- Creating and managing rooms
-- Starting and ending sessions
-- Creating polls and quizzes
-- Broadcasting messages to students
-- Viewing real-time responses
-- Analyzing session feedback
-- Tracking student engagement
-- Managing Q&A interactions
-- Reviewing analytics and insights
-`;
-  } else {
-    return `
-For Students:
-- Joining sessions with session codes
-- Participating in polls and quizzes
-- Asking questions (anonymous or identified)
-- Upvoting other questions
-- Providing session feedback
-- Viewing response history
-`;
-  }
-}
-
-// function buildFollowUpPrompt(previousMessage, previousResponse, clarificationRequest) {
-//   return `Previous conversation:
-// User: "${previousMessage}"
-// Assistant: "${previousResponse}"
-
-// User now asks: "${clarificationRequest}"
-
-// Please provide clarification or additional details.`;
-// }
-
-// function buildFeatureHelpPrompt(featureName, role) {
-//   return `Explain how to use the "${featureName}" feature in Classtro for a ${role}.
-
-// Provide:
-// 1. Brief overview (1 sentence)
-// 2. Step-by-step guide (3-5 steps)
-// 3. Pro tip or best practice
-
-// Keep it concise and actionable.`;
-// }
 
 module.exports = {
   buildChatPrompt,
-  // buildFollowUpPrompt,
-  // buildFeatureHelpPrompt,
 };

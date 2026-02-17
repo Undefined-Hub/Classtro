@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import { X, Send, Bot, Minimize2, Maximize2 } from "lucide-react";
 import { useLocation } from "react-router-dom";
 import ChatMessage from "./ChatMessage";
@@ -14,12 +14,12 @@ const ChatBotWindow = ({ isOpen, onClose }) => {
   const isAuthenticated = !!user;
   
   // Get initial suggestions based on auth status and role
-  const getInitialSuggestions = () => {
+  const getInitialSuggestions = useCallback(() => {
     if (!isAuthenticated) {
       // Guest suggestions (before login)
       return [
         "What is Classtro?",
-        "Explain machine learning basics",
+        "How can I improve my study habits?",
         "How does online learning work?"
       ];
     } else if (user.role === 'TEACHER') {
@@ -37,7 +37,7 @@ const ChatBotWindow = ({ isOpen, onClose }) => {
         "How to ask questions anonymously?"
       ];
     }
-  };
+  }, [isAuthenticated, user?.role]);
 
   const [messages, setMessages] = useState([
     {
@@ -69,22 +69,19 @@ const ChatBotWindow = ({ isOpen, onClose }) => {
     }
   }, [isOpen, isMinimized]);
 
-  // Update suggestions when authentication status or role changes
+  // Reset chat when user changes (login/logout/role change)
   useEffect(() => {
-    setMessages((prev) => {
-      if (prev.length > 0 && prev[0].id === 1) {
-        // Update only the first message's suggestions
-        return [
-          {
-            ...prev[0],
-            suggestions: getInitialSuggestions(),
-          },
-          ...prev.slice(1),
-        ];
-      }
-      return prev;
-    });
-  }, [isAuthenticated, user?.role]);
+    // Clear chat history and reset to welcome message with fresh suggestions
+    setMessages([
+      {
+        id: 1,
+        text: "How can I help you today?",
+        isBot: true,
+        timestamp: new Date(),
+        suggestions: getInitialSuggestions(),
+      },
+    ]);
+  }, [user?.id, user?.role, getInitialSuggestions]); // Triggers on user change or role change
 
   // Function to send message to AI and get response
   const sendMessageToAI = async (message, role, page, isAuthenticated) => {
@@ -169,20 +166,20 @@ const ChatBotWindow = ({ isOpen, onClose }) => {
 
   return (
     <div
-      className={`fixed right-6 bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 z-[10000] transition-all duration-300 ${
+      className={`fixed bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 z-[10000] transition-all duration-300 ${
         isMinimized
-          ? "bottom-6 w-[320px] h-[60px]"
-          : "bottom-6 w-[380px] h-[600px] sm:w-[420px] sm:h-[650px]"
+          ? "bottom-4 right-4 w-[280px] sm:w-[320px] h-[60px]"
+          : "bottom-6 right-6 w-[calc(100%-3rem)] sm:w-[420px] md:w-[460px] h-[calc(100vh-3rem)] sm:h-[650px] md:h-[700px]"
       }`}
     >
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-blue-500 to-blue-600 rounded-t-2xl">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
-            <Bot size={24} className="text-white" />
+      <div className="flex items-center justify-between p-3 sm:p-4 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-blue-500 to-blue-600 rounded-t-2xl sm:rounded-t-2xl rounded-t-none">
+        <div className="flex items-center gap-2 sm:gap-3">
+          <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
+            <Bot size={20} className="text-white sm:w-6 sm:h-6" />
           </div>
           <div>
-            <h3 className="text-white font-semibold text-base m-0">
+            <h3 className="text-white font-semibold text-sm sm:text-base m-0">
               Classtro AI Assistant
             </h3>
             <p className="text-blue-100 text-xs m-0">
@@ -191,20 +188,20 @@ const ChatBotWindow = ({ isOpen, onClose }) => {
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 sm:gap-2">
           <button
             onClick={toggleMinimize}
-            className="p-2 rounded-lg text-white/80 hover:text-white hover:bg-white/20 transition-all duration-200 cursor-pointer border-none bg-transparent"
+            className="p-1.5 sm:p-2 rounded-lg text-white/80 hover:text-white hover:bg-white/20 transition-all duration-200 cursor-pointer border-none bg-transparent"
             aria-label={isMinimized ? "Maximize" : "Minimize"}
           >
-            {isMinimized ? <Maximize2 size={18} /> : <Minimize2 size={18} />}
+            {isMinimized ? <Maximize2 size={16} className="sm:w-[18px] sm:h-[18px]" /> : <Minimize2 size={16} className="sm:w-[18px] sm:h-[18px]" />}
           </button>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg text-white/80 hover:text-white hover:bg-white/20 transition-all duration-200 cursor-pointer border-none bg-transparent"
+            className="p-1.5 sm:p-2 rounded-lg text-white/80 hover:text-white hover:bg-white/20 transition-all duration-200 cursor-pointer border-none bg-transparent"
             aria-label="Close"
           >
-            <X size={20} />
+            <X size={18} className="sm:w-5 sm:h-5" />
           </button>
         </div>
       </div>
@@ -212,19 +209,20 @@ const ChatBotWindow = ({ isOpen, onClose }) => {
       {!isMinimized && (
         <>
           {/* Messages Container */}
-          <div className="h-[calc(100%-140px)] overflow-y-auto p-4 bg-gray-50 dark:bg-gray-900">
+          <div className="h-[calc(100%-140px)] sm:h-[calc(100%-140px)] overflow-y-auto p-3 sm:p-4 bg-gray-50 dark:bg-gray-900">
             {messages.map((msg) => (
               <div key={msg.id}>
                 <ChatMessage message={msg.text} isBot={msg.isBot} />
                 
                 {/* Show suggestions only for first bot message */}
                 {msg.isBot && msg.suggestions && msg.id === 1 && (
-                  <div className="flex flex-wrap gap-2 mb-4 ml-11">
+                  <div className="flex flex-wrap gap-2 mb-4 ml-0 sm:ml-11">
                     {msg.suggestions.map((suggestion, idx) => (
                       <button
                         key={idx}
                         onClick={() => handleSuggestionClick(suggestion)}
-                        className="px-3 py-1.5 text-xs bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-full text-gray-700 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-gray-600 hover:border-blue-400 transition-all duration-200"
+                        // className="px-3 py-1.5 text-xs bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-full text-gray-700 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-gray-600 hover:border-blue-400 transition-all duration-200"
+                        className="px-2.5 sm:px-3 py-1.5 text-[11px] sm:text-xs bg-blue-50/50 dark:bg-blue-900/20 border-2 border-blue-200 dark:border-blue-800 rounded-full text-gray-700 dark:text-gray-200 hover:bg-blue-100 dark:hover:bg-blue-800/40 hover:border-blue-400 dark:hover:border-blue-600 hover:shadow-md transition-all duration-200 cursor-pointer"
                       >
                         {suggestion}
                       </button>
@@ -235,19 +233,19 @@ const ChatBotWindow = ({ isOpen, onClose }) => {
             ))}
 
             {isTyping && (
-              <div className="flex gap-3 mb-4 justify-start">
-                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-md">
-                  <Bot size={18} className="text-white" />
+              <div className="flex gap-2 sm:gap-3 mb-3 sm:mb-4 justify-start">
+                <div className="flex-shrink-0 w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-md">
+                  <Bot size={16} className="text-white sm:w-[18px] sm:h-[18px]" />
                 </div>
-                <div className="bg-gray-100 dark:bg-gray-700 rounded-2xl rounded-tl-sm px-4 py-3 shadow-sm">
+                <div className="bg-gray-100 dark:bg-gray-700 rounded-2xl rounded-tl-sm px-3 py-2 sm:px-4 sm:py-3 shadow-sm">
                   <div className="flex gap-1">
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+                    <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-gray-400 rounded-full animate-bounce"></div>
                     <div
-                      className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                      className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-gray-400 rounded-full animate-bounce"
                       style={{ animationDelay: "0.2s" }}
                     ></div>
                     <div
-                      className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                      className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-gray-400 rounded-full animate-bounce"
                       style={{ animationDelay: "0.4s" }}
                     ></div>
                   </div>
@@ -259,7 +257,7 @@ const ChatBotWindow = ({ isOpen, onClose }) => {
           </div>
 
           {/* Input Area */}
-          <div className="p-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+          <div className="p-3 sm:p-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
             <form onSubmit={handleSendMessage} className="flex gap-2">
               <input
                 ref={inputRef}
@@ -267,22 +265,22 @@ const ChatBotWindow = ({ isOpen, onClose }) => {
                 value={inputMessage}
                 onChange={(e) => setInputMessage(e.target.value)}
                 placeholder="Ask me anything..."
-                className="flex-1 px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                className="flex-1 px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
               />
               <button
                 type="submit"
                 disabled={!inputMessage.trim()}
-                className={`p-3 rounded-xl border-none cursor-pointer transition-all duration-200 ${
+                className={`p-2.5 sm:p-3 rounded-xl border-none cursor-pointer transition-all duration-200 ${
                   inputMessage.trim()
                     ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white hover:shadow-lg hover:scale-105"
                     : "bg-gray-200 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed"
                 }`}
                 aria-label="Send message"
               >
-                <Send size={20} />
+                <Send size={18} className="sm:w-5 sm:h-5" />
               </button>
             </form>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 m-0 text-center">
+            <p className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400 mt-2 m-0 text-center">
               AI-powered by Gemini • Ask about Classtro or general topics
             </p>
           </div>
