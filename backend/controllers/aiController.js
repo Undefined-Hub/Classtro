@@ -35,10 +35,10 @@ const handleChatRequest = async (req, res, next) => {
       isAuthenticated: isUserAuthenticated,
     });
 
-    // Call AI service with optimized settings
+    // Call AI service with enhanced formatting config
     const aiResponse = await generateAIResponse(prompt, {
-      temperature: 0.3, // Low temperature for consistent, focused responses
-      maxTokens: 300, // Concise responses only
+      temperature: 0.4, // Slightly higher for natural formatting variety
+      maxTokens: 350, // Allow structured responses with bullets
     });
 
     // Return AI response
