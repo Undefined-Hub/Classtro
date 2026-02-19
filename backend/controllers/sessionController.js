@@ -3,6 +3,11 @@ const Room = require("../models/Room");
 const Poll = require("../models/Polls");
 const Participant = require("../models/Participant");
 const { validateInput } = require("../utils/validateInput");
+const { 
+  trackJoinActivity, 
+  trackLeaveActivity, 
+  trackReconnectActivity 
+} = require("../services/sessionActivityTracker");
 const crypto = require("crypto");
 const {
   sessionIdParamSchema,
@@ -188,14 +193,25 @@ const closeSession = async (req, res, next) => {
       { sessionId: session._id, isActive: true },
       { $set: { isActive: false, closedAt: new Date() } },
     );
-    console.log("Closed polls:", polls.modifiedCount);
+    console.log("✅ Closed polls:", polls.modifiedCount);
 
     // Mark all active participants as left
-    const participants = await Participant.updateMany(
+    const activeParticipants = await Participant.find(
       { sessionId: session._id, isActive: true, leftAt: { $exists: false } },
-      { $set: { leftAt: new Date(), isActive: false } },
     );
-    console.log("Marked participants as left:", participants.modifiedCount);
+    
+    for (const participant of activeParticipants) {
+      await Participant.findByIdAndUpdate(participant._id, {
+        $set: { leftAt: new Date(), isActive: false },
+      });
+      await trackLeaveActivity(
+        session._id,
+        participant._id,
+        participant.userId,
+        "session_ended"
+      );
+    }
+    console.log("✅ Marked participants as left:", activeParticipants.length);
 
     res.json({ message: "Session closed successfully", session });
   } catch (err) {
@@ -271,6 +287,17 @@ const joinSession = async (req, res, next) => {
           participant.isActive = true;
           await participant.save();
 
+          // Track reconnect activity
+          await trackReconnectActivity(
+            session._id,
+            participant._id,
+            userId,
+            {
+              ip: req.ip,
+              deviceInfo: req.headers["user-agent"],
+            }
+          );
+
           // Increment only concurrent count
           await Session.findByIdAndUpdate(session._id, {
             $inc: { participantCount: 1 },
@@ -314,6 +341,17 @@ const joinSession = async (req, res, next) => {
       deviceInfo: req.headers["user-agent"],
       isActive: true,
     });
+
+    // Track join activity
+    await trackJoinActivity(
+      session._id,
+      participant._id,
+      userId,
+      {
+        ip: req.ip,
+        deviceInfo: req.headers["user-agent"],
+      }
+    );
 
     // Update both counts
     await Session.findByIdAndUpdate(session._id, {
@@ -362,13 +400,22 @@ const leaveSession = async (req, res, next) => {
     );
 
     if (participant) {
+      // Track leave activity
+      await trackLeaveActivity(
+        session._id,
+        participant._id,
+        participant.userId,
+        "manual"
+      );
+      
       // Decrement concurrent count only
       await Session.findByIdAndUpdate(session._id, {
         $inc: { participantCount: -1 },
       });
+      res.json({ message: "Left session", success: true });
+    } else {
+      return res.status(404).json({ message: "Participant not found or already left", success: false });
     }
-
-    res.json({ message: "Left session" });
   } catch (err) {
     next(err);
   }

@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
+import api from "../utils/api";
 
 const AnalyticsContext = createContext();
 
@@ -12,6 +13,15 @@ const generateMockData = (sessionData) => {
   const endTime = new Date(now.getTime() - 300000); // 5 minutes ago
 
   return {
+    includedSections: {
+      participants: true,
+      timeline: true,
+      polls: true,
+      qna: true,
+      attendance: true,
+      feedback: true,
+      ai: true,
+    },
     sessionInfo: {
       title: sessionData?.title || "Introduction to Web Development",
       roomName: sessionData?.roomName || "Computer Science 101",
@@ -29,6 +39,7 @@ const generateMockData = (sessionData) => {
         joinAt: startTime.toISOString(),
         leaveAt: endTime.toISOString(),
         duration: 55,
+        attendanceStatus: "full",
       },
       {
         id: 2,
@@ -36,6 +47,7 @@ const generateMockData = (sessionData) => {
         joinAt: new Date(startTime.getTime() + 300000).toISOString(),
         leaveAt: endTime.toISOString(),
         duration: 50,
+        attendanceStatus: "full",
       },
       {
         id: 3,
@@ -43,6 +55,7 @@ const generateMockData = (sessionData) => {
         joinAt: startTime.toISOString(),
         leaveAt: new Date(endTime.getTime() - 600000).toISOString(),
         duration: 45,
+        attendanceStatus: "full",
       },
       {
         id: 4,
@@ -50,6 +63,7 @@ const generateMockData = (sessionData) => {
         joinAt: new Date(startTime.getTime() + 600000).toISOString(),
         leaveAt: endTime.toISOString(),
         duration: 40,
+        attendanceStatus: "partial",
       },
       {
         id: 5,
@@ -57,6 +71,7 @@ const generateMockData = (sessionData) => {
         joinAt: startTime.toISOString(),
         leaveAt: endTime.toISOString(),
         duration: 55,
+        attendanceStatus: "full",
       },
       {
         id: 6,
@@ -64,6 +79,7 @@ const generateMockData = (sessionData) => {
         joinAt: new Date(startTime.getTime() + 900000).toISOString(),
         leaveAt: new Date(endTime.getTime() - 300000).toISOString(),
         duration: 35,
+        attendanceStatus: "partial",
       },
       {
         id: 7,
@@ -71,6 +87,7 @@ const generateMockData = (sessionData) => {
         joinAt: startTime.toISOString(),
         leaveAt: endTime.toISOString(),
         duration: 55,
+        attendanceStatus: "full",
       },
       {
         id: 8,
@@ -78,6 +95,7 @@ const generateMockData = (sessionData) => {
         joinAt: new Date(startTime.getTime() + 1200000).toISOString(),
         leaveAt: endTime.toISOString(),
         duration: 35,
+        attendanceStatus: "partial",
       },
       {
         id: 9,
@@ -85,6 +103,7 @@ const generateMockData = (sessionData) => {
         joinAt: new Date(startTime.getTime() + 150000).toISOString(),
         leaveAt: new Date(endTime.getTime() - 900000).toISOString(),
         duration: 40,
+        attendanceStatus: "partial",
       },
       {
         id: 10,
@@ -92,6 +111,7 @@ const generateMockData = (sessionData) => {
         joinAt: startTime.toISOString(),
         leaveAt: new Date(endTime.getTime() - 1200000).toISOString(),
         duration: 35,
+        attendanceStatus: "partial",
       },
       {
         id: 11,
@@ -99,6 +119,7 @@ const generateMockData = (sessionData) => {
         joinAt: new Date(startTime.getTime() + 450000).toISOString(),
         leaveAt: endTime.toISOString(),
         duration: 47,
+        attendanceStatus: "full",
       },
       {
         id: 12,
@@ -106,6 +127,7 @@ const generateMockData = (sessionData) => {
         joinAt: startTime.toISOString(),
         leaveAt: endTime.toISOString(),
         duration: 55,
+        attendanceStatus: "full",
       },
       {
         id: 13,
@@ -113,6 +135,7 @@ const generateMockData = (sessionData) => {
         joinAt: new Date(startTime.getTime() + 750000).toISOString(),
         leaveAt: new Date(endTime.getTime() - 450000).toISOString(),
         duration: 42,
+        attendanceStatus: "full",
       },
       {
         id: 14,
@@ -120,6 +143,7 @@ const generateMockData = (sessionData) => {
         joinAt: new Date(startTime.getTime() + 1800000).toISOString(),
         leaveAt: endTime.toISOString(),
         duration: 25,
+        attendanceStatus: "partial",
       },
       {
         id: 15,
@@ -127,6 +151,7 @@ const generateMockData = (sessionData) => {
         joinAt: startTime.toISOString(),
         leaveAt: new Date(endTime.getTime() - 1500000).toISOString(),
         duration: 30,
+        attendanceStatus: "partial",
       },
     ],
     participantsTimeline: [
@@ -303,20 +328,60 @@ export const AnalyticsProvider = ({ children }) => {
   const [analyticsData, setAnalyticsData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isGenerated, setIsGenerated] = useState(false);
 
   useEffect(() => {
-    // Simulate API call delay
     const loadData = async () => {
       try {
         setLoading(true);
-        // Simulate network delay
-        await new Promise((resolve) => setTimeout(resolve, 1000));
+        setError(null);
 
+        // Get session ID from location state
+        const sessionId = location.state?.sessionId;
+        
+        if (!sessionId) {
+          setError("No session ID provided");
+          setLoading(false);
+          return;
+        }
+
+        console.log("📊 Fetching analytics for session:", sessionId);
+
+        // Fetch analytics from backend
+        const response = await api.get(
+          `/api/analytics/frontend/${sessionId}`,
+        );
+
+        console.log("Analytics API response:", response.data);
+
+        if (response.data?.success) {
+          if (response.data.generated) {
+            // Analytics exist - use them
+            setAnalyticsData(response.data.data);
+            setIsGenerated(true);
+            console.log("✅ Analytics loaded from cache");
+          } else {
+            // Analytics not generated yet
+            setIsGenerated(false);
+            setError(response.data.message || "Analytics have not been generated yet");
+            console.log("⚠️ Analytics not generated yet");
+            
+            // Use mock data as fallback for UI preview
+            const sessionData = location.state?.sessionData;
+            const mockData = generateMockData(sessionData);
+            setAnalyticsData(mockData);
+          }
+        } else {
+          throw new Error(response.data?.message || "Failed to load analytics");
+        }
+      } catch (err) {
+        console.error("❌ Failed to load analytics:", err);
+        setError(err.response?.data?.message || "Failed to load analytics data");
+        
+        // Use mock data as fallback
         const sessionData = location.state?.sessionData;
         const mockData = generateMockData(sessionData);
         setAnalyticsData(mockData);
-      } catch (err) {
-        setError("Failed to load analytics data");
       } finally {
         setLoading(false);
       }
@@ -325,15 +390,31 @@ export const AnalyticsProvider = ({ children }) => {
     loadData();
   }, [location.state]);
 
+  const refetch = async () => {
+    const sessionId = location.state?.sessionId;
+    if (!sessionId) return;
+
+    setLoading(true);
+    try {
+      const response = await api.get(`/api/analytics/frontend/${sessionId}`);
+      if (response.data?.success && response.data.generated) {
+        setAnalyticsData(response.data.data);
+        setIsGenerated(true);
+        setError(null);
+      }
+    } catch (err) {
+      console.error("Refetch error:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const value = {
     analyticsData,
     loading,
     error,
-    refetch: () => {
-      const sessionData = location.state?.sessionData;
-      const mockData = generateMockData(sessionData);
-      setAnalyticsData(mockData);
-    },
+    isGenerated,
+    refetch,
   };
 
   return (

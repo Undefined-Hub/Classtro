@@ -1,11 +1,63 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Play, BarChart3 } from "lucide-react";
+import { Play, BarChart3, Loader, Clock } from "lucide-react";
+import GenerateAnalyticsModal from "./GenerateAnalyticsModal";
+import api from "../../../utils/api";
+
+const FEEDBACK_COLLECTION_TIMEOUT = 45; // seconds
 
 const SessionCard = ({ session, onSessionClick, selectedRoom, onManageSession }) => {
   const navigate = useNavigate();
   const [showMenu, setShowMenu] = useState(false);
+  const [showGenerateModal, setShowGenerateModal] = useState(false);
+  const [analyticsStatus, setAnalyticsStatus] = useState(null); // null, 'generated', 'not-generated'
+  const [checkingAnalytics, setCheckingAnalytics] = useState(false);
+  const [feedbackTimeoutRemaining, setFeedbackTimeoutRemaining] = useState(0); // seconds
   const menuRef = useRef(null);
+
+  // Check if analytics are generated when session is completed
+  useEffect(() => {
+    if (!session.isActive) {
+      checkAnalyticsStatus();
+    }
+  }, [session._id, session.isActive]);
+
+  // Handle feedback collection timeout countdown
+  useEffect(() => {
+    if (!session.isActive && session.endAt) {
+      // Calculate time elapsed since session ended
+      const endTime = new Date(session.endAt).getTime();
+      const now = new Date().getTime();
+      const elapsedSeconds = Math.floor((now - endTime) / 1000);
+      const remainingSeconds = Math.max(0, FEEDBACK_COLLECTION_TIMEOUT - elapsedSeconds);
+
+      setFeedbackTimeoutRemaining(remainingSeconds);
+
+      // Only set up countdown interval if still in timeout period
+      if (remainingSeconds > 0) {
+        const interval = setInterval(() => {
+          setFeedbackTimeoutRemaining((prev) => Math.max(0, prev - 1));
+        }, 1000);
+
+        return () => clearInterval(interval);
+      }
+    }
+  }, [session.isActive, session.endAt]);
+
+  const checkAnalyticsStatus = async () => {
+    try {
+      setCheckingAnalytics(true);
+      const response = await api.get(`/api/analytics/frontend/${session._id}`);
+      if (response.data?.success) {
+        setAnalyticsStatus(response.data.generated ? 'generated' : 'not-generated');
+      }
+    } catch (err) {
+      console.error('Failed to check analytics status:', err);
+      setAnalyticsStatus('not-generated');
+    } finally {
+      setCheckingAnalytics(false);
+    }
+  };
 
   // Close menu when clicking outside
   useEffect(() => {
@@ -45,8 +97,15 @@ const SessionCard = ({ session, onSessionClick, selectedRoom, onManageSession })
     alert("Delete functionality will be implemented soon!");
   };
 
-  const handleViewAnalytics = (session) => {
-    // Navigate to the analytics with session data as state
+  const handleGenerateAnalytics = (e) => {
+    e.stopPropagation();
+    e.preventDefault();
+    setShowGenerateModal(true);
+  };
+
+  const handleViewAnalytics = (e) => {
+    e.stopPropagation();
+    e.preventDefault();
     navigate("/analytics", {
       state: {
         sessionId: session._id,
@@ -55,6 +114,12 @@ const SessionCard = ({ session, onSessionClick, selectedRoom, onManageSession })
         roomName: selectedRoom ? selectedRoom.name : "",
       },
     });
+  };
+
+  const handleGenerationSuccess = () => {
+    // Update status to generated and navigate
+    setAnalyticsStatus('generated');
+    handleViewAnalytics({ stopPropagation: () => {}, preventDefault: () => {} });
   };
 
   return (
@@ -208,16 +273,53 @@ const SessionCard = ({ session, onSessionClick, selectedRoom, onManageSession })
               Join Live Session
             </button>
           ) : (
-            <button
-              onClick={() => handleViewAnalytics(session)}
-              className="w-full flex items-center justify-center px-4 py-2.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg text-sm font-semibold transition-all duration-200 transform hover:scale-[1.02]"
-            >
-              <BarChart3 className="w-5 h-5 mr-2" />
-              View Analytics
-            </button>
+            <>
+              {checkingAnalytics && !analyticsStatus ? (
+                <button
+                  disabled
+                  className="w-full flex items-center justify-center px-4 py-2.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg text-sm font-semibold transition-all duration-200 transform opacity-75"
+                >
+                  <Loader className="w-5 h-5 mr-2 animate-spin" />
+                  Checking...
+                </button>
+              ) : analyticsStatus === 'generated' ? (
+                <button
+                  onClick={handleViewAnalytics}
+                  className="w-full flex items-center justify-center px-4 py-2.5 bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white rounded-lg text-sm font-semibold transition-all duration-200 transform hover:scale-[1.02] hover:shadow-lg"
+                >
+                  <BarChart3 className="w-5 h-5 mr-2" />
+                  View Analytics
+                </button>
+              ) : feedbackTimeoutRemaining > 0 ? (
+                <button
+                  disabled
+                  className="w-full flex items-center justify-center px-4 py-2.5 bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-400 border border-amber-300 dark:border-amber-700 rounded-lg text-sm font-semibold transition-all duration-200 cursor-wait opacity-75"
+                  title="Waiting for feedback collection to complete"
+                >
+                  <Clock className="w-5 h-5 mr-2" />
+                  Waiting for feedback ({feedbackTimeoutRemaining}s)
+                </button>
+              ) : (
+                <button
+                  onClick={handleGenerateAnalytics}
+                  className="w-full flex items-center justify-center px-4 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-lg text-sm font-semibold transition-all duration-200 transform hover:scale-[1.02] hover:shadow-lg"
+                >
+                  <BarChart3 className="w-5 h-5 mr-2" />
+                  Generate Analytics
+                </button>
+              )}
+            </>
           )}
         </div>
       </div>
+
+      {/* Generate Analytics Modal */}
+      <GenerateAnalyticsModal
+        isOpen={showGenerateModal}
+        onClose={() => setShowGenerateModal(false)}
+        session={session}
+        onSuccess={handleGenerationSuccess}
+      />
     </div>
   );
 };

@@ -12,7 +12,9 @@ import QuizManager from "../../components/Host/sessionWorkspace/QuizManager";
 import ParticipantList from "../../components/Host/sessionWorkspace/ParticipantList";
 import QuickActions from "../../components/Host/sessionWorkspace/QuickActions";
 import QRJoinView from "../../components/Host/sessionWorkspace/QRJoinView";
+import BroadcastModal from "../../components/Host/sessionWorkspace/BroadcastModal";
 import { useHostSession } from "../../context/HostSessionContext.jsx";
+import { useAuth } from "../../context/UserContext.jsx";
 import axios from "axios";
 // * API import
 import api from "../../utils/api.js";
@@ -65,6 +67,7 @@ const SessionWorkspace = () => {
   // * Router hooks
   const navigate = useNavigate();
   const location = useLocation();
+  const { user } = useAuth();
 
   // Use HostSessionContext for all state
   const {
@@ -117,6 +120,11 @@ const SessionWorkspace = () => {
 
   // * Mobile Detection
   const [isMobile, setIsMobile] = useState(false);
+
+  // * Broadcast Modal State
+  const [isBroadcastModalOpen, setIsBroadcastModalOpen] = useState(false);
+  const [broadcastHistory, setBroadcastHistory] = useState([]);
+  const [loadingBroadcasts, setLoadingBroadcasts] = useState(false);
 
   useEffect(() => {
     const checkMobile = () => {
@@ -333,6 +341,59 @@ const SessionWorkspace = () => {
       // Refetch participants list whenever count changes
       fetchParticipants(sessionData.code);
     });
+    // Listen for broadcast reactions in real-time
+    const onReactionUpdate = (payload) => {
+      console.log("[REACTION] Host received broadcast:reaction-update:", payload);
+      
+      setBroadcastHistory((prev) =>
+        prev.map((broadcast) => {
+          if (broadcast._id !== payload.broadcastId) return broadcast;
+
+          // If full reactions array is provided, use it directly (fallback)
+          if (payload.reactions && Array.isArray(payload.reactions)) {
+            console.log("[REACTION] Host: Using full reactions array from backend");
+            return {
+              ...broadcast,
+              reactions: payload.reactions,
+            };
+          }
+
+          // Otherwise, apply incremental update
+          const { emoji, userId, userName, action } = payload;
+          
+          // Create a copy of reactions array to avoid mutations
+          let reactions = broadcast.reactions ? [...broadcast.reactions] : [];
+
+          if (action === "added") {
+            // Add reaction if not already present
+            const exists = reactions.some(
+              (r) => r.userId === userId && r.emoji === emoji
+            );
+            if (!exists) {
+              reactions.push({
+                emoji,
+                userId,
+                userName,
+                timestamp: new Date(),
+              });
+              console.log("[REACTION] Host: Added reaction to broadcast:", payload.broadcastId, emoji);
+            }
+          } else if (action === "removed") {
+            // Remove reaction
+            reactions = reactions.filter(
+              (r) => !(r.userId === userId && r.emoji === emoji)
+            );
+            console.log("[REACTION] Host: Removed reaction from broadcast:", payload.broadcastId, emoji);
+          }
+
+          return {
+            ...broadcast,
+            reactions,
+          };
+        })
+      );
+    };
+    socket.on("broadcast:reaction-update", onReactionUpdate);
     // Optionally listen for broadcasted messages (if needed)
     socket.on("broadcast:message", (payload) => {
       // You can handle incoming broadcast messages here if needed
@@ -348,6 +409,7 @@ const SessionWorkspace = () => {
       socket.off("room:members");
       socket.off("participants:update");
       socket.off("broadcast:message");
+      socket.off("broadcast:reaction-update");
       socket.off("qna:question:created", onCreated);
       socket.off("qna:question:updated", onUpdated);
       socket.off("qna:question:deleted", onDeleted);
@@ -368,8 +430,83 @@ const SessionWorkspace = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionData?.code, fetchParticipants]);
 
-  // Broadcast message to all students
-  const handleBroadcast = (e) => {
+  // Fetch broadcast history
+  const fetchBroadcastHistory = useCallback(async () => {
+    if (!sessionData?._id) return;
+    
+    setLoadingBroadcasts(true);
+    try {
+      const response = await api.get(`/api/sessions/${sessionData._id}/broadcasts`);
+      setBroadcastHistory(response.data.broadcasts || []);
+    } catch (error) {
+      console.error("Error fetching broadcast history:", error);
+    } finally {
+      setLoadingBroadcasts(false);
+    }
+  }, [sessionData?._id]);
+
+  // Load broadcast history when modal opens
+  useEffect(() => {
+    if (isBroadcastModalOpen) {
+      fetchBroadcastHistory();
+    }
+  }, [isBroadcastModalOpen, fetchBroadcastHistory]);
+
+  // Broadcast message to all students (new implementation with file support)
+  const handleBroadcast = async ({ message, files = [] }) => {
+    if (!message.trim()) return;
+    const socket = socketRef.current;
+    if (!socket) {
+      console.error("Socket not connected");
+      throw new Error("Socket not connected");
+    }
+
+    try {
+      // 1. Prepare FormData for file upload
+      const formData = new FormData();
+      formData.append("message", message.trim());
+      
+      // Append files if any
+      files.forEach((file) => {
+        formData.append("files", file);
+      });
+
+      // 2. Save to database via API (with metadata fetching and file upload)
+      const response = await api.post(
+        `/api/sessions/${sessionData._id}/broadcasts?fetchMetadata=true`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+
+      const newBroadcast = response.data.broadcast;
+
+      // 3. Emit to all participants in real-time via socket
+      socket.emit("broadcast:teacher", {
+        code: sessionData.code,
+        teacherId: sessionData.teacherId,
+        message: newBroadcast.message,
+        urls: newBroadcast.urls || [],
+        urlMetadata: newBroadcast.urlMetadata || null,
+        files: newBroadcast.files || [],
+        broadcastId: newBroadcast._id,
+      });
+
+      // 4. Update local broadcast history
+      setBroadcastHistory((prev) => [newBroadcast, ...prev]);
+
+      console.log("Broadcast sent successfully:", newBroadcast);
+    } catch (error) {
+      console.error("Error sending broadcast:", error);
+      throw error;
+    }
+  };
+
+  // Old broadcast handler (keeping for backward compatibility if needed elsewhere)
+  const handleBroadcastOld = (e) => {
     e.preventDefault();
     if (!broadcastMessage.trim()) return;
     const socket = socketRef.current;
@@ -680,12 +817,7 @@ const SessionWorkspace = () => {
               onShowConfirmClose={() => setShowConfirmClose(true)}
               getInitials={getInitials}
               getAvatarColor={getAvatarColor}
-              showBroadcastForm={showBroadcastForm}
-              setShowBroadcastForm={setShowBroadcastForm}
-              broadcastMessage={broadcastMessage}
-              setBroadcastMessage={setBroadcastMessage}
-              broadcastStatus={broadcastStatus}
-              handleBroadcast={handleBroadcast}
+              onOpenBroadcastModal={() => setIsBroadcastModalOpen(true)}
             />
           </div>
         </div>
@@ -757,6 +889,16 @@ const SessionWorkspace = () => {
           </div>
         </div>
       )}
+
+      {/* Broadcast Modal */}
+      <BroadcastModal
+        isOpen={isBroadcastModalOpen}
+        onClose={() => setIsBroadcastModalOpen(false)}
+        onSendBroadcast={handleBroadcast}
+        broadcastHistory={broadcastHistory}
+        loading={loadingBroadcasts}
+        currentUserId={user?.id}
+      />
     </div>
   );
 };

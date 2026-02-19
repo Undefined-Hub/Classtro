@@ -121,12 +121,26 @@ export const ParticipantSessionProvider = ({ children }) => {
     // emit join on connect
     socket.on("connect", () => {
       try {
+        console.log("[SOCKET:ParticipantContext] Connected, emitting join-session:", {
+          code: sessionData.joinCode,
+          participantId: sessionData.participantId,
+        });
         socket.emit("join-session", {
           code: sessionData.joinCode,
           participantId: sessionData.participantId,
           role: "student",
         });
-      } catch {}
+      } catch (err) {
+        console.error("[SOCKET:ParticipantContext] Error on connect:", err);
+      }
+    });
+
+    socket.on("connect_error", (error) => {
+      console.error("[SOCKET:ParticipantContext] Connection error:", error);
+    });
+
+    socket.on("disconnect", (reason) => {
+      console.log("[SOCKET:ParticipantContext] Disconnected reason:", reason);
     });
 
     // on unmount or when sessionData is cleared, leave and disconnect

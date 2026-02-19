@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../context/UserContext.jsx";
 import { useParticipantSession } from "../../context/ParticipantSessionContext.jsx";
 import { STORAGE_KEY } from "../../context/ParticipantSessionContext.jsx";
 import SessionHeader from "../../components/Participant/SessionHeader.jsx";
@@ -7,6 +8,7 @@ import WelcomeContent from "../../components/Participant/WelcomeContent.jsx";
 import ParticipantQnA from "../../components/Participant/ParticipantQnA.jsx";
 import ParticipantLiveQuiz from "../../components/Participant/ParticipantLiveQuiz.jsx";
 import SessionFeedbackModal from "../../components/Participant/SessionFeedbackModal.jsx";
+import BroadcastFeed from "../../components/Participant/BroadcastFeed.jsx";
 // AskQuestionModal was replaced by an inline ask panel inside ParticipantQnA
 import api from "../../utils/api.js";
 import toast from "../../utils/toastUtils.js";
@@ -14,6 +16,7 @@ import { useSubmitDebounce } from "../../hooks/useDebounce.js";
 
 const ParticipantSession = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   // * Context
   const {
     sessionData,
@@ -57,6 +60,9 @@ const ParticipantSession = () => {
 
   const [broadcastMsg, setBroadcastMsg] = useState(null);
   const [participantCount, setParticipantCount] = useState(1);
+
+  // Broadcasts state for announcement feed
+  const [broadcasts, setBroadcasts] = useState([]);
 
   const [questions, setQuestions] = useState([]);
   const [askOpen, setAskOpen] = useState(false);
@@ -122,10 +128,25 @@ const ParticipantSession = () => {
     }
   }, [sessionData, setSessionData, navigate]);
 
+  // * Fetch broadcast history
+  const fetchBroadcastHistory = async () => {
+    if (!sessionData?.session?._id) return;
+    
+    try {
+      const response = await api.get(`/api/sessions/${sessionData.session._id}/broadcasts`);
+      const loadedBroadcasts = response.data.broadcasts || [];
+      console.log("[BROADCAST] Initial broadcasts fetched:", loadedBroadcasts);
+      setBroadcasts(loadedBroadcasts);
+    } catch (error) {
+      console.error("Error fetching broadcast history:", error);
+    }
+  };
+
   // * Fetch session data and participant count on initial load
   useEffect(() => {
     if (sessionData?.joinCode) {
       fetchSessionData(sessionData.joinCode);
+      fetchBroadcastHistory();
     }
   }, [sessionData?.joinCode]);
 
@@ -171,8 +192,75 @@ const ParticipantSession = () => {
 
     // * Session Handlers
     const onBroadcast = (data) => {
+      // Keep the old behavior for backward compatibility
       setBroadcastMsg(
         `${data.message}${data.from ? ` (from ${data.from})` : ""}`,
+      );
+      
+      // Add to broadcasts array for the feed
+      const newBroadcast = {
+        _id: data.broadcastId || Date.now().toString(),
+        message: data.message,
+        urls: data.urls || [],
+        urlMetadata: data.urlMetadata || null,
+        files: data.files || [],
+        reactions: [],
+        views: [],
+        timestamp: data.timestamp || new Date(),
+      };
+      setBroadcasts((prev) => [newBroadcast, ...prev]);
+    };
+
+    // Handle real-time reaction updates
+    const onReactionUpdate = (data) => {
+      console.log("[REACTION] Received broadcast:reaction-update event:", data);
+      
+      setBroadcasts((prev) =>
+        prev.map((broadcast) => {
+          if (broadcast._id !== data.broadcastId) return broadcast;
+
+          // If full reactions array is provided, use it directly (fallback)
+          if (data.reactions && Array.isArray(data.reactions)) {
+            console.log("[REACTION] Using full reactions array from backend");
+            return {
+              ...broadcast,
+              reactions: data.reactions,
+            };
+          }
+
+          // Otherwise, apply incremental update
+          const { emoji, userId, userName, action } = data;
+          
+          // Create a copy of reactions array to avoid mutations
+          let reactions = broadcast.reactions ? [...broadcast.reactions] : [];
+
+          if (action === "added") {
+            // Add reaction if not already present
+            const exists = reactions.some(
+              (r) => r.userId === userId && r.emoji === emoji
+            );
+            if (!exists) {
+              reactions.push({
+                emoji,
+                userId,
+                userName,
+                timestamp: new Date(),
+              });
+              console.log("[REACTION] Added reaction to broadcast:", data.broadcastId, emoji);
+            }
+          } else if (action === "removed") {
+            // Remove reaction
+            reactions = reactions.filter(
+              (r) => !(r.userId === userId && r.emoji === emoji)
+            );
+            console.log("[REACTION] Removed reaction from broadcast:", data.broadcastId, emoji);
+          }
+
+          return {
+            ...broadcast,
+            reactions,
+          };
+        })
       );
     };
 
@@ -353,11 +441,14 @@ const ParticipantSession = () => {
 
     // * ------------------- Socket Listeners -------------------
     try {
+      console.log("[SOCKET] Registering listeners...");
       socket.on("polls:new-poll", onNewPollReceived);
       socket.on("poll:update", onVoteUpdateReceived);
       socket.on("poll:closed", onPollClosed);
 
       socket.on("broadcast:message", onBroadcast);
+      socket.on("broadcast:reaction-update", onReactionUpdate);
+      console.log("[SOCKET] broadcast:reaction-update listener registered");
       socket.on("participants:update", onParticipantsUpdate);
       socket.on("session:ended", onSessionEnded);
 
@@ -388,6 +479,7 @@ const ParticipantSession = () => {
         socket.off("poll:closed", onPollClosed);
 
         socket.off("broadcast:message", onBroadcast);
+        socket.off("broadcast:reaction-update", onReactionUpdate);
         socket.off("participants:update", onParticipantsUpdate);
         socket.off("session:ended", onSessionEnded);
 
@@ -552,6 +644,14 @@ const ParticipantSession = () => {
         roomName={sessionData?.session?.roomId?.name || sessionData?.roomName}
         onSubmit={handleFeedbackSubmit}
         isSubmitting={feedbackSubmitting}
+      />
+
+      {/* Broadcast Feed - Floating Announcement Panel */}
+      <BroadcastFeed 
+        broadcasts={broadcasts} 
+        sessionId={sessionData?.session?._id}
+        userId={user?.id}
+        userName={user?.name}
       />
     </div>
   );

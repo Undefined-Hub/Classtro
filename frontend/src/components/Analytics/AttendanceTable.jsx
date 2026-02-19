@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useAnalyticsData } from "../../context/AnalyticsContext";
+import { exportAnalyticsToPdf } from "../../utils/analyticsPdfExport";
 
 const AttendanceTable = () => {
   const { analyticsData, loading } = useAnalyticsData();
@@ -8,6 +9,11 @@ const AttendanceTable = () => {
   const [isFullscreenOpen, setIsFullscreenOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
+
+  // Calculate session duration for progress bar
+  const sessionDuration = analyticsData?.sessionInfo?.startAt && analyticsData?.sessionInfo?.endAt
+    ? Math.round((new Date(analyticsData.sessionInfo.endAt) - new Date(analyticsData.sessionInfo.startAt)) / (1000 * 60))
+    : 60; // fallback to 60 minutes
 
   if (loading) {
     return (
@@ -28,6 +34,10 @@ const AttendanceTable = () => {
   }
 
   const { participants } = analyticsData;
+
+  const handleExportPdf = () => {
+    exportAnalyticsToPdf(analyticsData);
+  };
 
   const handleSort = (field) => {
     if (sortBy === field) {
@@ -210,9 +220,13 @@ const AttendanceTable = () => {
             </span>
             <div className="flex-1 bg-gray-200 dark:bg-gray-700 rounded-full h-2 max-w-20">
               <div
-                className="bg-blue-500 h-2 rounded-full transition-all duration-300"
+                className={`h-2 rounded-full transition-all duration-300 ${
+                  participant.attendanceStatus === "full"
+                    ? "bg-blue-500"
+                    : "bg-yellow-500"
+                }`}
                 style={{
-                  width: `${Math.min((participant.duration / 60) * 100, 100)}%`,
+                  width: `${Math.min((participant.duration / sessionDuration) * 100, 100)}%`,
                 }}
               ></div>
             </div>
@@ -225,14 +239,14 @@ const AttendanceTable = () => {
             className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
               isStillActive
                 ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
-                : participant.duration >= 45
+                : participant.attendanceStatus === "full"
                   ? "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400"
                   : "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400"
             }`}
           >
             {isStillActive
               ? "Active"
-              : participant.duration >= 45
+              : participant.attendanceStatus === "full"
                 ? "Full"
                 : "Partial"}
           </span>
@@ -453,8 +467,9 @@ const AttendanceTable = () => {
             </button>
           )} */}
           <button
+            onClick={handleExportPdf}
             className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-            title="Download attendance report"
+            title="Export PDF"
           >
             <svg
               className="w-5 h-5"
@@ -467,24 +482,6 @@ const AttendanceTable = () => {
                 strokeLinejoin="round"
                 strokeWidth={2}
                 d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-              />
-            </svg>
-          </button>
-          <button
-            className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-            title="Export to CSV"
-          >
-            <svg
-              className="w-5 h-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
               />
             </svg>
           </button>
@@ -538,7 +535,7 @@ const AttendanceTable = () => {
         <div className="grid grid-cols-3 gap-4 text-center">
           <div>
             <p className="text-lg font-semibold text-gray-900 dark:text-white">
-              {participants.filter((p) => p.duration >= 45).length}
+              {participants.filter((p) => p.attendanceStatus === "full").length}
             </p>
             <p className="text-xs text-gray-500 dark:text-gray-400">
               Full Attendance
