@@ -6,6 +6,7 @@ const {
   getSessionQuizzes,
   getLiveQuizById,
   getQuizResults,
+  validateTemplateForMode,
 } = require("../controllers/liveQuizController");
 const { getParticipantSubmission } = require("../controllers/quizEvaluationController");
 const authenticateJWT = require("../middlewares/authenticateJWT");
@@ -14,6 +15,9 @@ const router = Router();
 
 // All routes require authentication
 router.use(authenticateJWT);
+
+// GET /api/live-quizzes/validate-template - Check if template is compatible with a mode
+router.get("/validate-template", validateTemplateForMode);
 
 // POST /api/live-quizzes - Create a new live quiz (draft)
 router.post("/", createLiveQuiz);

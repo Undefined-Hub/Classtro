@@ -310,18 +310,18 @@ function SessionsPage() {
                 type="text"
                 value={quizName}
                 onChange={(e) => setQuizName(e.target.value)}
-                className="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600"
+                className="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600 text-white"
                 placeholder="Enter quiz name"
               />
             </div>
             <div className="mb-4">
-              <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+              <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300 ">
                 Description
               </label>
               <textarea
                 value={quizDescription}
                 onChange={(e) => setQuizDescription(e.target.value)}
-                className="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600"
+                className="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600 text-white"
                 placeholder="Enter quiz description"
                 rows={3}
               />

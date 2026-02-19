@@ -6,7 +6,15 @@ const Session = require("../models/Session");
 // Create a live quiz (draft state)
 const createLiveQuiz = async (req, res) => {
   try {
-    const { sessionId, templateId, title, questions, durationSeconds } = req.body;
+    const { 
+      sessionId, 
+      templateId, 
+      title, 
+      questions, 
+      durationSeconds,
+      mode = "ONE_SHOT",
+      questionDurationSeconds = 30,
+    } = req.body;
 
     let quizQuestions = questions;
     let quizTitle = title;
@@ -17,6 +25,17 @@ const createLiveQuiz = async (req, res) => {
       if (!template) {
         return res.status(404).json({ error: "Quiz template not found" });
       }
+      
+      // Validate for HOST_CONTROLLED mode - no MULTI_SELECT allowed
+      if (mode === "HOST_CONTROLLED") {
+        const hasMultiSelect = template.questions.some(q => q.type === "MULTI_SELECT");
+        if (hasMultiSelect) {
+          return res.status(400).json({ 
+            error: "HOST_CONTROLLED mode does not support MULTI_SELECT questions. Please use a template with only MCQ questions." 
+          });
+        }
+      }
+      
       // Map template questions to preserve option IDs properly
       quizQuestions = template.questions.map(q => ({
         type: q.type,
@@ -35,6 +54,16 @@ const createLiveQuiz = async (req, res) => {
     if (!quizQuestions || quizQuestions.length === 0) {
       return res.status(400).json({ error: "Quiz must have at least one question" });
     }
+    
+    // Validate mode-specific requirements for provided questions
+    if (mode === "HOST_CONTROLLED" && !templateId) {
+      const hasMultiSelect = quizQuestions.some(q => q.type === "MULTI_SELECT");
+      if (hasMultiSelect) {
+        return res.status(400).json({ 
+          error: "HOST_CONTROLLED mode does not support MULTI_SELECT questions." 
+        });
+      }
+    }
 
     const quiz = await LiveQuiz.create({
       sessionId,
@@ -44,6 +73,10 @@ const createLiveQuiz = async (req, res) => {
       questions: quizQuestions,
       durationSeconds,
       status: "DRAFT",
+      mode,
+      questionDurationSeconds: mode === "HOST_CONTROLLED" ? questionDurationSeconds : undefined,
+      currentQuestionIndex: mode === "HOST_CONTROLLED" ? -1 : undefined,
+      leaderboard: mode === "HOST_CONTROLLED" ? [] : undefined,
     });
 
     res.status(201).json(quiz);
@@ -81,22 +114,37 @@ const launchQuiz = async (req, res) => {
 
     // Emit real-time event to all session participants using session code
     if (req.io) {
-      req.io.to(`session:${session.code}`).emit("quiz:launched", {
-        quizId: quiz._id,
-        title: quiz.title,
-        questions: quiz.questions.map(q => ({
-          _id: q._id,
-          type: q.type,
-          questionText: q.questionText,
-          options: q.options.map(opt => ({
-            _id: opt._id,
-            text: opt.text,
-          })),
-          points: q.points,
-        })), // Don't send correct answers to clients
-        durationSeconds: quiz.durationSeconds,
-        startedAt: quiz.startedAt,
-      });
+      if (quiz.mode === "HOST_CONTROLLED") {
+        // For HOST_CONTROLLED: notify quiz started but don't send questions
+        // Teacher will publish questions one by one via socket
+        req.io.to(`session:${session.code}`).emit("quiz:launched", {
+          quizId: quiz._id,
+          title: quiz.title,
+          mode: quiz.mode,
+          totalQuestions: quiz.questions.length,
+          questionDurationSeconds: quiz.questionDurationSeconds,
+          startedAt: quiz.startedAt,
+        });
+      } else {
+        // For ONE_SHOT: send all questions at once (existing behavior)
+        req.io.to(`session:${session.code}`).emit("quiz:launched", {
+          quizId: quiz._id,
+          title: quiz.title,
+          mode: quiz.mode || "ONE_SHOT",
+          questions: quiz.questions.map(q => ({
+            _id: q._id,
+            type: q.type,
+            questionText: q.questionText,
+            options: q.options.map(opt => ({
+              _id: opt._id,
+              text: opt.text,
+            })),
+            points: q.points,
+          })), // Don't send correct answers to clients
+          durationSeconds: quiz.durationSeconds,
+          startedAt: quiz.startedAt,
+        });
+      }
     }
 
     res.json({ success: true, quiz });
@@ -213,6 +261,62 @@ const getQuizResults = async (req, res) => {
   }
 };
 
+// Validate if a template is compatible with HOST_CONTROLLED mode
+const validateTemplateForMode = async (req, res) => {
+  try {
+    const { templateId, mode } = req.query;
+    
+    if (!templateId) {
+      return res.status(400).json({ error: "templateId is required" });
+    }
+    
+    const template = await QuizTemplate.findById(templateId);
+    if (!template) {
+      return res.status(404).json({ error: "Quiz template not found" });
+    }
+    
+    // Check ownership
+    if (template.createdBy.toString() !== req.user.id) {
+      return res.status(403).json({ error: "Access denied" });
+    }
+    
+    const result = {
+      templateId,
+      title: template.title,
+      totalQuestions: template.questions.length,
+      questionTypes: {},
+      compatible: {
+        ONE_SHOT: true,
+        HOST_CONTROLLED: true,
+      },
+      issues: [],
+    };
+    
+    // Analyze question types
+    template.questions.forEach(q => {
+      result.questionTypes[q.type] = (result.questionTypes[q.type] || 0) + 1;
+    });
+    
+    // Check HOST_CONTROLLED compatibility
+    if (result.questionTypes.MULTI_SELECT > 0) {
+      result.compatible.HOST_CONTROLLED = false;
+      result.issues.push(`Contains ${result.questionTypes.MULTI_SELECT} MULTI_SELECT question(s). HOST_CONTROLLED mode only supports MCQ questions.`);
+    }
+    
+    // If specific mode requested, return simple boolean
+    if (mode) {
+      return res.json({
+        compatible: result.compatible[mode] ?? false,
+        issues: result.compatible[mode] ? [] : result.issues,
+      });
+    }
+    
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
 module.exports = {
   createLiveQuiz,
   launchQuiz,
@@ -220,4 +324,5 @@ module.exports = {
   getSessionQuizzes,
   getLiveQuizById,
   getQuizResults,
+  validateTemplateForMode,
 };

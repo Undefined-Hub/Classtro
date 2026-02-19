@@ -37,7 +37,23 @@ const ParticipantSession = () => {
     setQuizAnswers,
     setQuizSubmitted,
     setQuizResult,
+    
+    // HOST_CONTROLLED quiz context
+    setHcCurrentQuestion,
+    setHcQuestionIndex,
+    setHcTimeRemaining,
+    setHcQuestionDuration,
+    setHcAnswerSubmitted,
+    setHcLeaderboard,
+    setHcFinalResults,
+    setHcShowResults,
   } = useParticipantSession();
+
+  // Ref to track current activeQuiz for socket handlers (avoids stale closure)
+  const activeQuizRef = useRef(activeQuiz);
+  useEffect(() => {
+    activeQuizRef.current = activeQuiz;
+  }, [activeQuiz]);
 
   const [broadcastMsg, setBroadcastMsg] = useState(null);
   const [participantCount, setParticipantCount] = useState(1);
@@ -234,9 +250,22 @@ const ParticipantSession = () => {
         _id: quizData.quizId || quizData._id,
       };
       setActiveQuiz(normalizedQuiz);
+      
+      // Reset ONE_SHOT quiz state
       setQuizAnswers({});
       setQuizSubmitted(false);
       setQuizResult(null);
+      
+      // Reset HOST_CONTROLLED quiz state
+      setHcCurrentQuestion(null);
+      setHcQuestionIndex(-1);
+      setHcTimeRemaining(0);
+      setHcQuestionDuration(0);
+      setHcAnswerSubmitted(false);
+      setHcLeaderboard([]);
+      setHcFinalResults(null);
+      setHcShowResults(false);
+      
       sessionStorage.setItem("activeQuiz", JSON.stringify(normalizedQuiz));
     };
 
@@ -252,6 +281,74 @@ const ParticipantSession = () => {
       setQuizAnswers({});
       setQuizSubmitted(false);
       setQuizResult(null);
+      // Clear HC state
+      setHcCurrentQuestion(null);
+      setHcQuestionIndex(-1);
+      setHcAnswerSubmitted(false);
+      setHcShowResults(false);
+    };
+
+    // HOST_CONTROLLED Quiz Handlers
+    const onHCQuestion = (data) => {
+      console.log("📝 HC Question received:", data);
+      // Use ref to get current activeQuiz (avoids stale closure)
+      const currentQuiz = activeQuizRef.current;
+      if (currentQuiz && data.quizId !== currentQuiz._id) {
+        console.log("🚫 Ignoring HC question from different quiz:", data.quizId, "current:", currentQuiz._id);
+        return;
+      }
+      const { question, questionIndex, totalQuestions, durationSeconds, startedAt } = data;
+      
+      setHcCurrentQuestion(question);
+      setHcQuestionIndex(questionIndex);
+      setHcQuestionDuration(durationSeconds);
+      setHcAnswerSubmitted(false);
+      setHcShowResults(false);
+      
+      // Calculate remaining time
+      const elapsed = Date.now() - new Date(startedAt).getTime();
+      const remaining = Math.max(0, durationSeconds - Math.floor(elapsed / 1000));
+      setHcTimeRemaining(remaining);
+    };
+
+    const onHCAnswerAck = (data) => {
+      console.log("✅ HC Answer acknowledged:", data);
+      // Use ref to get current activeQuiz (avoids stale closure)
+      const currentQuiz = activeQuizRef.current;
+      if (currentQuiz && data.quizId !== currentQuiz._id) {
+        console.log("🚫 Ignoring HC answer ack from different quiz:", data.quizId, "current:", currentQuiz._id);
+        return;
+      }
+      setHcAnswerSubmitted(true);
+    };
+
+    const onHCResults = (data) => {
+      console.log("📊 HC Question results:", data);
+      // Use ref to get current activeQuiz (avoids stale closure)
+      const currentQuiz = activeQuizRef.current;
+      if (currentQuiz && data.quizId !== currentQuiz._id) {
+        console.log("🚫 Ignoring HC results from different quiz:", data.quizId, "current:", currentQuiz._id);
+        return;
+      }
+      const { leaderboard } = data;
+      setHcLeaderboard(leaderboard || []);
+      setHcShowResults(true);
+    };
+
+    const onHCFinal = (data) => {
+      console.log("🏆 HC Final results:", data);
+      // Use ref to get current activeQuiz (avoids stale closure)
+      const currentQuiz = activeQuizRef.current;
+      if (currentQuiz && data.quizId !== currentQuiz._id) {
+        console.log("🚫 Ignoring HC final results from different quiz:", data.quizId, "current:", currentQuiz._id);
+        return;
+      }
+      setHcFinalResults(data);
+      setHcShowResults(true);
+    };
+
+    const onHCError = ({ error }) => {
+      console.error("❌ HC Error:", error);
     };
 
     // * ------------------- Socket Listeners -------------------
@@ -273,6 +370,13 @@ const ParticipantSession = () => {
       // Quiz listeners
       socket.on("quiz:launched", onQuizLaunched);
       socket.on("quiz:closed", onQuizClosed);
+      
+      // HOST_CONTROLLED quiz listeners
+      socket.on("quiz:hc:question", onHCQuestion);
+      socket.on("quiz:hc:answer:ack", onHCAnswerAck);
+      socket.on("quiz:hc:results", onHCResults);
+      socket.on("quiz:hc:final", onHCFinal);
+      socket.on("quiz:hc:error", onHCError);
     } catch (err) {
       console.error("Failed to register socket listeners", err);
     }
@@ -296,6 +400,13 @@ const ParticipantSession = () => {
         // Quiz listeners
         socket.off("quiz:launched", onQuizLaunched);
         socket.off("quiz:closed", onQuizClosed);
+        
+        // HOST_CONTROLLED quiz listeners
+        socket.off("quiz:hc:question", onHCQuestion);
+        socket.off("quiz:hc:answer:ack", onHCAnswerAck);
+        socket.off("quiz:hc:results", onHCResults);
+        socket.off("quiz:hc:final", onHCFinal);
+        socket.off("quiz:hc:error", onHCError);
       } catch (err) {
         /* ignore */
       }

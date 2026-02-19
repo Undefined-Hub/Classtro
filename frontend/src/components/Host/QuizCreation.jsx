@@ -547,7 +547,7 @@ function QuizCreation({ quizName, quizDescription, onBack, existingQuiz }) {
                         </div>
                       </div>
 
-                      <p className="text-sm font-semibold mb-3 text-slate-900 dark:text-white leading-relaxed">
+                      <p className="text-base font-semibold mb-3 text-slate-900 dark:text-white leading-relaxed">
                         {q.questionText}
                       </p>
 
@@ -555,7 +555,7 @@ function QuizCreation({ quizName, quizDescription, onBack, existingQuiz }) {
                         {q.options.map((opt) => (
                           <li 
                             key={opt._id} 
-                            className={`text-xs flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
+                              className={`text-sm flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
                               q.correctAnswers.includes(opt.optionId)
                                 ? "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300 font-semibold border border-emerald-200 dark:border-emerald-800"
                                 : "text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-800/50"

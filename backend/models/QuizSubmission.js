@@ -8,6 +8,11 @@ const AnswerSchema = new mongoose.Schema(
     },
     selectedOptions: [mongoose.Schema.Types.ObjectId],
     answeredAt: Date,
+    // For HOST_CONTROLLED mode: per-question evaluation
+    isCorrect: { type: Boolean, default: null },
+    scoreAwarded: { type: Number, default: 0 },
+    // Response time in milliseconds (for speed bonus calculation)
+    responseTimeMs: { type: Number, default: null },
   },
   { _id: false }
 );
