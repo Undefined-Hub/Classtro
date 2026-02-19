@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import FloatingButton from "./FloatingButton";
 import OptionsPanel from "./OptionsPanel";
 import FeedbackModal from "./FeedbackModal";
+import ChatBotWindow from "./ChatBot/ChatBotWindow.jsx";
 import toast from "../../utils/toastUtils";
 
 // Static list of bug report modules
@@ -29,6 +30,7 @@ const FloatingBugButton = () => {
   const [reportType, setReportType] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [screenshotPreview, setScreenshotPreview] = useState(null);
+  const [showChatBot, setShowChatBot] = useState(false);
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -45,9 +47,18 @@ const FloatingBugButton = () => {
   };
 
   const handleOptionSelect = (type) => {
-    setReportType(type);
-    setShowModal(true);
-    setIsOpen(false);
+    if (type === "chatbot") {
+      setShowChatBot(true);
+      setIsOpen(false);
+    } else {
+      setReportType(type);
+      setShowModal(true);
+      setIsOpen(false);
+    }
+  };
+
+  const handleCloseChatBot = () => {
+    setShowChatBot(false);
   };
 
   const handleCloseModal = () => {
@@ -202,6 +213,8 @@ const FloatingBugButton = () => {
         onSubmit={handleSubmit}
         onRemoveScreenshot={handleRemoveScreenshot}
       />
+
+      <ChatBotWindow isOpen={showChatBot} onClose={handleCloseChatBot} />
     </>
   );
 };

@@ -1,11 +1,20 @@
 import React from "react";
-import { Heart, Bug } from "lucide-react";
+import { Heart, Bug, Bot } from "lucide-react";
 
 const OptionsPanel = ({ isOpen, onOptionSelect }) => {
   if (!isOpen) return null;
 
   return (
     <div className="fixed bottom-[100px] right-6 bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-100 dark:border-gray-700 p-2 min-w-[180px] backdrop-blur-sm z-[9998] transition-all duration-300 sm:min-w-[200px]">
+      <button
+        className="w-full p-4 border-none bg-transparent rounded-xl cursor-pointer flex items-center gap-3 text-sm font-medium text-gray-700 dark:text-gray-200 transition-all duration-200 hover:bg-purple-50 dark:hover:bg-purple-900/30 hover:text-purple-700 dark:hover:text-purple-300 group"
+        onClick={() => onOptionSelect("chatbot")}
+      >
+        <div className="p-2 rounded-lg bg-purple-100 dark:bg-purple-900/50 group-hover:bg-purple-200 dark:group-hover:bg-purple-800/50 transition-colors">
+          <Bot size={18} className="text-purple-600 dark:text-purple-400" />
+        </div>
+        <span>Clario AI</span>
+      </button>
       <button
         className="w-full p-4 border-none bg-transparent rounded-xl cursor-pointer flex items-center gap-3 text-sm font-medium text-gray-700 dark:text-gray-200 transition-all duration-200 hover:bg-blue-50 dark:hover:bg-blue-900/30 hover:text-blue-700 dark:hover:text-blue-300 group"
         onClick={() => onOptionSelect("feedback")}
