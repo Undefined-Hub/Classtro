@@ -14,19 +14,19 @@ const WelcomeContent = ({
   const firstRender = useRef(true);
 
   useEffect(() => {
-    // If a poll or broadcast appears after first render, mark as interacted
-    if (!firstRender.current && (activePoll || broadcastMsg)) {
+    // If a poll appears after first render, mark as interacted
+    if (!firstRender.current && activePoll) {
       setHasInteracted(true);
     }
     // Mark first render as done
     firstRender.current = false;
-  }, [activePoll, broadcastMsg]);
+  }, [activePoll]);
 
   return (
     <div className="max-w-4xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
       <div className="text-center">
         <>
-          {!activePoll && !broadcastMsg && !hasInteracted ? (
+          {!activePoll && !hasInteracted ? (
             <>
               <div className="mx-auto flex items-center justify-center w-20 h-20 sm:w-24 sm:h-24 bg-gradient-to-br from-green-100 via-green-50 to-green-200 dark:from-green-900/40 dark:via-green-900/20 dark:to-green-800 rounded-full shadow-lg mb-8">
                 <svg
@@ -48,20 +48,18 @@ const WelcomeContent = ({
               </p>
               <div className="flex justify-center">
                 <span className="inline-block px-4 py-2 rounded-lg bg-white dark:bg-gray-800 shadow text-sm text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700">
-                  Waiting for host to start a poll or send an announcement
+                  Waiting for host activities
                 </span>
               </div>
             </>
           ) : (
             <>
               <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-900 dark:text-white mb-4 tracking-tight">
-                {activePoll ? "Live Polls" : "Session Updates"}
+                Live Polls
               </h1>
               <div className="flex justify-center">
                 <span className="inline-block px-4 py-2 rounded-lg bg-blue-50 dark:bg-blue-900/20 shadow text-sm text-blue-800 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
-                  {activePoll
-                    ? "Participate in real-time polls from your host"
-                    : "Stay tuned for announcements and activities"}
+                  Participate in real-time polls from your host
                 </span>
               </div>
             </>
@@ -86,24 +84,80 @@ const WelcomeContent = ({
             </span>
           </div>
 
-          <div className="sm:hidden mt-4 px-4">
-            <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3 text-sm space-y-1">
-              <div className="font-medium text-gray-900 dark:text-white truncate">
-                {sessionData?.session?.title || "Session"}
+          <div className="sm:hidden mt-6 px-4">
+            <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4 shadow-sm space-y-3">
+              {/* Session Title */}
+              <div className="flex items-center space-x-2 pb-3 border-b border-gray-200 dark:border-gray-700">
+                <svg
+                  className="w-5 h-5 text-gray-500 dark:text-gray-400 flex-shrink-0"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"
+                  />
+                </svg>
+                <span className="font-semibold text-gray-900 dark:text-white truncate text-base">
+                  {sessionData?.session?.title || "Session"}
+                </span>
               </div>
-              <div className="text-gray-500 dark:text-gray-400">
-                Code: {sessionData?.joinCode || "N/A"}
+              
+              {/* Session Code */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <svg
+                    className="w-4 h-4 text-gray-500 dark:text-gray-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14"
+                    />
+                  </svg>
+                  <span className="text-sm text-gray-500 dark:text-gray-400">Session Code</span>
+                </div>
+                <span className="font-mono text-sm font-semibold text-gray-900 dark:text-white bg-gray-100 dark:bg-gray-700 px-3 py-1 rounded-md">
+                  {sessionData?.joinCode || "N/A"}
+                </span>
               </div>
-              <div className="text-gray-500 dark:text-gray-400 truncate">
-                Host: {sessionData?.session?.teacherId?.name || "Unknown"}
+              
+              {/* Host Name */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <svg
+                    className="w-4 h-4 text-gray-500 dark:text-gray-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                    />
+                  </svg>
+                  <span className="text-sm text-gray-500 dark:text-gray-400">Hosted by</span>
+                </div>
+                <span className="text-sm font-medium text-gray-900 dark:text-white truncate max-w-[160px]">
+                  {sessionData?.session?.teacherId?.name || "Unknown"}
+                </span>
               </div>
             </div>
           </div>
 
           {activePoll && <ParticipantLivePoll />}
 
-          {/* Only show "Waiting for Host" if there is NO activePoll and NO broadcastMsg */}
-          {!activePoll && !broadcastMsg && (
+          {/* Show waiting state when no active poll */}
+          {!activePoll && (
             <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-6 max-w-lg mx-auto mt-8">
               <div className="flex items-center justify-center mb-4">
                 <div className="flex space-x-1">
@@ -121,36 +175,32 @@ const WelcomeContent = ({
               <h3 className="text-lg font-semibold text-blue-900 dark:text-blue-400 mb-2">
                 Waiting for Host
               </h3>
-              <p className="text-blue-800 dark:text-blue-300">
+              <p className="text-blue-800 dark:text-blue-300 text-sm">
                 Please keep this window open
               </p>
-            </div>
-          )}
-
-          {/* Show broadcast message if present and no activePoll */}
-          {!activePoll && broadcastMsg && (
-            <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-6 max-w-lg mx-auto mt-8 animate-fade-in">
-              <div className="flex items-center justify-center mb-2">
-                <svg
-                  className="w-8 h-8 text-yellow-500 dark:text-yellow-400"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
-              </div>
-              <h3 className="text-lg font-semibold text-yellow-900 dark:text-yellow-300 mb-2">
-                Announcement from Host
-              </h3>
-              <p className="text-yellow-800 dark:text-yellow-200 text-lg">
-                {broadcastMsg}
-              </p>
+              {broadcastMsg && (
+                <div className="mt-4 pt-4 border-t border-blue-200 dark:border-blue-700">
+                  <div className="flex items-center justify-center space-x-2 text-blue-700 dark:text-blue-300">
+                    <svg
+                      className="w-5 h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"
+                      />
+                    </svg>
+                    <span className="text-sm font-medium">New announcement available</span>
+                  </div>
+                  <p className="text-xs text-blue-600 dark:text-blue-400 mt-2">
+                    Check the notification bell in the bottom-right corner
+                  </p>
+                </div>
+              )}
             </div>
           )}
 

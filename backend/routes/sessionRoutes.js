@@ -14,7 +14,15 @@ const {
   getParticipantById,
   monitorSessions,
 } = require("../controllers/sessionController");
+const {
+  addBroadcast,
+  getBroadcasts,
+  deleteBroadcast,
+  addReaction,
+  trackView,
+} = require("../controllers/broadcastController");
 const authenticateJWT = require("../middlewares/authenticateJWT");
+const { uploadBroadcastFiles, handleBroadcastUploadError } = require("../config/multer");
 
 // ---------------- PUBLIC / SHARED ROUTES ----------------
 router.get("/code/:code", getSessionByCode); // Get session metadata by join code (public, for join UI) ✅
@@ -35,4 +43,12 @@ router.get("/participants/:participantId", authenticateJWT, getParticipantById);
 
 router.post("/:sessionId/polls", authenticateJWT, createPoll); // Create a poll in a session (teacher only)
 router.get("/:sessionId/polls", authenticateJWT, listPolls); // List all polls in a session (teacher only)
+
+// ---------------- BROADCAST / ANNOUNCEMENT ROUTES ----------------
+router.post("/:sessionId/broadcasts", authenticateJWT, uploadBroadcastFiles, handleBroadcastUploadError, addBroadcast); // Send broadcast with optional files (teacher only)
+router.get("/:sessionId/broadcasts", authenticateJWT, getBroadcasts); // Get all broadcasts for a session
+router.delete("/:sessionId/broadcasts/:broadcastId", authenticateJWT, deleteBroadcast); // Delete a broadcast (teacher only)
+router.post("/:sessionId/broadcasts/:broadcastId/react", authenticateJWT, addReaction); // Add/toggle reaction to broadcast
+router.post("/:sessionId/broadcasts/:broadcastId/view", authenticateJWT, trackView); // Track broadcast view
+
 module.exports = router;

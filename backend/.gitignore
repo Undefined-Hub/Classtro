@@ -31,6 +31,9 @@ jspm_packages/
 dist/
 build/
 
+# Uploads
+uploads/broadcasts/
+
 # Optional npm cache directory
 .npm/
 
@@ -62,6 +65,9 @@ temp/
 # API documentation (if generated)
 *.swagger
 *.apidoc
+
+# Trash folder
+trash/
 
 # Miscellaneous
 *.bak
