@@ -199,10 +199,12 @@ const QuizManager = ({ isParticipantListOpen = true }) => {
     const onHCFinal = (data) => {
       const currentQuiz = activeQuizRef.current;
       if (currentQuiz && currentQuiz._id === data.quizId) {
-        setLeaderboard(data.leaderboard || []);
-        setShowLeaderboard(true);
-        setActiveQuiz(prev => ({ ...prev, status: "CLOSED" }));
-        setPastQuizzes(prev => [{ ...currentQuiz, status: "CLOSED" }, ...prev]);
+        const finalLeaderboard = data.leaderboard || [];
+        // Update activeQuiz with CLOSED status + final leaderboard so renderHCResults() has correct data immediately
+        setActiveQuiz(prev => ({ ...prev, status: "CLOSED", leaderboard: finalLeaderboard }));
+        setPastQuizzes(prev => [{ ...currentQuiz, status: "CLOSED", leaderboard: finalLeaderboard }, ...prev]);
+        // Also fetch submissions so renderHCResults() submission table is populated
+        fetchQuizResults(currentQuiz._id);
       }
     };
 
@@ -404,17 +406,18 @@ const QuizManager = ({ isParticipantListOpen = true }) => {
         </button>
         
         <button
-          onClick={() => setSelectedMode("HOST_CONTROLLED")}
+          // TODO: In development
+          // onClick={() => setSelectedMode("HOST_CONTROLLED")}
           className={`p-4 rounded-xl border-2 transition-all text-left ${
             selectedMode === "HOST_CONTROLLED"
               ? "border-amber-500 bg-amber-50 dark:bg-amber-900/30"
-              : "border-slate-200 dark:border-slate-700 hover:border-slate-300"
+              : "border-slate-200 dark:border-slate-700 hover:border-red-500"
           }`}
         >
-          <div className="font-semibold text-slate-900 dark:text-white mb-1 flex items-center gap-2">
+          <div className="font-semibold text-slate-900 dark:text-white mb-1 flex items-center gap-2 cursor-not-allowed">
             Host Controlled
             <span className="text-xs bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 px-2 py-0.5 rounded-full">
-              Kahoot-style
+              Coming Soon..
             </span>
           </div>
           <div className="text-xs text-slate-500 dark:text-slate-400">
@@ -1002,6 +1005,191 @@ const QuizManager = ({ isParticipantListOpen = true }) => {
     );
   };
 
+  // Render HOST_CONTROLLED closed quiz — historical results view
+  const renderHCResults = () => {
+    const totalQuestions = activeQuiz?.questions?.length || 0;
+    // Use leaderboard stored on the quiz document (always up-to-date from MongoDB)
+    const sortedLeaderboard = activeQuiz?.leaderboard
+      ? [...activeQuiz.leaderboard].sort((a, b) => b.totalScore - a.totalScore)
+      : [];
+    const avgScore = sortedLeaderboard.length > 0
+      ? Math.round(sortedLeaderboard.reduce((s, e) => s + e.totalScore, 0) / sortedLeaderboard.length * 100) / 100
+      : 0;
+    const topScore = sortedLeaderboard[0]?.totalScore?.toFixed(2) ?? "0";
+
+    return (
+      <div className="space-y-6">
+        {/* Quiz Header */}
+        <div className="bg-gradient-to-r from-amber-500 to-orange-500 rounded-2xl p-6 text-white">
+          <div className="flex items-center gap-2 mb-2">
+            <span className="px-2.5 py-1 bg-white/20 rounded-full text-xs font-semibold uppercase tracking-wide">
+              🎮 Host Controlled
+            </span>
+            <span className="px-2.5 py-1 bg-green-500/40 rounded-full text-xs font-semibold">
+              ✅ Completed
+            </span>
+          </div>
+          <h2 className="text-2xl font-bold">{activeQuiz.title}</h2>
+          <p className="text-amber-100 mt-1">
+            {totalQuestions} questions •{" "}
+            {activeQuiz.closedAt
+              ? `Closed ${new Date(activeQuiz.closedAt).toLocaleTimeString()}`
+              : "Finished"}
+          </p>
+
+          {/* Stats */}
+          <div className="grid grid-cols-3 gap-4 mt-6">
+            <div className="bg-white/10 rounded-xl p-4 text-center">
+              <Users className="w-6 h-6 mx-auto mb-2 text-amber-200" />
+              <div className="text-2xl font-bold">{sortedLeaderboard.length}</div>
+              <div className="text-amber-200 text-sm">Participants</div>
+            </div>
+            <div className="bg-white/10 rounded-xl p-4 text-center">
+              <Target className="w-6 h-6 mx-auto mb-2 text-amber-200" />
+              <div className="text-2xl font-bold">{avgScore}</div>
+              <div className="text-amber-200 text-sm">Avg Score</div>
+            </div>
+            <div className="bg-white/10 rounded-xl p-4 text-center">
+              <Trophy className="w-6 h-6 mx-auto mb-2 text-yellow-300" />
+              <div className="text-2xl font-bold">{topScore}</div>
+              <div className="text-amber-200 text-sm">Top Score</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Back Button */}
+        <button
+          onClick={handleBackToQuizList}
+          className="w-full py-3 bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl font-semibold transition-all flex items-center justify-center gap-2 shadow-sm hover:shadow-md"
+        >
+          <ArrowLeft className="w-5 h-5" />
+          Back to Quiz List
+        </button>
+
+        {/* Final Leaderboard */}
+        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden">
+          <div className="p-4 border-b border-slate-200 dark:border-slate-700 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20">
+            <h3 className="font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+              <Trophy className="w-5 h-5 text-amber-500" />
+              Final Leaderboard
+            </h3>
+          </div>
+          <div className="divide-y divide-slate-100 dark:divide-slate-800 max-h-[350px] overflow-y-auto">
+            {sortedLeaderboard.length === 0 ? (
+              <div className="p-8 text-center text-slate-500 dark:text-slate-400">
+                <AlertCircle className="w-10 h-10 mx-auto mb-3 text-slate-300 dark:text-slate-600" />
+                <p>No participants on the leaderboard</p>
+              </div>
+            ) : (
+              sortedLeaderboard.map((entry, index) => (
+                <div
+                  key={entry.participantId}
+                  className="p-4 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800/50"
+                >
+                  <div className="flex items-center gap-3">
+                    <div
+                      className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm ${
+                        index === 0
+                          ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-400"
+                          : index === 1
+                          ? "bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-300"
+                          : index === 2
+                          ? "bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-400"
+                          : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400"
+                      }`}
+                    >
+                      {index === 0 ? "🥇" : index === 1 ? "🥈" : index === 2 ? "🥉" : index + 1}
+                    </div>
+                    <span className="font-medium text-slate-900 dark:text-white">
+                      {entry.participantName}
+                    </span>
+                  </div>
+                  <span className="font-bold text-lg text-amber-600 dark:text-amber-400">
+                    {entry.totalScore.toFixed(2)} pts
+                  </span>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+
+        {/* Detailed Submissions */}
+        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden">
+          <div className="p-4 border-b border-slate-200 dark:border-slate-700">
+            <h3 className="font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+              <BarChart3 className="w-5 h-5 text-slate-500" />
+              Submissions ({quizSubmissions.length})
+            </h3>
+          </div>
+          <div className="divide-y divide-slate-100 dark:divide-slate-800 max-h-[300px] overflow-y-auto">
+            {quizSubmissions.length === 0 ? (
+              <div className="p-8 text-center text-slate-500 dark:text-slate-400">
+                <AlertCircle className="w-10 h-10 mx-auto mb-3 text-slate-300 dark:text-slate-600" />
+                <p>No submissions recorded</p>
+              </div>
+            ) : (
+              quizSubmissions.map((submission, index) => {
+                const answeredCount = submission.answers?.length || 0;
+                const correctCount = submission.answers?.filter((a) => a.isCorrect).length || 0;
+                return (
+                  <div
+                    key={submission._id}
+                    className="p-4 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800/50"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div
+                        className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${
+                          index === 0
+                            ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-400"
+                            : index === 1
+                            ? "bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-300"
+                            : index === 2
+                            ? "bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-400"
+                            : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400"
+                        }`}
+                      >
+                        {index + 1}
+                      </div>
+                      <div>
+                        <div className="font-medium text-slate-900 dark:text-white">
+                          {submission.participantId?.name || "Anonymous"}
+                        </div>
+                        <div className="text-xs text-slate-500 dark:text-slate-400">
+                          {correctCount}/{answeredCount} correct answers
+                          {answeredCount < totalQuestions && (
+                            <span className="text-orange-500 ml-1">
+                              ({totalQuestions - answeredCount} skipped)
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="font-bold text-lg text-slate-900 dark:text-white">
+                        {(submission.score || 0).toFixed(2)} pts
+                      </div>
+                      <div
+                        className={`text-sm font-medium ${
+                          submission.percentage >= 70
+                            ? "text-green-600 dark:text-green-400"
+                            : submission.percentage >= 40
+                            ? "text-yellow-600 dark:text-yellow-400"
+                            : "text-red-600 dark:text-red-400"
+                        }`}
+                      >
+                        {submission.percentage ?? 0}%
+                      </div>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   // Main render
   return (
     <div
@@ -1041,7 +1229,11 @@ const QuizManager = ({ isParticipantListOpen = true }) => {
 
       {/* Content */}
       {activeQuiz ? (
-        activeQuiz.mode === "HOST_CONTROLLED" ? renderHCControlPanel() : renderActiveQuiz()
+        activeQuiz.mode === "HOST_CONTROLLED"
+          ? activeQuiz.status === "CLOSED"
+            ? renderHCResults()
+            : renderHCControlPanel()
+          : renderActiveQuiz()
       ) : (
         <div className="space-y-6">
           {/* Empty State or Past Quizzes */}
@@ -1081,15 +1273,33 @@ const QuizManager = ({ isParticipantListOpen = true }) => {
                     className="p-4 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800/50 cursor-pointer"
                   >
                     <div className="flex items-center gap-3">
-                      <div className="p-2 bg-slate-100 dark:bg-slate-800 rounded-lg">
-                        <FileQuestion className="w-5 h-5 text-slate-500 dark:text-slate-400" />
+                      <div
+                        className={`p-2 rounded-lg ${
+                          quiz.mode === "HOST_CONTROLLED"
+                            ? "bg-amber-100 dark:bg-amber-900/30"
+                            : "bg-slate-100 dark:bg-slate-800"
+                        }`}
+                      >
+                        {quiz.mode === "HOST_CONTROLLED" ? (
+                          <Zap className="w-5 h-5 text-amber-500" />
+                        ) : (
+                          <FileQuestion className="w-5 h-5 text-slate-500 dark:text-slate-400" />
+                        )}
                       </div>
                       <div>
-                        <div className="font-medium text-slate-900 dark:text-white">
-                          {quiz.title}
+                        <div className="flex items-center gap-2">
+                          <div className="font-medium text-slate-900 dark:text-white">
+                            {quiz.title}
+                          </div>
+                          {quiz.mode === "HOST_CONTROLLED" && (
+                            <span className="text-xs bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 px-1.5 py-0.5 rounded-full">
+                              HC
+                            </span>
+                          )}
                         </div>
                         <div className="text-sm text-slate-500 dark:text-slate-400">
-                          {quiz.questions?.length || 0} questions • Closed{" "}
+                          {quiz.questions?.length || 0} questions •{" "}
+                          {quiz.leaderboard?.length || 0} participants • Closed{" "}
                           {new Date(quiz.closedAt).toLocaleTimeString()}
                         </div>
                       </div>
