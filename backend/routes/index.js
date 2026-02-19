@@ -9,6 +9,8 @@ const pollRoutes = require("./pollRoutes");
 const feedbackRoutes = require("./feedbackRoutes");
 const userRoutes = require("./userRoutes");
 const analyticsRoutes = require("./analyticsRoutes");
+const quizTemplateRoutes = require("./quizTemplateRoutes");
+const liveQuizRoutes = require("./liveQuizRoutes");
 const router = Router();
 
 router.use("/api/auth", authRoutes);
@@ -20,4 +22,6 @@ router.use("/api/questions", authenticateJWT, qnaRoutes);
 router.use("/api/polls", pollRoutes);
 router.use("/api/feedback", feedbackRoutes);
 router.use("/api/analytics", authenticateJWT, analyticsRoutes);
+router.use("/api/quiz-templates", quizTemplateRoutes);
+router.use("/api/live-quizzes", liveQuizRoutes);
 module.exports = router;

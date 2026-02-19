@@ -160,7 +160,7 @@ function DashboardLayout() {
                 }`
               }
             >
-              All Quizes
+              All Quizzes
             </NavLink>
           </div>
         </div>

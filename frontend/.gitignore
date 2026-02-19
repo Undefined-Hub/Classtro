@@ -20,6 +20,7 @@ coverage
 # Dependency directories
 node_modules/
 jspm_packages/
+package-lock.json
 
 # Environment variable files
 .env

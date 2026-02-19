@@ -39,6 +39,30 @@ export const ParticipantSessionProvider = ({ children }) => {
       return null;
     }
   });
+  
+  // Quiz state
+  const [activeQuiz, setActiveQuiz] = useState(() => {
+    try {
+      const raw = sessionStorage.getItem("activeQuiz");
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      return null;
+    }
+  });
+  const [quizAnswers, setQuizAnswers] = useState({});
+  const [quizSubmitted, setQuizSubmitted] = useState(false);
+  const [quizResult, setQuizResult] = useState(null);
+  
+  // HOST_CONTROLLED quiz state
+  const [hcCurrentQuestion, setHcCurrentQuestion] = useState(null);
+  const [hcQuestionIndex, setHcQuestionIndex] = useState(-1);
+  const [hcTimeRemaining, setHcTimeRemaining] = useState(0);
+  const [hcQuestionDuration, setHcQuestionDuration] = useState(30);
+  const [hcAnswerSubmitted, setHcAnswerSubmitted] = useState(false);
+  const [hcLeaderboard, setHcLeaderboard] = useState([]);
+  const [hcFinalResults, setHcFinalResults] = useState(null);
+  const [hcShowResults, setHcShowResults] = useState(false);
+  
   useEffect(() => {
     try {
       if (sessionData) {
@@ -57,10 +81,25 @@ export const ParticipantSessionProvider = ({ children }) => {
     try {
       sessionStorage.removeItem(STORAGE_KEY);
       sessionStorage.removeItem("activePoll");
+      sessionStorage.removeItem("activeQuiz");
     } catch {}
 
     setSessionData(null);
     setActivePoll(null);
+    setActiveQuiz(null);
+    setQuizAnswers({});
+    setQuizSubmitted(false);
+    setQuizResult(null);
+    
+    // Clear HOST_CONTROLLED state
+    setHcCurrentQuestion(null);
+    setHcQuestionIndex(-1);
+    setHcTimeRemaining(0);
+    setHcQuestionDuration(30);
+    setHcAnswerSubmitted(false);
+    setHcLeaderboard([]);
+    setHcFinalResults(null);
+    setHcShowResults(false);
   }, []);
 
   // Socket lifecycle - create once per provider when sessionData exists
@@ -74,7 +113,7 @@ export const ParticipantSessionProvider = ({ children }) => {
     const token = localStorage.getItem("accessToken");
     const socket = io(SOCKET_URL, {
       withCredentials: true,
-      extraHeaders: token ? { Authorization: `Bearer ${token}` } : undefined,
+      auth: token ? { token } : undefined,
     });
     socketRef.current = socket;
     setSocketReady(true);
@@ -153,8 +192,36 @@ export const ParticipantSessionProvider = ({ children }) => {
 
       pollId,
       setPollId,
+
+      // Quiz context
+      activeQuiz,
+      setActiveQuiz,
+      quizAnswers,
+      setQuizAnswers,
+      quizSubmitted,
+      setQuizSubmitted,
+      quizResult,
+      setQuizResult,
+      
+      // HOST_CONTROLLED quiz context
+      hcCurrentQuestion,
+      setHcCurrentQuestion,
+      hcQuestionIndex,
+      setHcQuestionIndex,
+      hcTimeRemaining,
+      setHcTimeRemaining,
+      hcQuestionDuration,
+      setHcQuestionDuration,
+      hcAnswerSubmitted,
+      setHcAnswerSubmitted,
+      hcLeaderboard,
+      setHcLeaderboard,
+      hcFinalResults,
+      setHcFinalResults,
+      hcShowResults,
+      setHcShowResults,
     }),
-    [sessionData, activePoll, socketReady],
+    [sessionData, activePoll, socketReady, activeQuiz, quizAnswers, quizSubmitted, quizResult, hcCurrentQuestion, hcQuestionIndex, hcAnswerSubmitted, hcLeaderboard, hcFinalResults, hcShowResults],
   );
 
   return (
