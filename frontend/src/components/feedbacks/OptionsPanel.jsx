@@ -13,7 +13,7 @@ const OptionsPanel = ({ isOpen, onOptionSelect }) => {
         <div className="p-2 rounded-lg bg-purple-100 dark:bg-purple-900/50 group-hover:bg-purple-200 dark:group-hover:bg-purple-800/50 transition-colors">
           <Bot size={18} className="text-purple-600 dark:text-purple-400" />
         </div>
-        <span>AI Chatbot</span>
+        <span>Clario AI</span>
       </button>
       <button
         className="w-full p-4 border-none bg-transparent rounded-xl cursor-pointer flex items-center gap-3 text-sm font-medium text-gray-700 dark:text-gray-200 transition-all duration-200 hover:bg-blue-50 dark:hover:bg-blue-900/30 hover:text-blue-700 dark:hover:text-blue-300 group"

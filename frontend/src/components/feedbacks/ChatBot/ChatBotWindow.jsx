@@ -173,7 +173,7 @@ const ChatBotWindow = ({ isOpen, onClose }) => {
       }`}
     >
       {/* Header */}
-      <div className="flex items-center justify-between p-3 sm:p-4 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-blue-500 to-blue-600 rounded-t-2xl sm:rounded-t-2xl rounded-t-none">
+      <div className="flex items-center justify-between p-3 sm:p-4 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-blue-500 to-blue-600 rounded-t-2xl">
         <div className="flex items-center gap-2 sm:gap-3">
           <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
             <Bot size={20} className="text-white sm:w-6 sm:h-6" />
@@ -209,7 +209,7 @@ const ChatBotWindow = ({ isOpen, onClose }) => {
       {!isMinimized && (
         <>
           {/* Messages Container */}
-          <div className="h-[calc(100%-140px)] sm:h-[calc(100%-140px)] overflow-y-auto p-3 sm:p-4 bg-gray-50 dark:bg-gray-900">
+          <div className="h-[calc(100%-140px)] sm:h-[calc(100%-140px)] overflow-y-auto p-3 sm:p-4 bg-gray-50 dark:bg-gray-900 hide-scrollbar">
             {messages.map((msg) => (
               <div key={msg.id}>
                 <ChatMessage message={msg.text} isBot={msg.isBot} />
