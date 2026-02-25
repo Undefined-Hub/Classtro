@@ -35,10 +35,10 @@ const handleChatRequest = async (req, res, next) => {
       isAuthenticated: isUserAuthenticated,
     });
 
-    // Call AI service with enhanced formatting config
+    // Call AI service with optimized config for gemini-2.5-flash-lite
     const aiResponse = await generateAIResponse(prompt, {
-      temperature: 0.4, // Slightly higher for natural formatting variety
-      maxTokens: 350, // Allow structured responses with bullets
+      temperature: 0.3,
+      maxTokens: 200, // Optimized for structured responses
     });
 
     // Return AI response
