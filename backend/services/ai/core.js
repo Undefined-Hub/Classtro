@@ -5,11 +5,6 @@ const ai = new GoogleGenAI({
   apiKey: process.env.GEMINI_API_KEY,
 });
 
-// Lightweight per-process tracing & simple guard to avoid accidental rapid retries
-let _lastRequestAt = 0; // epoch ms of last successful attempt or attempted call
-let _lastRequestId = null;
-const REQUEST_GUARD_MS = 60_000; // 1 minute guard per process for testing
-
 /**
  * Generate AI response - Provider-agnostic design for future AWS Bedrock migration
  * Includes automatic retry mechanism for 503/UNAVAILABLE errors
@@ -20,11 +15,10 @@ const REQUEST_GUARD_MS = 60_000; // 1 minute guard per process for testing
 async function generateAIResponse(prompt, options = {}) {
   const MAX_RETRIES = 0;
   const RETRY_DELAY_MS = 1000;
-  const RATE_LIMIT_DELAY_MS = 5000; // 429 needs longer backoff
 
   const {
     model = "gemini-2.5-flash-lite",
-    maxTokens = 200,
+    maxTokens = 130,
     temperature = 0.3,
   } = options;
 
@@ -103,18 +97,9 @@ async function generateAIResponse(prompt, options = {}) {
   // Retry loop: Total attempts = MAX_RETRIES + 1 (initial attempt)
   for (let attempt = 1; attempt <= MAX_RETRIES + 1; attempt++) {
     try {
-      // Per-process guard: if we made a call within the last minute, skip calling
-      const now = Date.now();
-      const reqId = `${now}-${Math.random().toString(36).slice(2,8)}`;
-      if (_lastRequestAt && (now - _lastRequestAt) < REQUEST_GUARD_MS) {
-        console.warn(`[AI TRACE] PID:${process.pid} SKIP reqId:${reqId} lastReqId:${_lastRequestId} lastAt:${new Date(_lastRequestAt).toISOString()}`);
-        // Simulate rate-limited fallback without hitting API
-        return "⚠️ Clario is receiving too many requests right now. Please wait a moment and try again.";
-      }
-      // Mark attempt timestamp & id for tracing
-      _lastRequestAt = now;
-      _lastRequestId = reqId;
-      console.log(`[AI TRACE] PID:${process.pid} CALL reqId:${reqId} ts:${new Date(now).toISOString()} model:${model}`);
+      // Generate unique request ID for tracing
+      const reqId = `${Date.now()}-${Math.random().toString(36).slice(2,8)}`;
+      console.log(`[AI TRACE] PID:${process.pid} CALL reqId:${reqId} ts:${new Date().toISOString()} model:${model}`);
 
       // Log prompt details for debugging
       console.log(`[AI DEBUG] prompt.length: ${prompt.length} chars, model: ${model}, maxTokens: ${options.maxTokens || maxTokens}`);

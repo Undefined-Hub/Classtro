@@ -27,18 +27,20 @@ const handleChatRequest = async (req, res, next) => {
       });
     }
 
-    // Build optimized prompt with minimal knowledge injection
-    const prompt = buildChatPrompt({
+    // Build optimized prompt with Hybrid Mode (returns { prompt, intent, maxTokens })
+    const { prompt, intent, maxTokens } = buildChatPrompt({
       role: effectiveRole,
       page: page || 'general',
       message,
       isAuthenticated: isUserAuthenticated,
     });
 
-    // Call AI service with optimized config for gemini-2.5-flash-lite
+    console.log(`[AI MODE] ${intent} | maxTokens: ${maxTokens}`);
+
+    // Call AI service with intent-specific config
     const aiResponse = await generateAIResponse(prompt, {
       temperature: 0.3,
-      maxTokens: 200, // Optimized for structured responses
+      maxTokens, // Dynamic: 180 for CLASSTRO, 130 for GENERAL
     });
 
     // Return AI response
