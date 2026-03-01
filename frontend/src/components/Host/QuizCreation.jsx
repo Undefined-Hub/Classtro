@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { ArrowLeft, Save, PlusCircle, Plus, PlusSquare, Edit, Trash2, BarChart3, Circle, CheckCircle, X, HelpCircle } from "lucide-react";
 import api from "../../utils/api";
+import AIQuizGenerator from "./AIQuizGenerator";
 
 function QuizCreation({ quizName, quizDescription, onBack, existingQuiz }) {
   const [questions, setQuestions] = useState(existingQuiz ? existingQuiz.questions : []);
@@ -61,6 +62,26 @@ function QuizCreation({ quizName, quizDescription, onBack, existingQuiz }) {
     } else {
       alert("Please fill in the question and all options.");
     }
+  };
+
+  // Receive generated questions from AI generator and append to questions state
+  const handleAIQuestionsGenerated = (generated) => {
+    if (!Array.isArray(generated) || generated.length === 0) return;
+    // Ensure optionIds exist and do not conflict
+    const timestamp = Date.now();
+    const normalized = generated.map((q, qi) => ({
+      type: q.type || 'MCQ',
+      questionText: q.questionText || '',
+      options: (q.options || []).map((opt, oi) => ({
+        optionId: opt.optionId || `ai_${timestamp}_${qi}_${oi}`,
+        text: opt.text || String(opt),
+      })),
+      correctAnswers: (q.correctAnswers || []).map(a => String(a)),
+      points: typeof q.points === 'number' ? q.points : 1,
+      negativePoints: typeof q.negativePoints === 'number' ? q.negativePoints : 0,
+    }));
+
+    setQuestions(prev => [...prev, ...normalized]);
   };
 
   const handleOptionChange = (index, value) => {
@@ -341,6 +362,8 @@ function QuizCreation({ quizName, quizDescription, onBack, existingQuiz }) {
                 </div>
                 <h3 className="text-lg font-bold text-slate-900 dark:text-white">Add New Question</h3>
               </div>
+
+              <AIQuizGenerator onGenerate={handleAIQuestionsGenerated} defaultPoints={points} maxQuestions={15} />
 
               <form className="space-y-6">
                 {/* Question Type Selector */}
