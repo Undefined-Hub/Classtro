@@ -1,10 +1,27 @@
 import { useState } from "react";
-import { ArrowLeft, Save, PlusCircle, Plus, PlusSquare, Edit, Trash2, BarChart3, Circle, CheckCircle, X, HelpCircle,Bot, Cpu } from "lucide-react";
+import {
+  ArrowLeft,
+  Save,
+  PlusCircle,
+  Plus,
+  PlusSquare,
+  Edit,
+  Trash2,
+  BarChart3,
+  Circle,
+  CheckCircle,
+  X,
+  HelpCircle,
+  Bot,
+  Cpu,
+} from "lucide-react";
 import api from "../../utils/api";
 import AIQuizGenerator from "./AIQuizGenerator";
 
 function QuizCreation({ quizName, quizDescription, onBack, existingQuiz }) {
-  const [questions, setQuestions] = useState(existingQuiz ? existingQuiz.questions : []);
+  const [questions, setQuestions] = useState(
+    existingQuiz ? existingQuiz.questions : [],
+  );
   const [currentQuestion, setCurrentQuestion] = useState("");
   const [options, setOptions] = useState(["", ""]);
   const [optionIds, setOptionIds] = useState([null, null]); // Store _ids alongside options
@@ -18,7 +35,7 @@ function QuizCreation({ quizName, quizDescription, onBack, existingQuiz }) {
   const [showAIGenerator, setShowAIGenerator] = useState(false);
 
   const handleAddQuestion = () => {
-    if (currentQuestion.trim() && options.every(opt => opt.trim())) {
+    if (currentQuestion.trim() && options.every((opt) => opt.trim())) {
       const optionObjects = options.map((text, index) => {
         // Preserve existing _id if available, otherwise create temp optionId
         if (optionIds[index]) {
@@ -32,7 +49,7 @@ function QuizCreation({ quizName, quizDescription, onBack, existingQuiz }) {
           text,
         };
       });
-      
+
       // Determine correct answers based on question type
       let correctAnswerIndices = [];
       if (questionType === "MULTI_SELECT") {
@@ -40,13 +57,13 @@ function QuizCreation({ quizName, quizDescription, onBack, existingQuiz }) {
       } else {
         correctAnswerIndices = [correctIndex];
       }
-      
+
       const newQuestion = {
         type: questionType,
         questionText: currentQuestion,
         options: optionObjects,
-        correctAnswers: correctAnswerIndices.map(idx => 
-          optionObjects[idx]._id || optionObjects[idx].optionId
+        correctAnswers: correctAnswerIndices.map(
+          (idx) => optionObjects[idx]._id || optionObjects[idx].optionId,
         ),
         points,
         negativePoints: negativePoints || undefined,
@@ -71,18 +88,19 @@ function QuizCreation({ quizName, quizDescription, onBack, existingQuiz }) {
     // Ensure optionIds exist and do not conflict
     const timestamp = Date.now();
     const normalized = generated.map((q, qi) => ({
-      type: q.type || 'MCQ',
-      questionText: q.questionText || '',
+      type: q.type || "MCQ",
+      questionText: q.questionText || "",
       options: (q.options || []).map((opt, oi) => ({
         optionId: opt.optionId || `ai_${timestamp}_${qi}_${oi}`,
         text: opt.text || String(opt),
       })),
-      correctAnswers: (q.correctAnswers || []).map(a => String(a)),
-      points: typeof q.points === 'number' ? q.points : 1,
-      negativePoints: typeof q.negativePoints === 'number' ? q.negativePoints : 0,
+      correctAnswers: (q.correctAnswers || []).map((a) => String(a)),
+      points: typeof q.points === "number" ? q.points : 1,
+      negativePoints:
+        typeof q.negativePoints === "number" ? q.negativePoints : 0,
     }));
 
-    setQuestions(prev => [...prev, ...normalized]);
+    setQuestions((prev) => [...prev, ...normalized]);
   };
 
   const handleOptionChange = (index, value) => {
@@ -113,24 +131,28 @@ function QuizCreation({ quizName, quizDescription, onBack, existingQuiz }) {
   const handleEditQuestion = (index) => {
     const q = questions[index];
     setCurrentQuestion(q.questionText);
-    setOptions(q.options.map(opt => opt.text));
-    setOptionIds(q.options.map(opt => opt._id || null)); // Preserve _ids
+    setOptions(q.options.map((opt) => opt.text));
+    setOptionIds(q.options.map((opt) => opt._id || null)); // Preserve _ids
     setQuestionType(q.type || "MCQ");
-    
+
     // Set correct indices based on question type
     const correctIndicesArray = q.options
       .map((opt, idx) => {
         const optionId = opt._id || opt.optionId;
         return q.correctAnswers.includes(optionId) ? idx : -1;
       })
-      .filter(idx => idx !== -1);
-    
+      .filter((idx) => idx !== -1);
+
     if (q.type === "MULTI_SELECT") {
-      setCorrectIndices(correctIndicesArray.length > 0 ? correctIndicesArray : [0]);
+      setCorrectIndices(
+        correctIndicesArray.length > 0 ? correctIndicesArray : [0],
+      );
     } else {
-      setCorrectIndex(correctIndicesArray.length > 0 ? correctIndicesArray[0] : 0);
+      setCorrectIndex(
+        correctIndicesArray.length > 0 ? correctIndicesArray[0] : 0,
+      );
     }
-    
+
     setPoints(q.points);
     setNegativePoints(q.negativePoints || 0);
     setQuestions(questions.filter((_, i) => i !== index));
@@ -144,7 +166,7 @@ function QuizCreation({ quizName, quizDescription, onBack, existingQuiz }) {
 
   const handleSaveQuiz = async () => {
     setIsSaving(true);
-    
+
     try {
       if (existingQuiz) {
         // Update existing quiz template
@@ -155,13 +177,20 @@ function QuizCreation({ quizName, quizDescription, onBack, existingQuiz }) {
           totalPoints,
           updatedAt: new Date().toISOString(),
         };
-        
-        const res = await api.put(`/api/quiz-templates/${existingQuiz._id}`, quizObject);
-        
+
+        const res = await api.put(
+          `/api/quiz-templates/${existingQuiz._id}`,
+          quizObject,
+        );
+
         if (res.status === 200 || res.status === 204) {
           // Update localStorage as backup
-          const existingQuizzes = JSON.parse(localStorage.getItem('quizzes') || '[]');
-          const index = existingQuizzes.findIndex(q => q._id === existingQuiz._id);
+          const existingQuizzes = JSON.parse(
+            localStorage.getItem("quizzes") || "[]",
+          );
+          const index = existingQuizzes.findIndex(
+            (q) => q._id === existingQuiz._id,
+          );
           if (index !== -1) {
             existingQuizzes[index] = {
               ...existingQuiz,
@@ -172,44 +201,46 @@ function QuizCreation({ quizName, quizDescription, onBack, existingQuiz }) {
               updatedAt: new Date().toISOString(),
             };
           }
-          localStorage.setItem('quizzes', JSON.stringify(existingQuizzes));
-          
+          localStorage.setItem("quizzes", JSON.stringify(existingQuizzes));
+
           alert("Quiz updated successfully!");
           onBack();
           return;
         } else {
-          throw new Error('Failed to update quiz');
+          throw new Error("Failed to update quiz");
         }
       }
 
       // Transform questions to match API format for new quizzes
       const timestamp = Date.now();
-      const transformedQuestions = questions.map(question => ({
+      const transformedQuestions = questions.map((question) => ({
         type: question.type,
         questionText: question.questionText,
         options: question.options.map((option, index) => ({
           optionId: `opt${timestamp}_${index}`,
-          text: option.text
+          text: option.text,
         })),
-        correctAnswers: question.correctAnswers.map(answerId => {
+        correctAnswers: question.correctAnswers.map((answerId) => {
           // Find the option and get its new optionId
-          const optionIndex = question.options.findIndex(opt => opt.optionId === answerId);
+          const optionIndex = question.options.findIndex(
+            (opt) => opt.optionId === answerId,
+          );
           return `opt${timestamp}_${optionIndex}`;
         }),
         points: question.points,
-        negativePoints: question.negativePoints || 0
+        negativePoints: question.negativePoints || 0,
       }));
 
       const quizPayload = {
         title: quizName,
         description: quizDescription,
         roomId: null,
-        questions: transformedQuestions
+        questions: transformedQuestions,
       };
 
       // Make API call
-      const response = await api.post('/api/quiz-templates', quizPayload);
-      
+      const response = await api.post("/api/quiz-templates", quizPayload);
+
       if (response.status === 201) {
         // Save to localStorage as backup
         const quizObject = {
@@ -223,45 +254,57 @@ function QuizCreation({ quizName, quizDescription, onBack, existingQuiz }) {
           createdAt: response.data.createdAt || new Date().toISOString(),
           updatedAt: response.data.updatedAt || new Date().toISOString(),
         };
-        
-        const existingQuizzes = JSON.parse(localStorage.getItem('quizzes') || '[]');
+
+        const existingQuizzes = JSON.parse(
+          localStorage.getItem("quizzes") || "[]",
+        );
         existingQuizzes.push(quizObject);
-        localStorage.setItem('quizzes', JSON.stringify(existingQuizzes));
-        
+        localStorage.setItem("quizzes", JSON.stringify(existingQuizzes));
+
         alert("Quiz saved successfully!");
         onBack();
       } else {
-        throw new Error('Failed to save quiz');
+        throw new Error("Failed to save quiz");
       }
     } catch (error) {
-      console.error('Error saving quiz:', error);
-      console.error('Error response:', error.response?.data);
-      
+      console.error("Error saving quiz:", error);
+      console.error("Error response:", error.response?.data);
+
       // Fallback to localStorage only
       const quizObject = {
         _id: existingQuiz ? existingQuiz._id : `quiz_${Date.now()}`,
         title: quizName,
         description: quizDescription,
-        createdBy: existingQuiz ? existingQuiz.createdBy : "teacherId_placeholder",
+        createdBy: existingQuiz
+          ? existingQuiz.createdBy
+          : "teacherId_placeholder",
         roomId: existingQuiz ? existingQuiz.roomId : null,
         questions,
         totalPoints,
-        createdAt: existingQuiz ? existingQuiz.createdAt : new Date().toISOString(),
+        createdAt: existingQuiz
+          ? existingQuiz.createdAt
+          : new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
-      
-      const existingQuizzes = JSON.parse(localStorage.getItem('quizzes') || '[]');
+
+      const existingQuizzes = JSON.parse(
+        localStorage.getItem("quizzes") || "[]",
+      );
       if (existingQuiz) {
-        const index = existingQuizzes.findIndex(q => q._id === existingQuiz._id);
+        const index = existingQuizzes.findIndex(
+          (q) => q._id === existingQuiz._id,
+        );
         if (index !== -1) {
           existingQuizzes[index] = quizObject;
         }
       } else {
         existingQuizzes.push(quizObject);
       }
-      localStorage.setItem('quizzes', JSON.stringify(existingQuizzes));
-      
-      alert(`API call failed, but quiz saved locally. ${existingQuiz ? "Quiz updated successfully!" : "Quiz saved successfully!"}`);
+      localStorage.setItem("quizzes", JSON.stringify(existingQuizzes));
+
+      alert(
+        `API call failed, but quiz saved locally. ${existingQuiz ? "Quiz updated successfully!" : "Quiz saved successfully!"}`,
+      );
       onBack();
     } finally {
       setIsSaving(false);
@@ -318,7 +361,7 @@ function QuizCreation({ quizName, quizDescription, onBack, existingQuiz }) {
         }
         `}
       </style>
-      
+
       <main className="max-w-7xl mx-auto p-4 lg:p-6">
         {/* Header Section */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
@@ -336,7 +379,10 @@ function QuizCreation({ quizName, quizDescription, onBack, existingQuiz }) {
               </span>
               <span className="text-slate-600 dark:text-slate-400 text-xs flex items-center gap-2 bg-white dark:bg-slate-800 px-3 py-1 rounded-full border border-slate-200 dark:border-slate-700">
                 <BarChart3 size={14} />
-                Total Points: <span className="font-semibold text-slate-900 dark:text-white">{totalPoints}</span>
+                Total Points:{" "}
+                <span className="font-semibold text-slate-900 dark:text-white">
+                  {totalPoints}
+                </span>
               </span>
               <button
                 onClick={() => setShowNegativePoints(!showNegativePoints)}
@@ -351,14 +397,14 @@ function QuizCreation({ quizName, quizDescription, onBack, existingQuiz }) {
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <button 
-              onClick={handleDiscard} 
+            <button
+              onClick={handleDiscard}
               className="px-5 py-1.5 rounded-lg border border-slate-300 dark:border-slate-600 font-semibold hover:bg-slate-100 dark:hover:bg-slate-800 transition-all text-slate-700 dark:text-slate-200 hover:border-slate-400 dark:hover:border-slate-500"
             >
               Discard
             </button>
-            <button 
-              onClick={handleSaveQuiz} 
+            <button
+              onClick={handleSaveQuiz}
               disabled={isSaving}
               className="bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-500 dark:hover:bg-emerald-600 text-white px-6 py-1.5 rounded-lg font-semibold transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
@@ -370,36 +416,52 @@ function QuizCreation({ quizName, quizDescription, onBack, existingQuiz }) {
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
           {/* Question Creation Form */}
-          <section className="lg:col-span-7 xl:col-span-8">
-            <div className="bg-white dark:bg-slate-900 rounded-xl shadow-lg dark:shadow-2xl border border-slate-200 dark:border-slate-800 p-4 lg:p-6">
-              <div className="flex items-center gap-3 mb-6 justify-between">
+          <section className="lg:col-span-5 xl:col-span-7">
+            <div className="bg-white dark:bg-slate-900 rounded-xl shadow-lg dark:shadow-2xl border border-slate-200 dark:border-slate-800 p-4 lg:p-5">
+              <div className="flex items-center gap-3 mb-4 justify-between">
                 <div className="flex justify-center items-center gap-2">
-                  <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
-                  <PlusCircle className="text-blue-600 dark:text-blue-400" size={24} />
-                </div>
-                <h3 className="text-lg font-bold text-slate-900 dark:text-white">Add New Question</h3>
+                  <div className="p-1.5 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+                    <PlusCircle
+                      className="text-blue-600 dark:text-blue-400"
+                      size={20}
+                    />
+                  </div>
+                  <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                    Add New Question
+                  </h3>
                 </div>
                 <button
                   type="button"
                   onClick={() => setShowAIGenerator(!showAIGenerator)}
-                  title={showAIGenerator ? "Hide AI Generator" : "Show AI Generator"}
+                  title={
+                    showAIGenerator ? "Hide AI Generator" : "Show AI Generator"
+                  }
                   className="ml-3 p-2 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all flex items-center gap-2 border-1 border-transparent ai-glow-button"
                 >
-                  <Bot size={18} className="text-purple-600 dark:text-purple-400" />
+                  <Bot
+                    size={18}
+                    className="text-purple-600 dark:text-purple-400"
+                  />
                   <span className="text-sm font-semibold">Clario</span>
                 </button>
               </div>
 
               {showAIGenerator && (
-                <AIQuizGenerator onGenerate={handleAIQuestionsGenerated} defaultPoints={points} maxQuestions={15} />
+                <AIQuizGenerator
+                  onGenerate={handleAIQuestionsGenerated}
+                  defaultPoints={points}
+                  maxQuestions={15}
+                />
               )}
 
-              <form className="space-y-6">
+              <form className="space-y-4">
                 {/* Question Type Selector */}
                 <div>
-                  <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Question Type</label>
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+                    Question Type
+                  </label>
                   <div className="grid grid-cols-2 gap-2">
-                    {["MCQ", "MULTI_SELECT"].map(type => (
+                    {["MCQ", "MULTI_SELECT"].map((type) => (
                       <button
                         key={type}
                         type="button"
@@ -408,7 +470,7 @@ function QuizCreation({ quizName, quizDescription, onBack, existingQuiz }) {
                           setCorrectIndex(0);
                           setCorrectIndices([0]);
                         }}
-                        className={`px-4 py-2.5 rounded-lg font-semibold transition-all ${
+                        className={`px-3 py-2 rounded-lg font-semibold text-sm transition-all ${
                           questionType === type
                             ? "bg-blue-600 dark:bg-blue-500 text-white"
                             : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
@@ -421,21 +483,23 @@ function QuizCreation({ quizName, quizDescription, onBack, existingQuiz }) {
                 </div>
 
                 {/* Question Text */}
-                
-                  <div className="flex items-center justify-between mb-2">
-                    
-                    <div className="flex items-end gap-4">
-                      
-                      <div className="flex items-center gap-3 mt-2">
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                      Question
+                    </label>
+                    <div className="flex items-center gap-3">
                       {showNegativePoints && (
-                        <div className="flex flex-col items-center gap-1">
+                        <div className="flex items-center gap-1.5">
                           <label className="text-xs font-medium text-slate-600 dark:text-slate-400">
-                            Negative
+                            Penalty:
                           </label>
                           <input
                             value={negativePoints}
-                            onChange={(e) => setNegativePoints(parseInt(e.target.value) || 0)}
-                            className="w-16 rounded-md border-2 border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white px-2 py-1 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 transition-all text-center text-sm"
+                            onChange={(e) =>
+                              setNegativePoints(parseInt(e.target.value) || 0)
+                            }
+                            className="w-14 rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white px-2 py-1 focus:ring-1 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 transition-all text-center text-xs"
                             type="number"
                             min="0"
                           />
@@ -446,21 +510,28 @@ function QuizCreation({ quizName, quizDescription, onBack, existingQuiz }) {
                   <textarea
                     value={currentQuestion}
                     onChange={(e) => setCurrentQuestion(e.target.value)}
-                    className="w-full rounded-lg border-2 border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white px-3 py-2.5 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 placeholder-slate-400 dark:placeholder-slate-500 resize-none transition-all"
+                    className="w-full rounded-lg border-2 border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white px-3 py-2 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 placeholder-slate-400 dark:placeholder-slate-500 resize-none transition-all text-sm"
                     placeholder="Enter your question here..."
-                    rows="4"
+                    rows="2"
                   />
                 </div>
 
                 {/* Options */}
-                <div className="space-y-3">
-                  <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
-                    Answer Options {questionType === "MULTI_SELECT" && <span className="text-xs text-blue-600 dark:text-blue-400">(select all correct)</span>}
+                <div className="space-y-2">
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+                    Answer Options{" "}
+                    {questionType === "MULTI_SELECT" && (
+                      <span className="text-xs text-blue-600 dark:text-blue-400">
+                        (select all correct)
+                      </span>
+                    )}
                   </label>
-                  <div className="space-y-3">
+                  <div className="space-y-2">
                     {options.map((option, index) => {
                       const isMulti = questionType === "MULTI_SELECT";
-                      const isSelected = isMulti ? correctIndices.includes(index) : correctIndex === index;
+                      const isSelected = isMulti
+                        ? correctIndices.includes(index)
+                        : correctIndex === index;
                       return (
                         <div key={index} className="relative group">
                           <div className="flex items-center gap-3">
@@ -468,10 +539,14 @@ function QuizCreation({ quizName, quizDescription, onBack, existingQuiz }) {
                               type="button"
                               onClick={() => {
                                 if (isMulti) {
-                                  const newIndices = correctIndices.includes(index)
-                                    ? correctIndices.filter(i => i !== index)
+                                  const newIndices = correctIndices.includes(
+                                    index,
+                                  )
+                                    ? correctIndices.filter((i) => i !== index)
                                     : [...correctIndices, index];
-                                  setCorrectIndices(newIndices.length > 0 ? newIndices : [0]);
+                                  setCorrectIndices(
+                                    newIndices.length > 0 ? newIndices : [0],
+                                  );
                                 } else {
                                   setCorrectIndex(index);
                                 }
@@ -490,7 +565,9 @@ function QuizCreation({ quizName, quizDescription, onBack, existingQuiz }) {
                             </button>
                             <input
                               value={option}
-                              onChange={(e) => handleOptionChange(index, e.target.value)}
+                              onChange={(e) =>
+                                handleOptionChange(index, e.target.value)
+                              }
                               className="flex-1 rounded-lg border-2 border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white px-3 py-2 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 transition-all"
                               placeholder={`Option ${index + 1}`}
                               type="text"
@@ -513,21 +590,21 @@ function QuizCreation({ quizName, quizDescription, onBack, existingQuiz }) {
                     <button
                       type="button"
                       onClick={handleAddOption}
-                      className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 text-sm font-semibold flex items-center gap-2 transition-colors mt-3 px-3 py-2 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg"
+                      className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 text-xs font-semibold flex items-center gap-1.5 transition-colors mt-2 px-2.5 py-1.5 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg"
                     >
-                      <Plus size={16} /> Add Another Option
+                      <Plus size={14} /> Add Another Option
                     </button>
                   )}
                 </div>
 
                 {/* Add Question Button */}
-                <div className="pt-4 flex justify-end">
+                <div className="pt-2 flex justify-end">
                   <button
                     type="button"
                     onClick={handleAddQuestion}
-                    className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white px-6 py-2.5 rounded-lg font-bold transition-all transform active:scale-95 flex items-center gap-2"
+                    className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white px-5 py-2 rounded-lg font-bold transition-all transform active:scale-95 flex items-center gap-2 text-sm"
                   >
-                    <PlusSquare size={20} />
+                    <PlusSquare size={18} />
                     Add Question
                   </button>
                 </div>
@@ -536,7 +613,7 @@ function QuizCreation({ quizName, quizDescription, onBack, existingQuiz }) {
           </section>
 
           {/* Questions List Sidebar */}
-          <aside className="lg:col-span-5 xl:col-span-4">
+          <aside className="lg:col-span-7 xl:col-span-5">
             <div className="sticky top-8 flex flex-col h-[calc(100vh-200px)]">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
@@ -562,67 +639,43 @@ function QuizCreation({ quizName, quizDescription, onBack, existingQuiz }) {
                   </div>
                 ) : (
                   questions.map((q, index) => (
-                    <div 
-                      key={q._id} 
-                      className="bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 p-4 rounded-xl shadow-sm hover:border-blue-400 dark:hover:border-blue-500 hover:shadow-md transition-all group"
+                    <div
+                      key={q._id}
+                      className="bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 p-3 rounded-xl shadow-sm hover:border-blue-400 dark:hover:border-blue-500 hover:shadow-md transition-all group"
                     >
-                      <div className="flex justify-between items-start mb-2">
-                        <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-lg">
-                          {q.type || "MCQ"} • Q{index + 1}
-                        </span>
-                        <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <button 
-                            onClick={() => handleEditQuestion(index)} 
-                            className="p-2 text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-all"
+                      <div className="flex justify-between items-center gap-2 mb-2">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-lg">
+                            {q.type || "MCQ"} • Q{index + 1}
+                          </span>
+                        </div>
+                        <div className="flex gap-1 opacity-50 group-hover:opacity-100 transition-opacity">
+                          <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 px-2 py-1 rounded-lg opacity-100">
+                            +{q.points}
+                          </span>
+                          {(q.negativePoints || 0) > 0 && (
+                            <span className="text-xs font-semibold text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 px-2 py-1 rounded-lg opacity-100">
+                              -{q.negativePoints}
+                            </span>
+                          )}
+                          <button
+                            onClick={() => handleEditQuestion(index)}
+                            className="p-1.5 text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-all"
                           >
-                            <Edit size={16} />
+                            <Edit size={14} />
                           </button>
-                          <button 
-                            onClick={() => handleDeleteQuestion(index)} 
-                            className="p-2 text-slate-400 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all"
+                          <button
+                            onClick={() => handleDeleteQuestion(index)}
+                            className="p-1.5 text-slate-400 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all"
                           >
-                            <Trash2 size={16} />
+                            <Trash2 size={14} />
                           </button>
                         </div>
                       </div>
 
-                      <p className="text-base font-semibold mb-3 text-slate-900 dark:text-white leading-relaxed">
+                      <p className="text-sm font-semibold text-slate-900 dark:text-white leading-relaxed">
                         {q.questionText}
                       </p>
-
-                      <ul className="space-y-2 mb-3">
-                        {q.options.map((opt) => {
-                          const candidates = [opt.optionId, opt._id, opt.id].map(v => v && String(v));
-                          const isCorrect = Array.isArray(q.correctAnswers) && q.correctAnswers.some(ans => candidates.includes(String(ans)));
-
-                          return (
-                            <li
-                              key={opt._id || opt.optionId}
-                              className={`text-sm flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
-                                isCorrect
-                                  ? "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300 font-semibold border border-emerald-200 dark:border-emerald-800"
-                                  : "text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-800/50"
-                              }`}
-                            >
-                              {isCorrect ? (
-                                <CheckCircle size={14} className="flex-shrink-0" />
-                              ) : (
-                                <Circle size={14} className="flex-shrink-0" />
-                              )}
-                              <span className="flex-1">{opt.text}</span>
-                            </li>
-                          );
-                        })}
-                      </ul>
-
-                      <div className="flex justify-between items-center pt-2 border-t-2 border-slate-100 dark:border-slate-800">
-                        <span className="text-xs font-semibold text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-lg">
-                          Points: <span className="text-slate-900 dark:text-white">{q.points}</span>
-                        </span>
-                        <span className="text-xs font-semibold text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-lg">
-                          Penalty: <span className="text-slate-900 dark:text-white">{q.negativePoints || 0}</span>
-                        </span>
-                      </div>
                     </div>
                   ))
                 )}
