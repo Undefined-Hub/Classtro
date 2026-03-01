@@ -818,7 +818,7 @@ function QuizCreation({ quizName, quizDescription, onBack, existingQuiz }) {
 
           {/* Questions List Sidebar - Horizontal Layout */}
           <aside className="lg:col-span-7 xl:col-span-5">
-            <div className="sticky top-8 flex flex-col h-[calc(100vh-200px)]">
+            <div className="sticky top-8 flex flex-col h-[calc(100vh-250px)]">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
                   Added Questions

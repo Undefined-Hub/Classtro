@@ -141,7 +141,7 @@ export default function AIQuizGenerator({
           <input
             value={topic}
             onChange={(e) => setTopic(e.target.value)}
-            placeholder="Enter quiz topic... (e.g., Photosynthesis, World War II)"
+            placeholder="Enter quiz topic... (e.g., React, Java)"
             className="flex-1 bg-transparent text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 outline-none text-base"
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey) {
