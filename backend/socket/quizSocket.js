@@ -1,7 +1,27 @@
 const LiveQuiz = require("../models/LiveQuiz");
 const QuizSubmission = require("../models/QuizSubmission");
 const Session = require("../models/Session");
+const User = require("../models/User");
+const Participant = require("../models/Participant");
 const { evaluateQuizSubmission } = require("../controllers/quizEvaluationController");
+
+// Helper function to get user's display name
+const getUserDisplayName = async (userId, sessionId) => {
+  try {
+    // First try to get name from Participant (works for both guests and logged-in users)
+    if (sessionId) {
+      const participant = await Participant.findOne({ sessionId, userId }).select('name');
+      if (participant?.name) return participant.name;
+    }
+    // Fallback to User model
+    const user = await User.findById(userId).select('name');
+    if (user?.name) return user.name;
+    return "Unknown";
+  } catch (err) {
+    console.error("Error fetching user name:", err);
+    return "Unknown";
+  }
+};
 
 const registerQuizSocket = (io, socket) => {
   console.log("🎯 Quiz socket handlers registered for:", socket.id);
@@ -78,10 +98,11 @@ const registerQuizSocket = (io, socket) => {
       // Notify teacher/session about new submission - use session code for room
       const session = await Session.findById(quiz.sessionId);
       if (session) {
+        const participantName = await getUserDisplayName(userId, quiz.sessionId);
         io.to(`session:${session.code}`).emit("quiz:new:submission", {
           quizId,
           participantId: userId,
-          participantName: socket.user?.name || "Unknown",
+          participantName,
           submissionId: submission._id,
           score: evaluatedSubmission.score,
           total: evaluatedSubmission.maxScore,
@@ -228,7 +249,6 @@ const registerQuizSocket = (io, socket) => {
   socket.on("quiz:hc:answer", async ({ quizId, questionId, selectedOptions }) => {
     try {
       const userId = socket.user?.id;
-      const userName = socket.user?.name || "Unknown";
 
       if (!userId) {
         socket.emit("quiz:hc:error", { error: "Not authenticated" });
@@ -236,6 +256,9 @@ const registerQuizSocket = (io, socket) => {
       }
 
       const quiz = await LiveQuiz.findById(quizId);
+      
+      // Get user's display name from database
+      const userName = await getUserDisplayName(userId, quiz?.sessionId);
       if (!quiz) {
         socket.emit("quiz:hc:error", { error: "Quiz not found" });
         return;

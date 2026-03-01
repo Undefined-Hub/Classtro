@@ -180,6 +180,7 @@ const QuizManager = ({ isParticipantListOpen = true }) => {
         setIsPublishing(false);
         setShowLeaderboard(false);
         setQuestionResults(null);
+        setAnswerCount(0); // Reset answer count for new question
         console.log("📥 Question published:", data.questionIndex + 1);
       }
     };
@@ -406,19 +407,16 @@ const QuizManager = ({ isParticipantListOpen = true }) => {
         </button>
         
         <button
-          // TODO: In development
-          // onClick={() => setSelectedMode("HOST_CONTROLLED")}
+          onClick={() => setSelectedMode("HOST_CONTROLLED")}
           className={`p-4 rounded-xl border-2 transition-all text-left ${
             selectedMode === "HOST_CONTROLLED"
               ? "border-amber-500 bg-amber-50 dark:bg-amber-900/30"
-              : "border-slate-200 dark:border-slate-700 hover:border-red-500"
+              : "border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600"
           }`}
         >
-          <div className="font-semibold text-slate-900 dark:text-white mb-1 flex items-center gap-2 cursor-not-allowed">
+          <div className="font-semibold text-slate-900 dark:text-white mb-1 flex items-center gap-2">
             Host Controlled
-            <span className="text-xs bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 px-2 py-0.5 rounded-full">
-              Coming Soon..
-            </span>
+            <Zap className="w-4 h-4 text-amber-500" />
           </div>
           <div className="text-xs text-slate-500 dark:text-slate-400">
             You control question timing. Speed bonus scoring!
@@ -787,7 +785,7 @@ const QuizManager = ({ isParticipantListOpen = true }) => {
     return (
       <div className="space-y-6">
         {/* Quiz Header */}
-        <div className="bg-gradient-to-r from-amber-500 to-orange-500 rounded-2xl p-6 text-white">
+        <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl p-6 text-white">
           <div className="flex items-start justify-between mb-4">
             <div>
               <div className="flex items-center gap-2 mb-2">
@@ -799,13 +797,13 @@ const QuizManager = ({ isParticipantListOpen = true }) => {
                 </span>
               </div>
               <h2 className="text-2xl font-bold">{activeQuiz.title}</h2>
-              <p className="text-amber-100 mt-1">
+              <p className="text-blue-100 mt-1">
                 Question {Math.max(0, currentQuestionIndex + 1)} of {totalQuestions}
               </p>
             </div>
             <div className="text-right">
               <div className="text-2xl font-bold">{questionDuration}s</div>
-              <div className="text-amber-200 text-sm">per question</div>
+              <div className="text-blue-200 text-sm">per question</div>
             </div>
           </div>
 
@@ -822,14 +820,14 @@ const QuizManager = ({ isParticipantListOpen = true }) => {
           {/* Live Stats */}
           <div className="grid grid-cols-2 gap-4 mt-6">
             <div className="bg-white/10 rounded-xl p-4 text-center">
-              <Users className="w-6 h-6 mx-auto mb-2 text-amber-200" />
+              <Users className="w-6 h-6 mx-auto mb-2 text-blue-200" />
               <div className="text-2xl font-bold">{answerCount}</div>
-              <div className="text-amber-200 text-sm">Answers Received</div>
+              <div className="text-blue-200 text-sm">Answers Received</div>
             </div>
             <div className="bg-white/10 rounded-xl p-4 text-center">
               <Medal className="w-6 h-6 mx-auto mb-2 text-yellow-300" />
               <div className="text-2xl font-bold">{leaderboard.length}</div>
-              <div className="text-amber-200 text-sm">On Leaderboard</div>
+              <div className="text-blue-200 text-sm">On Leaderboard</div>
             </div>
           </div>
         </div>
@@ -839,10 +837,10 @@ const QuizManager = ({ isParticipantListOpen = true }) => {
           <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 p-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-semibold text-slate-900 dark:text-white flex items-center gap-2">
-                <Target className="w-5 h-5 text-amber-500" />
+                <Target className="w-5 h-5 text-blue-500" />
                 Current Question
               </h3>
-              <span className="px-3 py-1 bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 rounded-full text-sm font-medium">
+              <span className="px-3 py-1 bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 rounded-full text-sm font-medium">
                 {currentQuestion.points} points
               </span>
             </div>
@@ -850,25 +848,29 @@ const QuizManager = ({ isParticipantListOpen = true }) => {
               {currentQuestion.questionText}
             </p>
             <div className="grid grid-cols-2 gap-3">
-              {currentQuestion.options?.map((opt, idx) => (
-                <div
-                  key={idx}
-                  className={`p-3 rounded-xl border-2 ${
-                    questionResults
-                      ? opt.isCorrect
-                        ? "border-green-500 bg-green-50 dark:bg-green-900/30"
+              {currentQuestion.options?.map((opt, idx) => {
+                // Check if this option is correct (comparing with questionResults if available)
+                const isCorrectOption = questionResults?.question?.correctAnswers?.includes(opt._id?.toString?.() || opt._id);
+                return (
+                  <div
+                    key={opt._id || idx}
+                    className={`p-3 rounded-xl border-2 ${
+                      questionResults
+                        ? isCorrectOption
+                          ? "border-green-500 bg-green-50 dark:bg-green-900/30"
+                          : "border-slate-200 dark:border-slate-700"
                         : "border-slate-200 dark:border-slate-700"
-                      : "border-slate-200 dark:border-slate-700"
-                  }`}
-                >
-                  <span className="text-slate-700 dark:text-slate-300">
-                    {String.fromCharCode(65 + idx)}. {opt.optionText}
-                  </span>
-                  {questionResults && opt.isCorrect && (
-                    <CheckCircle className="w-4 h-4 text-green-500 inline ml-2" />
-                  )}
-                </div>
-              ))}
+                    }`}
+                  >
+                    <span className="text-slate-700 dark:text-slate-300">
+                      {String.fromCharCode(65 + idx)}. {opt.text || opt.optionText}
+                    </span>
+                    {questionResults && isCorrectOption && (
+                      <CheckCircle className="w-4 h-4 text-green-500 inline ml-2" />
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}
@@ -876,9 +878,9 @@ const QuizManager = ({ isParticipantListOpen = true }) => {
         {/* Question Results / Leaderboard */}
         {showLeaderboard && questionResults && (
           <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden">
-            <div className="p-4 border-b border-slate-200 dark:border-slate-700 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20">
+            <div className="p-4 border-b border-slate-200 dark:border-slate-700 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20">
               <h3 className="font-semibold text-slate-900 dark:text-white flex items-center gap-2">
-                <Trophy className="w-5 h-5 text-amber-500" />
+                <Trophy className="w-5 h-5 text-blue-500" />
                 Leaderboard
               </h3>
             </div>
@@ -911,7 +913,7 @@ const QuizManager = ({ isParticipantListOpen = true }) => {
                         {entry.participantName}
                       </span>
                     </div>
-                    <span className="font-bold text-lg text-amber-600 dark:text-amber-400">
+                    <span className="font-bold text-lg text-blue-600 dark:text-blue-400">
                       {entry.totalScore.toFixed(2)} pts
                     </span>
                   </div>
@@ -967,7 +969,7 @@ const QuizManager = ({ isParticipantListOpen = true }) => {
                 <button
                   onClick={handleCloseCurrentQuestion}
                   disabled={isClosingQuestion}
-                  className="flex-1 py-4 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white rounded-xl font-semibold flex items-center justify-center gap-2 transition-all disabled:opacity-50 shadow-lg"
+                  className="flex-1 py-4 bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 text-white rounded-xl font-semibold flex items-center justify-center gap-2 transition-all disabled:opacity-50 shadow-lg"
                 >
                   {isClosingQuestion ? (
                     <Loader2 className="w-5 h-5 animate-spin" />
@@ -1020,7 +1022,7 @@ const QuizManager = ({ isParticipantListOpen = true }) => {
     return (
       <div className="space-y-6">
         {/* Quiz Header */}
-        <div className="bg-gradient-to-r from-amber-500 to-orange-500 rounded-2xl p-6 text-white">
+        <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl p-6 text-white">
           <div className="flex items-center gap-2 mb-2">
             <span className="px-2.5 py-1 bg-white/20 rounded-full text-xs font-semibold uppercase tracking-wide">
               🎮 Host Controlled
@@ -1030,7 +1032,7 @@ const QuizManager = ({ isParticipantListOpen = true }) => {
             </span>
           </div>
           <h2 className="text-2xl font-bold">{activeQuiz.title}</h2>
-          <p className="text-amber-100 mt-1">
+          <p className="text-blue-100 mt-1">
             {totalQuestions} questions •{" "}
             {activeQuiz.closedAt
               ? `Closed ${new Date(activeQuiz.closedAt).toLocaleTimeString()}`
@@ -1040,19 +1042,19 @@ const QuizManager = ({ isParticipantListOpen = true }) => {
           {/* Stats */}
           <div className="grid grid-cols-3 gap-4 mt-6">
             <div className="bg-white/10 rounded-xl p-4 text-center">
-              <Users className="w-6 h-6 mx-auto mb-2 text-amber-200" />
+              <Users className="w-6 h-6 mx-auto mb-2 text-blue-200" />
               <div className="text-2xl font-bold">{sortedLeaderboard.length}</div>
-              <div className="text-amber-200 text-sm">Participants</div>
+              <div className="text-blue-200 text-sm">Participants</div>
             </div>
             <div className="bg-white/10 rounded-xl p-4 text-center">
-              <Target className="w-6 h-6 mx-auto mb-2 text-amber-200" />
+              <Target className="w-6 h-6 mx-auto mb-2 text-blue-200" />
               <div className="text-2xl font-bold">{avgScore}</div>
-              <div className="text-amber-200 text-sm">Avg Score</div>
+              <div className="text-blue-200 text-sm">Avg Score</div>
             </div>
             <div className="bg-white/10 rounded-xl p-4 text-center">
               <Trophy className="w-6 h-6 mx-auto mb-2 text-yellow-300" />
               <div className="text-2xl font-bold">{topScore}</div>
-              <div className="text-amber-200 text-sm">Top Score</div>
+              <div className="text-blue-200 text-sm">Top Score</div>
             </div>
           </div>
         </div>
@@ -1068,9 +1070,9 @@ const QuizManager = ({ isParticipantListOpen = true }) => {
 
         {/* Final Leaderboard */}
         <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden">
-          <div className="p-4 border-b border-slate-200 dark:border-slate-700 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20">
+          <div className="p-4 border-b border-slate-200 dark:border-slate-700 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20">
             <h3 className="font-semibold text-slate-900 dark:text-white flex items-center gap-2">
-              <Trophy className="w-5 h-5 text-amber-500" />
+              <Trophy className="w-5 h-5 text-blue-500" />
               Final Leaderboard
             </h3>
           </div>
@@ -1104,7 +1106,7 @@ const QuizManager = ({ isParticipantListOpen = true }) => {
                       {entry.participantName}
                     </span>
                   </div>
-                  <span className="font-bold text-lg text-amber-600 dark:text-amber-400">
+                  <span className="font-bold text-lg text-blue-600 dark:text-blue-400">
                     {entry.totalScore.toFixed(2)} pts
                   </span>
                 </div>
