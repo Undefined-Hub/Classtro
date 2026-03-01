@@ -37,6 +37,26 @@ import { CSS } from "@dnd-kit/utilities";
 import api from "../../utils/api";
 import AIQuizGenerator from "./AIQuizGenerator";
 
+const QuestionSkeleton = memo(() => (
+    <div className="bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 p-3 rounded-xl shadow-sm">
+      <div className="flex justify-between items-center gap-2 mb-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          <div className="w-16 h-5 bg-slate-200 dark:bg-slate-800 rounded-lg animate-skeleton-pulse"></div>
+          <div className="w-12 h-5 bg-slate-200 dark:bg-slate-800 rounded-lg animate-skeleton-pulse" style={{ animationDelay: '0.1s' }}></div>
+        </div>
+        <div className="flex gap-1">
+          <div className="w-10 h-5 bg-emerald-100 dark:bg-emerald-900/20 rounded-lg animate-skeleton-pulse" style={{ animationDelay: '0.2s' }}></div>
+          <div className="w-6 h-6 bg-slate-200 dark:bg-slate-800 rounded-lg animate-skeleton-pulse"></div>
+          <div className="w-6 h-6 bg-slate-200 dark:bg-slate-800 rounded-lg animate-skeleton-pulse" style={{ animationDelay: '0.1s' }}></div>
+        </div>
+      </div>
+      <div className="space-y-2">
+        <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-3/4 animate-skeleton-pulse" style={{ animationDelay: '0.15s' }}></div>
+        <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-1/2 animate-skeleton-pulse" style={{ animationDelay: '0.25s' }}></div>
+      </div>
+    </div>
+  ));
+
 function QuizCreation({ quizName, quizDescription, onBack, existingQuiz }) {
   const [questions, setQuestions] = useState(
     existingQuiz 
@@ -57,6 +77,8 @@ function QuizCreation({ quizName, quizDescription, onBack, existingQuiz }) {
   const [showNegativePoints, setShowNegativePoints] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [showAIGenerator, setShowAIGenerator] = useState(false);
+  const [isAIGenerating, setIsAIGenerating] = useState(false);
+  const [aiSkeletonCount, setAiSkeletonCount] = useState(3);
   const [layoutMode, setLayoutMode] = useState("vertical"); // "horizontal" or "vertical"
 
   const sensors = useSensors(
@@ -407,6 +429,9 @@ function QuizCreation({ quizName, quizDescription, onBack, existingQuiz }) {
     }
   };
 
+  // Loading Skeleton Component
+  
+
   // Sortable Question Component
   const SortableQuestion = memo(({ question, index, id, onEdit, onDelete }) => {
     const {
@@ -632,6 +657,11 @@ function QuizCreation({ quizName, quizDescription, onBack, existingQuiz }) {
                   onGenerate={handleAIQuestionsGenerated}
                   defaultPoints={points}
                   maxQuestions={15}
+                  onGenerationStart={(count) => {
+                    setIsAIGenerating(true);
+                    setAiSkeletonCount(count);
+                  }}
+                  onGenerationEnd={() => setIsAIGenerating(false)}
                 />
               )}
 
@@ -799,7 +829,7 @@ function QuizCreation({ quizName, quizDescription, onBack, existingQuiz }) {
               </div>
 
               <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-3">
-                {questions.length === 0 ? (
+                {questions.length === 0 && !isAIGenerating ? (
                   <div className="bg-white dark:bg-slate-900 border-2 border-dashed border-slate-300 dark:border-slate-700 p-6 rounded-xl text-center">
                     <div className="text-slate-400 dark:text-slate-500 mb-2">
                       <PlusCircle size={48} className="mx-auto opacity-30" />
@@ -812,29 +842,40 @@ function QuizCreation({ quizName, quizDescription, onBack, existingQuiz }) {
                     </p>
                   </div>
                 ) : (
-                  <DndContext
-                    sensors={sensors}
-                    collisionDetection={closestCenter}
-                    onDragEnd={handleDragEnd}
-                  >
-                    <SortableContext
-                      items={questionIds}
-                      strategy={verticalListSortingStrategy}
-                    >
+                  <>
+                    {questions.length > 0 && (
+                      <DndContext
+                        sensors={sensors}
+                        collisionDetection={closestCenter}
+                        onDragEnd={handleDragEnd}
+                      >
+                        <SortableContext
+                          items={questionIds}
+                          strategy={verticalListSortingStrategy}
+                        >
+                          <div className="space-y-3">
+                            {questions.map((q, index) => (
+                              <SortableQuestion
+                                key={q._id}
+                                id={q._id}
+                                question={q}
+                                index={index}
+                                onEdit={() => handleEditQuestionById(q._id)}
+                                onDelete={() => handleDeleteQuestionById(q._id)}
+                              />
+                            ))}
+                          </div>
+                        </SortableContext>
+                      </DndContext>
+                    )}
+                    {isAIGenerating && (
                       <div className="space-y-3">
-                        {questions.map((q, index) => (
-                          <SortableQuestion
-                            key={q._id}
-                            id={q._id}
-                            question={q}
-                            index={index}
-                            onEdit={() => handleEditQuestionById(q._id)}
-                            onDelete={() => handleDeleteQuestionById(q._id)}
-                          />
+                        {[...Array(aiSkeletonCount)].map((_, i) => (
+                          <QuestionSkeleton key={`skeleton-${i}`} />
                         ))}
                       </div>
-                    </SortableContext>
-                  </DndContext>
+                    )}
+                  </>
                 )}
               </div>
             </div>
@@ -879,6 +920,11 @@ function QuizCreation({ quizName, quizDescription, onBack, existingQuiz }) {
                     onGenerate={handleAIQuestionsGenerated}
                     defaultPoints={points}
                     maxQuestions={15}
+                    onGenerationStart={(count) => {
+                      setIsAIGenerating(true);
+                      setAiSkeletonCount(count);
+                    }}
+                    onGenerationEnd={() => setIsAIGenerating(false)}
                   />
                 )}
 
@@ -1045,7 +1091,7 @@ function QuizCreation({ quizName, quizDescription, onBack, existingQuiz }) {
               </div>
 
               <div className="space-y-3">
-                {questions.length === 0 ? (
+                {questions.length === 0 && !isAIGenerating ? (
                   <div className="bg-white dark:bg-slate-900 border-2 border-dashed border-slate-300 dark:border-slate-700 p-6 rounded-xl text-center">
                     <div className="text-slate-400 dark:text-slate-500 mb-2">
                       <PlusCircle size={48} className="mx-auto opacity-30" />
@@ -1058,29 +1104,40 @@ function QuizCreation({ quizName, quizDescription, onBack, existingQuiz }) {
                     </p>
                   </div>
                 ) : (
-                  <DndContext
-                    sensors={sensors}
-                    collisionDetection={closestCenter}
-                    onDragEnd={handleDragEnd}
-                  >
-                    <SortableContext
-                      items={questionIds}
-                      strategy={verticalListSortingStrategy}
-                    >
+                  <>
+                    {questions.length > 0 && (
+                      <DndContext
+                        sensors={sensors}
+                        collisionDetection={closestCenter}
+                        onDragEnd={handleDragEnd}
+                      >
+                        <SortableContext
+                          items={questionIds}
+                          strategy={verticalListSortingStrategy}
+                        >
+                          <div className="space-y-3">
+                            {questions.map((q, index) => (
+                              <SortableQuestion
+                                key={q._id}
+                                id={q._id}
+                                question={q}
+                                index={index}
+                                onEdit={() => handleEditQuestionById(q._id)}
+                                onDelete={() => handleDeleteQuestionById(q._id)}
+                              />
+                            ))}
+                          </div>
+                        </SortableContext>
+                      </DndContext>
+                    )}
+                    {isAIGenerating && (
                       <div className="space-y-3">
-                        {questions.map((q, index) => (
-                          <SortableQuestion
-                            key={q._id}
-                            id={q._id}
-                            question={q}
-                            index={index}
-                            onEdit={() => handleEditQuestionById(q._id)}
-                            onDelete={() => handleDeleteQuestionById(q._id)}
-                          />
+                        {[...Array(aiSkeletonCount)].map((_, i) => (
+                          <QuestionSkeleton key={`skeleton-${i}`} />
                         ))}
                       </div>
-                    </SortableContext>
-                  </DndContext>
+                    )}
+                  </>
                 )}
               </div>
             </section>

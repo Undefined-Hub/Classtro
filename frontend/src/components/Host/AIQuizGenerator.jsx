@@ -15,6 +15,8 @@ export default function AIQuizGenerator({
   onGenerate,
   defaultPoints = 1,
   maxQuestions = 10,
+  onGenerationStart,
+  onGenerationEnd,
 }) {
   const [topic, setTopic] = useState("");
   const [keywords, setKeywords] = useState("");
@@ -49,6 +51,7 @@ export default function AIQuizGenerator({
 
     setIsGenerating(true);
     setError(null);
+    if (onGenerationStart) onGenerationStart(count);
     try {
       const payload = {
         topic: topic.trim(),
@@ -108,6 +111,7 @@ export default function AIQuizGenerator({
       );
     } finally {
       setIsGenerating(false);
+      if (onGenerationEnd) onGenerationEnd();
     }
   };
 
