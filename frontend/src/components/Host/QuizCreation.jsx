@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ArrowLeft, Save, PlusCircle, Plus, PlusSquare, Edit, Trash2, BarChart3, Circle, CheckCircle, X, HelpCircle } from "lucide-react";
+import { ArrowLeft, Save, PlusCircle, Plus, PlusSquare, Edit, Trash2, BarChart3, Circle, CheckCircle, X, HelpCircle,Bot, Cpu } from "lucide-react";
 import api from "../../utils/api";
 import AIQuizGenerator from "./AIQuizGenerator";
 
@@ -9,13 +9,13 @@ function QuizCreation({ quizName, quizDescription, onBack, existingQuiz }) {
   const [options, setOptions] = useState(["", ""]);
   const [optionIds, setOptionIds] = useState([null, null]); // Store _ids alongside options
   const [questionType, setQuestionType] = useState("MCQ");
-  const [questionMode, setQuestionMode] = useState('both'); // 'both' | 'mcq' | 'multi'
   const [correctIndex, setCorrectIndex] = useState(0);
   const [correctIndices, setCorrectIndices] = useState([0]); // For MULTI_SELECT
   const [points, setPoints] = useState(1);
   const [negativePoints, setNegativePoints] = useState(0);
   const [showNegativePoints, setShowNegativePoints] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [showAIGenerator, setShowAIGenerator] = useState(false);
 
   const handleAddQuestion = () => {
     if (currentQuestion.trim() && options.every(opt => opt.trim())) {
@@ -297,6 +297,25 @@ function QuizCreation({ quizName, quizDescription, onBack, existingQuiz }) {
         .dark .custom-scrollbar::-webkit-scrollbar-thumb:hover {
           background: #64748b;
         }
+        
+        @keyframes glow-border {
+          0%, 100% {
+            box-shadow: 0 0 5px rgba(147, 51, 234, 0.3), 0 0 10px rgba(147, 51, 234, 0.2);
+            border-color: rgba(147, 51, 234, 0.4);
+          }
+          50% {
+            box-shadow: 0 0 15px rgba(147, 51, 234, 0.5), 0 0 25px rgba(147, 51, 234, 0.3), 0 0 35px rgba(147, 51, 234, 0.1);
+            border-color: rgba(147, 51, 234, 0.7);
+          }
+        }
+        
+        .dark .ai-glow-button {
+          animation: glow-border 3s ease-in-out infinite;
+        }
+        
+        .ai-glow-button {
+          animation: glow-border 3s ease-in-out infinite;
+        }
         `}
       </style>
       
@@ -353,77 +372,60 @@ function QuizCreation({ quizName, quizDescription, onBack, existingQuiz }) {
           {/* Question Creation Form */}
           <section className="lg:col-span-7 xl:col-span-8">
             <div className="bg-white dark:bg-slate-900 rounded-xl shadow-lg dark:shadow-2xl border border-slate-200 dark:border-slate-800 p-4 lg:p-6">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+              <div className="flex items-center gap-3 mb-6 justify-between">
+                <div className="flex justify-center items-center gap-2">
+                  <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
                   <PlusCircle className="text-blue-600 dark:text-blue-400" size={24} />
                 </div>
                 <h3 className="text-lg font-bold text-slate-900 dark:text-white">Add New Question</h3>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowAIGenerator(!showAIGenerator)}
+                  title={showAIGenerator ? "Hide AI Generator" : "Show AI Generator"}
+                  className="ml-3 p-2 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all flex items-center gap-2 border-1 border-transparent ai-glow-button"
+                >
+                  <Bot size={18} className="text-purple-600 dark:text-purple-400" />
+                  <span className="text-sm font-semibold">Clario</span>
+                </button>
               </div>
 
-              <AIQuizGenerator onGenerate={handleAIQuestionsGenerated} defaultPoints={points} maxQuestions={15} questionMode={questionMode} />
+              {showAIGenerator && (
+                <AIQuizGenerator onGenerate={handleAIQuestionsGenerated} defaultPoints={points} maxQuestions={15} />
+              )}
 
               <form className="space-y-6">
-                {/* Question Mode Selector */}
-                <div>
-                  <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Question Mode</label>
-                  <select value={questionMode} onChange={(e) => {
-                    const mode = e.target.value;
-                    setQuestionMode(mode);
-                    if (mode === 'mcq') setQuestionType('MCQ');
-                    else if (mode === 'multi') setQuestionType('MULTI_SELECT');
-                  }} className="p-2 rounded-md border w-full max-w-xs">
-                    <option value="both">Both (MCQ + Multi-Select)</option>
-                    <option value="mcq">Only MCQ</option>
-                    <option value="multi">Only Multi-Select</option>
-                  </select>
-                </div>
-
                 {/* Question Type Selector */}
                 <div>
                   <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Question Type</label>
                   <div className="grid grid-cols-2 gap-2">
-                    {questionMode === 'both' ? (
-                      ["MCQ", "MULTI_SELECT"].map(type => (
-                        <button
-                          key={type}
-                          type="button"
-                          onClick={() => {
-                            setQuestionType(type);
-                            setCorrectIndex(0);
-                            setCorrectIndices([0]);
-                          }}
-                          className={`px-4 py-2.5 rounded-lg font-semibold transition-all ${
-                            questionType === type
-                              ? "bg-blue-600 dark:bg-blue-500 text-white"
-                              : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
-                          }`}
-                        >
-                          {type === "MULTI_SELECT" ? "Multi-Select" : type}
-                        </button>
-                      ))
-                    ) : (
-                      <div className="px-3 py-2 rounded-md bg-slate-100 dark:bg-slate-800 text-sm font-medium">
-                        {questionMode === 'mcq' ? 'Only MCQ' : 'Only Multi-Select'}
-                      </div>
-                    )}
+                    {["MCQ", "MULTI_SELECT"].map(type => (
+                      <button
+                        key={type}
+                        type="button"
+                        onClick={() => {
+                          setQuestionType(type);
+                          setCorrectIndex(0);
+                          setCorrectIndices([0]);
+                        }}
+                        className={`px-4 py-2.5 rounded-lg font-semibold transition-all ${
+                          questionType === type
+                            ? "bg-blue-600 dark:bg-blue-500 text-white"
+                            : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
+                        }`}
+                      >
+                        {type === "MULTI_SELECT" ? "Multi-Select" : type}
+                      </button>
+                    ))}
                   </div>
                 </div>
 
                 {/* Question Text */}
                 
                   <div className="flex items-center justify-between mb-2">
-                    <label className="text-sm font-semibold text-slate-700 dark:text-slate-300 pt-1 flex items-center gap-2">
-                      <HelpCircle size={16} className="text-blue-600 dark:text-blue-400" />
-                      Question Text
-                    </label>
+                    
                     <div className="flex items-end gap-4">
-                      <button
-                        onClick={onBack}
-                        className="p-2 rounded-lg bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all shadow-sm hover:shadow-md border border-slate-200 dark:border-slate-700"
-                      >
-                        <ArrowLeft size={20} />
-                      </button>
-
+                      
                       <div className="flex items-center gap-3 mt-2">
                       {showNegativePoints && (
                         <div className="flex flex-col items-center gap-1">
