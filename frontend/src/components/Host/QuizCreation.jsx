@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback, memo, useMemo } from "react";
 import {
   ArrowLeft,
   Save,
@@ -16,13 +16,35 @@ import {
   Cpu,
   LayoutGrid,
   Rows3,
+  GripVertical,
 } from "lucide-react";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import api from "../../utils/api";
 import AIQuizGenerator from "./AIQuizGenerator";
 
 function QuizCreation({ quizName, quizDescription, onBack, existingQuiz }) {
   const [questions, setQuestions] = useState(
-    existingQuiz ? existingQuiz.questions : [],
+    existingQuiz 
+      ? existingQuiz.questions.map((q, idx) => ({
+          ...q,
+          _id: q._id || `existing_${Date.now()}_${idx}_${Math.random()}`,
+        }))
+      : [],
   );
   const [currentQuestion, setCurrentQuestion] = useState("");
   const [options, setOptions] = useState(["", ""]);
@@ -36,6 +58,25 @@ function QuizCreation({ quizName, quizDescription, onBack, existingQuiz }) {
   const [isSaving, setIsSaving] = useState(false);
   const [showAIGenerator, setShowAIGenerator] = useState(false);
   const [layoutMode, setLayoutMode] = useState("vertical"); // "horizontal" or "vertical"
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  const handleDragEnd = useCallback((event) => {
+    const { active, over } = event;
+
+    if (active.id !== over.id) {
+      setQuestions((items) => {
+        const oldIndex = items.findIndex((q) => q._id === active.id);
+        const newIndex = items.findIndex((q) => q._id === over.id);
+        return arrayMove(items, oldIndex, newIndex);
+      });
+    }
+  }, []);
 
   const handleAddQuestion = () => {
     if (currentQuestion.trim() && options.every((opt) => opt.trim())) {
@@ -62,6 +103,7 @@ function QuizCreation({ quizName, quizDescription, onBack, existingQuiz }) {
       }
 
       const newQuestion = {
+        _id: `question_${Date.now()}_${Math.random()}`,
         type: questionType,
         questionText: currentQuestion,
         options: optionObjects,
@@ -91,6 +133,7 @@ function QuizCreation({ quizName, quizDescription, onBack, existingQuiz }) {
     // Ensure optionIds exist and do not conflict
     const timestamp = Date.now();
     const normalized = generated.map((q, qi) => ({
+      _id: `ai_question_${timestamp}_${qi}_${Math.random()}`,
       type: q.type || "MCQ",
       questionText: q.questionText || "",
       options: (q.options || []).map((opt, oi) => ({
@@ -131,41 +174,85 @@ function QuizCreation({ quizName, quizDescription, onBack, existingQuiz }) {
     }
   };
 
-  const handleEditQuestion = (index) => {
-    const q = questions[index];
-    setCurrentQuestion(q.questionText);
-    setOptions(q.options.map((opt) => opt.text));
-    setOptionIds(q.options.map((opt) => opt._id || null)); // Preserve _ids
-    setQuestionType(q.type || "MCQ");
+  const handleEditQuestion = useCallback((index) => {
+    setQuestions((currentQuestions) => {
+      const q = currentQuestions[index];
+      setCurrentQuestion(q.questionText);
+      setOptions(q.options.map((opt) => opt.text));
+      setOptionIds(q.options.map((opt) => opt._id || null)); // Preserve _ids
+      setQuestionType(q.type || "MCQ");
 
-    // Set correct indices based on question type
-    const correctIndicesArray = q.options
-      .map((opt, idx) => {
-        const optionId = opt._id || opt.optionId;
-        return q.correctAnswers.includes(optionId) ? idx : -1;
-      })
-      .filter((idx) => idx !== -1);
+      // Set correct indices based on question type
+      const correctIndicesArray = q.options
+        .map((opt, idx) => {
+          const optionId = opt._id || opt.optionId;
+          return q.correctAnswers.includes(optionId) ? idx : -1;
+        })
+        .filter((idx) => idx !== -1);
 
-    if (q.type === "MULTI_SELECT") {
-      setCorrectIndices(
-        correctIndicesArray.length > 0 ? correctIndicesArray : [0],
-      );
-    } else {
-      setCorrectIndex(
-        correctIndicesArray.length > 0 ? correctIndicesArray[0] : 0,
-      );
-    }
+      if (q.type === "MULTI_SELECT") {
+        setCorrectIndices(
+          correctIndicesArray.length > 0 ? correctIndicesArray : [0],
+        );
+      } else {
+        setCorrectIndex(
+          correctIndicesArray.length > 0 ? correctIndicesArray[0] : 0,
+        );
+      }
 
-    setPoints(q.points);
-    setNegativePoints(q.negativePoints || 0);
-    setQuestions(questions.filter((_, i) => i !== index));
-  };
+      setPoints(q.points);
+      setNegativePoints(q.negativePoints || 0);
+      
+      return currentQuestions.filter((_, i) => i !== index);
+    });
+  }, []);
 
-  const handleDeleteQuestion = (index) => {
-    setQuestions(questions.filter((_, i) => i !== index));
-  };
+  const handleDeleteQuestion = useCallback((index) => {
+    setQuestions((prev) => prev.filter((_, i) => i !== index));
+  }, []);
+
+  const handleEditQuestionById = useCallback((questionId) => {
+    setQuestions((currentQuestions) => {
+      const index = currentQuestions.findIndex(q => q._id === questionId);
+      if (index === -1) return currentQuestions;
+      
+      const q = currentQuestions[index];
+      setCurrentQuestion(q.questionText);
+      setOptions(q.options.map((opt) => opt.text));
+      setOptionIds(q.options.map((opt) => opt._id || null));
+      setQuestionType(q.type || "MCQ");
+
+      const correctIndicesArray = q.options
+        .map((opt, idx) => {
+          const optionId = opt._id || opt.optionId;
+          return q.correctAnswers.includes(optionId) ? idx : -1;
+        })
+        .filter((idx) => idx !== -1);
+
+      if (q.type === "MULTI_SELECT") {
+        setCorrectIndices(
+          correctIndicesArray.length > 0 ? correctIndicesArray : [0],
+        );
+      } else {
+        setCorrectIndex(
+          correctIndicesArray.length > 0 ? correctIndicesArray[0] : 0,
+        );
+      }
+
+      setPoints(q.points);
+      setNegativePoints(q.negativePoints || 0);
+      
+      return currentQuestions.filter((_, i) => i !== index);
+    });
+  }, []);
+
+  const handleDeleteQuestionById = useCallback((questionId) => {
+    setQuestions((prev) => prev.filter((q) => q._id !== questionId));
+  }, []);
 
   const totalPoints = questions.reduce((sum, q) => sum + q.points, 0);
+
+  const questionIds = useMemo(() => questions.map((q) => q._id), [questions]);
 
   const handleSaveQuiz = async () => {
     setIsSaving(true);
@@ -319,6 +406,86 @@ function QuizCreation({ quizName, quizDescription, onBack, existingQuiz }) {
       onBack();
     }
   };
+
+  // Sortable Question Component
+  const SortableQuestion = memo(({ question, index, id, onEdit, onDelete }) => {
+    const {
+      attributes,
+      listeners,
+      setNodeRef,
+      transform,
+      transition,
+      isDragging,
+    } = useSortable({ id });
+
+    const style = {
+      transform: CSS.Transform.toString(transform),
+      transition,
+      opacity: isDragging ? 0.5 : 1,
+    };
+
+    return (
+      <div
+        ref={setNodeRef}
+        style={style}
+        className="bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 p-3 rounded-xl shadow-sm hover:border-blue-400 dark:hover:border-blue-500 hover:shadow-md transition-all group"
+      >
+        <div className="flex justify-between items-center gap-2 mb-2">
+          <div className="flex items-center gap-2 flex-wrap">
+            <button
+              {...attributes}
+              {...listeners}
+              className="cursor-grab active:cursor-grabbing p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded transition-all"
+              title="Drag to reorder"
+            >
+              <GripVertical size={16} />
+            </button>
+            <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-lg">
+              {question.type || "MCQ"} • Q{index + 1}
+            </span>
+          </div>
+          <div className="flex gap-1 opacity-50 group-hover:opacity-100 transition-opacity">
+            <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 px-2 py-1 rounded-lg opacity-100">
+              +{question.points}
+            </span>
+            {(question.negativePoints || 0) > 0 && (
+              <span className="text-xs font-semibold text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 px-2 py-1 rounded-lg opacity-100">
+                -{question.negativePoints}
+              </span>
+            )}
+            <button
+              onClick={onEdit}
+              className="p-1.5 text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-all"
+            >
+              <Edit size={14} />
+            </button>
+            <button
+              onClick={onDelete}
+              className="p-1.5 text-slate-400 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all"
+            >
+              <Trash2 size={14} />
+            </button>
+          </div>
+        </div>
+
+        <p className="text-sm font-semibold text-slate-900 dark:text-white leading-relaxed">
+          {question.questionText}
+        </p>
+      </div>
+    );
+  }, (prevProps, nextProps) => {
+    // Custom comparison: only re-render if question content or id changes
+    // Ignore index and function props to prevent re-renders during drag
+    if (prevProps.id !== nextProps.id) return false;
+    if (prevProps.question === nextProps.question) return true;
+    
+    return (
+      prevProps.question.questionText === nextProps.question.questionText &&
+      prevProps.question.points === nextProps.question.points &&
+      prevProps.question.negativePoints === nextProps.question.negativePoints &&
+      prevProps.question.type === nextProps.question.type
+    );
+  });
 
   return (
     <div className="text-slate-900 dark:text-slate-100 min-h-screen">
@@ -645,46 +812,29 @@ function QuizCreation({ quizName, quizDescription, onBack, existingQuiz }) {
                     </p>
                   </div>
                 ) : (
-                  questions.map((q, index) => (
-                    <div
-                      key={q._id}
-                      className="bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 p-3 rounded-xl shadow-sm hover:border-blue-400 dark:hover:border-blue-500 hover:shadow-md transition-all group"
+                  <DndContext
+                    sensors={sensors}
+                    collisionDetection={closestCenter}
+                    onDragEnd={handleDragEnd}
+                  >
+                    <SortableContext
+                      items={questionIds}
+                      strategy={verticalListSortingStrategy}
                     >
-                      <div className="flex justify-between items-center gap-2 mb-2">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-lg">
-                            {q.type || "MCQ"} • Q{index + 1}
-                          </span>
-                        </div>
-                        <div className="flex gap-1 opacity-50 group-hover:opacity-100 transition-opacity">
-                          <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 px-2 py-1 rounded-lg opacity-100">
-                            +{q.points}
-                          </span>
-                          {(q.negativePoints || 0) > 0 && (
-                            <span className="text-xs font-semibold text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 px-2 py-1 rounded-lg opacity-100">
-                              -{q.negativePoints}
-                            </span>
-                          )}
-                          <button
-                            onClick={() => handleEditQuestion(index)}
-                            className="p-1.5 text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-all"
-                          >
-                            <Edit size={14} />
-                          </button>
-                          <button
-                            onClick={() => handleDeleteQuestion(index)}
-                            className="p-1.5 text-slate-400 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all"
-                          >
-                            <Trash2 size={14} />
-                          </button>
-                        </div>
+                      <div className="space-y-3">
+                        {questions.map((q, index) => (
+                          <SortableQuestion
+                            key={q._id}
+                            id={q._id}
+                            question={q}
+                            index={index}
+                            onEdit={() => handleEditQuestionById(q._id)}
+                            onDelete={() => handleDeleteQuestionById(q._id)}
+                          />
+                        ))}
                       </div>
-
-                      <p className="text-sm font-semibold text-slate-900 dark:text-white leading-relaxed">
-                        {q.questionText}
-                      </p>
-                    </div>
-                  ))
+                    </SortableContext>
+                  </DndContext>
                 )}
               </div>
             </div>
@@ -908,46 +1058,29 @@ function QuizCreation({ quizName, quizDescription, onBack, existingQuiz }) {
                     </p>
                   </div>
                 ) : (
-                  questions.map((q, index) => (
-                    <div
-                      key={q._id}
-                      className="bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 p-3 rounded-xl shadow-sm hover:border-blue-400 dark:hover:border-blue-500 hover:shadow-md transition-all group"
+                  <DndContext
+                    sensors={sensors}
+                    collisionDetection={closestCenter}
+                    onDragEnd={handleDragEnd}
+                  >
+                    <SortableContext
+                      items={questionIds}
+                      strategy={verticalListSortingStrategy}
                     >
-                      <div className="flex justify-between items-center gap-2 mb-2">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-lg">
-                            {q.type || "MCQ"} • Q{index + 1}
-                          </span>
-                        </div>
-                        <div className="flex gap-1 opacity-50 group-hover:opacity-100 transition-opacity">
-                          <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 px-2 py-1 rounded-lg opacity-100">
-                            +{q.points}
-                          </span>
-                          {(q.negativePoints || 0) > 0 && (
-                            <span className="text-xs font-semibold text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 px-2 py-1 rounded-lg opacity-100">
-                              -{q.negativePoints}
-                            </span>
-                          )}
-                          <button
-                            onClick={() => handleEditQuestion(index)}
-                            className="p-1.5 text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-all"
-                          >
-                            <Edit size={14} />
-                          </button>
-                          <button
-                            onClick={() => handleDeleteQuestion(index)}
-                            className="p-1.5 text-slate-400 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all"
-                          >
-                            <Trash2 size={14} />
-                          </button>
-                        </div>
+                      <div className="space-y-3">
+                        {questions.map((q, index) => (
+                          <SortableQuestion
+                            key={q._id}
+                            id={q._id}
+                            question={q}
+                            index={index}
+                            onEdit={() => handleEditQuestionById(q._id)}
+                            onDelete={() => handleDeleteQuestionById(q._id)}
+                          />
+                        ))}
                       </div>
-
-                      <p className="text-sm font-semibold text-slate-900 dark:text-white leading-relaxed">
-                        {q.questionText}
-                      </p>
-                    </div>
-                  ))
+                    </SortableContext>
+                  </DndContext>
                 )}
               </div>
             </section>
