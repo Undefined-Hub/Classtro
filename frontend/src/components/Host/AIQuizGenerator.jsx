@@ -1,7 +1,7 @@
 import { useState } from "react";
 import api from "../../utils/api";
 
-export default function AIQuizGenerator({ onGenerate, defaultPoints = 1, maxQuestions = 10 }) {
+export default function AIQuizGenerator({ onGenerate, defaultPoints = 1, maxQuestions = 10, questionMode = 'both' }) {
   const [topic, setTopic] = useState("");
   const [keywords, setKeywords] = useState("");
   const [difficulty, setDifficulty] = useState("medium");
@@ -28,6 +28,7 @@ export default function AIQuizGenerator({ onGenerate, defaultPoints = 1, maxQues
         difficulty,
         count,
         defaultPoints,
+        questionMode,
       };
 
       const res = await api.post('/api/ai/generate-quiz', payload);

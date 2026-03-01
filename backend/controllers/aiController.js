@@ -10,17 +10,26 @@ const { buildChatPrompt } = require('../services/ai/prompts/chatPrompt');
 async function generateQuiz(req, res) {
   try {
     const { topic, keywords = "", difficulty = "medium", count = 5, defaultPoints = 1 } = req.body || {};
+    const { questionMode = 'both' } = req.body || {};
 
     if (!topic || typeof topic !== 'string') {
       return res.status(400).json({ message: 'Topic is required' });
     }
     const n = Math.min(20, Math.max(1, parseInt(count) || 5));
 
-    // Build a prompt that requests strict JSON output
+    // Build a prompt that requests strict JSON output and includes the requested question mode
+    const normalizedMode = String(questionMode || 'both').toLowerCase();
+    let modeInstruction = 'You may generate a mix of MCQ and MULTI_SELECT questions.';
+    if (normalizedMode === 'mcq') {
+      modeInstruction = 'Generate ONLY MCQ questions (each with a single correct answer).';
+    } else if (normalizedMode === 'multi') {
+      modeInstruction = 'Generate ONLY MULTI_SELECT questions (each should have two correct answers).';
+    }
+
     const prompt = `You are an assistant that generates multiple-choice quizzes. Output ONLY valid JSON that matches this schema:\n` +
-      `{ "questions": [ { "type": "MCQ|MULTI_SELECT", "questionText": string, "options": [{ "optionId": string, "text": string }], "correctAnswers": [optionId|string|index], "points": number, "negativePoints": number } ] }\n` +
-      `Generate ${n} questions on the topic: "${topic}". Difficulty: ${difficulty}. Keywords: "${keywords}". ` +
-      `Each question should have 3-5 options. For MULTI_SELECT include 2 correct options only if difficulty is hard, otherwise keep single correct answer. Use short, clear questions and options. Use unique optionId for each option. Return exactly the JSON object and nothing else.`;
+      `{ "questions": [ { "type": "MCQ|MULTI_SELECT", "questionText": string, "options": [{ "optionId": string, "text": string }], "correctAnswers": [optionId|string|index], "points": 1, "negativePoints": 0 } ] }\n` +
+      `Generate ${n} questions on the topic: "${topic}". Difficulty: ${difficulty}. Keywords: "${keywords}". ${modeInstruction} ` +
+      `Each question should have 3-5 options. For MULTI_SELECT include 2 correct options when requested. Use short, clear questions and options. Use unique optionId for each option. Return exactly the JSON object and nothing else.`;
 
     const raw = await generateAIResponse(prompt, { maxTokens: 800, temperature: difficulty === 'hard' ? 0.6 : 0.25 });
 
@@ -73,6 +82,33 @@ async function generateQuiz(req, res) {
         points: typeof q.points === 'number' ? q.points : defaultPoints,
         negativePoints: typeof q.negativePoints === 'number' ? q.negativePoints : 0,
       };
+    });
+
+    // Coerce/filter results to requested questionMode (coercion strategy)
+    const mode = String(questionMode || 'both').toLowerCase();
+    questions.forEach(q => {
+      if (mode === 'mcq') {
+        // Force MCQ and single correct answer
+        q.type = 'MCQ';
+        if (Array.isArray(q.correctAnswers) && q.correctAnswers.length > 1) {
+          q.correctAnswers = [q.correctAnswers[0]];
+        }
+        if (!Array.isArray(q.correctAnswers) || q.correctAnswers.length === 0) {
+          q.correctAnswers = [q.options[0]?.optionId].filter(Boolean);
+        }
+      } else if (mode === 'multi') {
+        // Force MULTI_SELECT and at least two correct answers
+        q.type = 'MULTI_SELECT';
+        if (!Array.isArray(q.correctAnswers)) q.correctAnswers = [];
+        // Ensure at least two correct answers; pick additional options if needed
+        if (q.correctAnswers.length < 2) {
+          const existing = new Set(q.correctAnswers.map(String));
+          for (let i = 0; i < q.options.length && existing.size < 2; i++) {
+            existing.add(q.options[i].optionId);
+          }
+          q.correctAnswers = Array.from(existing).slice(0, 2);
+        }
+      }
     });
 
     return res.json({ questions });

@@ -9,6 +9,7 @@ function QuizCreation({ quizName, quizDescription, onBack, existingQuiz }) {
   const [options, setOptions] = useState(["", ""]);
   const [optionIds, setOptionIds] = useState([null, null]); // Store _ids alongside options
   const [questionType, setQuestionType] = useState("MCQ");
+  const [questionMode, setQuestionMode] = useState('both'); // 'both' | 'mcq' | 'multi'
   const [correctIndex, setCorrectIndex] = useState(0);
   const [correctIndices, setCorrectIndices] = useState([0]); // For MULTI_SELECT
   const [points, setPoints] = useState(1);
@@ -303,35 +304,31 @@ function QuizCreation({ quizName, quizDescription, onBack, existingQuiz }) {
         {/* Header Section */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
           <div className="flex items-center gap-4">
-            <button 
-              onClick={onBack} 
+            <button
+              onClick={onBack}
               className="p-2 rounded-lg bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all shadow-sm hover:shadow-md border border-slate-200 dark:border-slate-700"
             >
               <ArrowLeft size={20} />
             </button>
-            <div>
-              <h2 className="text-xl lg:text-2xl font-bold text-slate-900 dark:text-white">
-                {existingQuiz ? "Editing" : "Creating"} Quiz: {quizName}
-              </h2>
-              <div className="flex items-center gap-3 mt-2">
-                <span className="bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider border border-blue-200 dark:border-blue-800">
-                  {existingQuiz ? "Editing" : "Draft"}
-                </span>
-                <span className="text-slate-600 dark:text-slate-400 text-sm flex items-center gap-2 bg-white dark:bg-slate-800 px-3 py-1 rounded-full border border-slate-200 dark:border-slate-700">
-                  <BarChart3 size={14} />
-                  Total Points: <span className="font-semibold text-slate-900 dark:text-white">{totalPoints}</span>
-                </span>
-                <button
-                  onClick={() => setShowNegativePoints(!showNegativePoints)}
-                  className={`px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider border transition-all ${
-                    showNegativePoints
-                      ? "bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 border-red-200 dark:border-red-800"
-                      : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700"
-                  }`}
-                >
-                  Negative Points: {showNegativePoints ? "ON" : "OFF"}
-                </button>
-              </div>
+
+            <div className="flex items-center gap-3 mt-2">
+              <span className="bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider border border-blue-200 dark:border-blue-800">
+                {existingQuiz ? "Editing" : "Draft"}
+              </span>
+              <span className="text-slate-600 dark:text-slate-400 text-sm flex items-center gap-2 bg-white dark:bg-slate-800 px-3 py-1 rounded-full border border-slate-200 dark:border-slate-700">
+                <BarChart3 size={14} />
+                Total Points: <span className="font-semibold text-slate-900 dark:text-white">{totalPoints}</span>
+              </span>
+              <button
+                onClick={() => setShowNegativePoints(!showNegativePoints)}
+                className={`px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider border transition-all ${
+                  showNegativePoints
+                    ? "bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 border-red-200 dark:border-red-800"
+                    : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700"
+                }`}
+              >
+                Negative Points: {showNegativePoints ? "ON" : "OFF"}
+              </button>
             </div>
           </div>
           <div className="flex items-center gap-3">
@@ -363,54 +360,71 @@ function QuizCreation({ quizName, quizDescription, onBack, existingQuiz }) {
                 <h3 className="text-lg font-bold text-slate-900 dark:text-white">Add New Question</h3>
               </div>
 
-              <AIQuizGenerator onGenerate={handleAIQuestionsGenerated} defaultPoints={points} maxQuestions={15} />
+              <AIQuizGenerator onGenerate={handleAIQuestionsGenerated} defaultPoints={points} maxQuestions={15} questionMode={questionMode} />
 
               <form className="space-y-6">
+                {/* Question Mode Selector */}
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Question Mode</label>
+                  <select value={questionMode} onChange={(e) => {
+                    const mode = e.target.value;
+                    setQuestionMode(mode);
+                    if (mode === 'mcq') setQuestionType('MCQ');
+                    else if (mode === 'multi') setQuestionType('MULTI_SELECT');
+                  }} className="p-2 rounded-md border w-full max-w-xs">
+                    <option value="both">Both (MCQ + Multi-Select)</option>
+                    <option value="mcq">Only MCQ</option>
+                    <option value="multi">Only Multi-Select</option>
+                  </select>
+                </div>
+
                 {/* Question Type Selector */}
                 <div>
                   <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Question Type</label>
                   <div className="grid grid-cols-2 gap-2">
-                    {["MCQ", "MULTI_SELECT"].map(type => (
-                      <button
-                        key={type}
-                        type="button"
-                        onClick={() => {
-                          setQuestionType(type);
-                          setCorrectIndex(0);
-                          setCorrectIndices([0]);
-                        }}
-                        className={`px-4 py-2.5 rounded-lg font-semibold transition-all ${
-                          questionType === type
-                            ? "bg-blue-600 dark:bg-blue-500 text-white"
-                            : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
-                        }`}
-                      >
-                        {type === "MULTI_SELECT" ? "Multi-Select" : type}
-                      </button>
-                    ))}
+                    {questionMode === 'both' ? (
+                      ["MCQ", "MULTI_SELECT"].map(type => (
+                        <button
+                          key={type}
+                          type="button"
+                          onClick={() => {
+                            setQuestionType(type);
+                            setCorrectIndex(0);
+                            setCorrectIndices([0]);
+                          }}
+                          className={`px-4 py-2.5 rounded-lg font-semibold transition-all ${
+                            questionType === type
+                              ? "bg-blue-600 dark:bg-blue-500 text-white"
+                              : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
+                          }`}
+                        >
+                          {type === "MULTI_SELECT" ? "Multi-Select" : type}
+                        </button>
+                      ))
+                    ) : (
+                      <div className="px-3 py-2 rounded-md bg-slate-100 dark:bg-slate-800 text-sm font-medium">
+                        {questionMode === 'mcq' ? 'Only MCQ' : 'Only Multi-Select'}
+                      </div>
+                    )}
                   </div>
                 </div>
 
                 {/* Question Text */}
-                <div>
+                
                   <div className="flex items-center justify-between mb-2">
                     <label className="text-sm font-semibold text-slate-700 dark:text-slate-300 pt-1 flex items-center gap-2">
                       <HelpCircle size={16} className="text-blue-600 dark:text-blue-400" />
                       Question Text
                     </label>
                     <div className="flex items-end gap-4">
-                      <div className="flex flex-col items-center gap-1">
-                        <label className="text-xs font-medium text-slate-600 dark:text-slate-400">
-                          Points
-                        </label>
-                        <input
-                          value={points}
-                          onChange={(e) => setPoints(parseInt(e.target.value) || 0)}
-                          className="w-16 rounded-md border-2 border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white px-2 py-1 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 transition-all text-center text-sm"
-                          type="number"
-                          min="0"
-                        />
-                      </div>
+                      <button
+                        onClick={onBack}
+                        className="p-2 rounded-lg bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all shadow-sm hover:shadow-md border border-slate-200 dark:border-slate-700"
+                      >
+                        <ArrowLeft size={20} />
+                      </button>
+
+                      <div className="flex items-center gap-3 mt-2">
                       {showNegativePoints && (
                         <div className="flex flex-col items-center gap-1">
                           <label className="text-xs font-medium text-slate-600 dark:text-slate-400">
@@ -575,23 +589,28 @@ function QuizCreation({ quizName, quizDescription, onBack, existingQuiz }) {
                       </p>
 
                       <ul className="space-y-2 mb-3">
-                        {q.options.map((opt) => (
-                          <li 
-                            key={opt._id} 
+                        {q.options.map((opt) => {
+                          const candidates = [opt.optionId, opt._id, opt.id].map(v => v && String(v));
+                          const isCorrect = Array.isArray(q.correctAnswers) && q.correctAnswers.some(ans => candidates.includes(String(ans)));
+
+                          return (
+                            <li
+                              key={opt._id || opt.optionId}
                               className={`text-sm flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
-                              q.correctAnswers.includes(opt.optionId)
-                                ? "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300 font-semibold border border-emerald-200 dark:border-emerald-800"
-                                : "text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-800/50"
-                            }`}
-                          >
-                            {q.correctAnswers.includes(opt.optionId) ? (
-                              <CheckCircle size={14} className="flex-shrink-0" />
-                            ) : (
-                              <Circle size={14} className="flex-shrink-0" />
-                            )}
-                            <span className="flex-1">{opt.text}</span>
-                          </li>
-                        ))}
+                                isCorrect
+                                  ? "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300 font-semibold border border-emerald-200 dark:border-emerald-800"
+                                  : "text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-800/50"
+                              }`}
+                            >
+                              {isCorrect ? (
+                                <CheckCircle size={14} className="flex-shrink-0" />
+                              ) : (
+                                <Circle size={14} className="flex-shrink-0" />
+                              )}
+                              <span className="flex-1">{opt.text}</span>
+                            </li>
+                          );
+                        })}
                       </ul>
 
                       <div className="flex justify-between items-center pt-2 border-t-2 border-slate-100 dark:border-slate-800">
