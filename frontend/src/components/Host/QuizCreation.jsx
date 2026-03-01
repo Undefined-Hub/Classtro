@@ -9,7 +9,7 @@ import {
   Trash2,
   BarChart3,
   Circle,
-  CheckCircle,
+  Check,
   X,
   HelpCircle,
   Bot,
@@ -764,7 +764,7 @@ function QuizCreation({ quizName, quizDescription, onBack, existingQuiz }) {
                               }`}
                             >
                               {isSelected && (
-                                <CheckCircle className="w-5 h-5 text-white" />
+                                <Check className="w-5 h-5 text-white" />
                               )}
                             </button>
                             <input
@@ -1027,7 +1027,7 @@ function QuizCreation({ quizName, quizDescription, onBack, existingQuiz }) {
                                 }`}
                               >
                                 {isSelected && (
-                                  <CheckCircle className="w-5 h-5 text-white" />
+                                  <Check className="w-5 h-5 text-white" />
                                 )}
                               </button>
                               <input
