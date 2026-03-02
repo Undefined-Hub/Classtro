@@ -1,15 +1,4 @@
-/**
- * Prompt Builder for Hybrid AI Mode
- * Builds different prompts based on intent (Classtro vs General)
- */
-
-/**
- * Build Classtro-specific prompt with knowledge injection
- * @param {string} knowledgeContext - Filtered knowledge from knowledge base
- * @param {string} question - User's question
- * @param {string} role - User role (teacher/student/guest)
- * @returns {string} Structured prompt with CONTEXT
- */
+// Build Classtro-specific prompt with knowledge injection
 function buildClasstroPrompt(knowledgeContext, question, role = 'guest') {
   let prompt = `You are an AI assistant for Classtro, a classroom engagement platform.
 
@@ -50,31 +39,41 @@ FORMATTING RULES:
   return prompt;
 }
 
-/**
- * Build general educational prompt (no knowledge restrictions)
- * Optimized for concise, structured answers
- * @param {string} question - User's question
- * @returns {string} Educational AI prompt
- */
-function buildGeneralPrompt(question) {
-  const prompt = `You are an educational AI assistant inside Classtro.
+// Build general educational prompt - concise responses (max 4 bullets, 120-150 words)
+// Supports optional conversational memory for follow-up questions
+function buildGeneralPrompt(question, previousContext = null) {
+  let prompt = `You are an educational AI assistant inside Classtro.`;
 
-Answer clearly and concisely.
+  // Add previous context if available (for follow-up questions)
+  if (previousContext && previousContext.lastUserMessage && previousContext.lastAssistantSummary) {
+    prompt += `
+
+Previous Context:
+User: ${previousContext.lastUserMessage}
+Assistant Summary: ${previousContext.lastAssistantSummary}
+
+Use the above context to answer intelligently if relevant.`;
+  }
+
+  prompt += `
+
+Current Question:
+${question}
 
 Response Rules:
-- Start with a short 1–2 sentence summary.
-- Use a heading (## Topic Name).
-- Maximum 4 bullet points.
-- Each bullet point: 1 short sentence only.
-- No long paragraphs.
-- No deep theory unless specifically asked.
-- Keep total response under 120–150 words.
-- Be clear and beginner-friendly.
+- Start with 1–2 line summary
+- Use heading (##)
+- Max 4 bullet points
+- Each bullet: short sentence
+- Total under 130 words
+- Be clear and beginner-friendly
+- Avoid long essays
 
-If the question is simple, answer in 3–5 lines only.
+IMPORTANT: End your response with a one-line summary in this format:
+[SUMMARY: brief description of what you explained]
 
-USER QUESTION:
-${question}`;
+Example:
+[SUMMARY: Explained the difference between var and let in JavaScript]`;
 
   return prompt;
 }

@@ -2,12 +2,6 @@
  * Intent Detection Layer for Hybrid AI Mode
  * Determines if user question is Classtro-related or general educational
  */
-
-/**
- * Detect user intent from message
- * @param {string} message - User's question
- * @returns {string} "CLASSTRO" | "GENERAL"
- */
 function detectIntent(message) {
   if (!message || typeof message !== 'string') {
     return "GENERAL";

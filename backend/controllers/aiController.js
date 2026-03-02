@@ -1,6 +1,8 @@
 const { generateAIResponse, checkAIHealth } = require('../services/ai/core');
 const { buildChatPrompt } = require('../services/ai/prompts/chatPrompt');
-// const { buildInsightsPrompt } = require('../services/ai/prompts/insightsPrompt'); // TODO: Use when implementing insights
+const { getMemory, storeMemory, extractSummary, getUserIdentifier } = require('../services/ai/memoryManager');
+const { isFollowUpQuestion } = require('../services/ai/followUpDetector');
+const { detectIntent } = require('../services/ai/intentDetector');
 
 // chatbot controller
 const handleChatRequest = async (req, res, next) => {
@@ -14,10 +16,7 @@ const handleChatRequest = async (req, res, next) => {
       });
     }
 
-    // Check authentication from middleware (req.user) or request body
     const isUserAuthenticated = !!req.user || !!isAuthenticated;
-
-    // Determine effective role: guest if not authenticated, otherwise use provided role
     const effectiveRole = isUserAuthenticated ? role : 'guest';
 
     if (!effectiveRole) {
@@ -27,27 +26,53 @@ const handleChatRequest = async (req, res, next) => {
       });
     }
 
-    // Build optimized prompt with Hybrid Mode (returns { prompt, intent, maxTokens })
-    const { prompt, intent, maxTokens } = buildChatPrompt({
+    // Check intent first to determine if we need memory
+    const intent = detectIntent(message);
+    let previousContext = null;
+
+    // For GENERAL mode only: check for follow-up questions and retrieve memory
+    if (intent === "GENERAL") {
+      const userId = getUserIdentifier(req);
+      
+      if (isFollowUpQuestion(message)) {
+        previousContext = getMemory(userId);
+        if (previousContext) {
+          console.log(`[MEMORY] Retrieved context for ${userId}`);
+        }
+      }
+    }
+
+    const { prompt, intent: detectedIntent, maxTokens } = buildChatPrompt({
       role: effectiveRole,
       page: page || 'general',
       message,
       isAuthenticated: isUserAuthenticated,
+      previousContext,
     });
 
-    console.log(`[AI MODE] ${intent} | maxTokens: ${maxTokens}`);
+    console.log(`[AI MODE] ${detectedIntent} | maxTokens: ${maxTokens}${previousContext ? ' | with-context' : ''}`);
 
-    // Call AI service with intent-specific config
     const aiResponse = await generateAIResponse(prompt, {
       temperature: 0.3,
-      maxTokens, // Dynamic: 180 for CLASSTRO, 130 for GENERAL
+      maxTokens,
     });
 
-    // Return AI response
+    // For GENERAL mode: extract summary and store memory
+    let finalResponse = aiResponse;
+    if (detectedIntent === "GENERAL") {
+      const userId = getUserIdentifier(req);
+      const { summary, cleanResponse } = extractSummary(aiResponse);
+      
+      storeMemory(userId, message, summary);
+      finalResponse = cleanResponse;
+      
+      console.log(`[MEMORY] Stored summary for ${userId}`);
+    }
+
     res.status(200).json({
       success: true,
       data: {
-        message: aiResponse,
+        message: finalResponse,
         timestamp: new Date().toISOString(),
       },
     });
@@ -58,7 +83,6 @@ const handleChatRequest = async (req, res, next) => {
   }
 };
 
-// Session Insights - TODO: Implement later
 const handleInsightsRequest = async (req, res, next) => {
   res.status(501).json({
     success: false,
