@@ -5,24 +5,17 @@ const ai = new GoogleGenAI({
   apiKey: process.env.GEMINI_API_KEY,
 });
 
-/**
- * Generate AI response - Provider-agnostic design for future AWS Bedrock migration
- * Includes automatic retry mechanism for 503/UNAVAILABLE errors
- * @param {string} prompt - The formatted prompt
- * @param {object} options - Generation configuration
- * @returns {Promise<string>} AI response text or friendly fallback message
- */
+// Generate AI response with retry logic for 503/network errors only
 async function generateAIResponse(prompt, options = {}) {
-  const MAX_RETRIES = 2;
+  const MAX_RETRIES = 0;
   const RETRY_DELAY_MS = 1000;
 
   const {
-    model = "gemini-3-flash-preview",
-    maxTokens = 300, // Optimized for concise responses
-    temperature = 0.3, // Lower temperature for consistency
+    model = "gemini-2.5-flash-lite",
+    maxTokens = 130,
+    temperature = 0.3,
   } = options;
 
-  // Input validation - fail fast without retry
   if (!prompt || typeof prompt !== "string") {
     throw new Error("Invalid prompt");
   }
@@ -31,25 +24,65 @@ async function generateAIResponse(prompt, options = {}) {
     throw new Error("GEMINI_API_KEY not configured");
   }
 
-  /**
-   * Check if error should trigger retry
-   * @param {Error} error - The error object
-   * @returns {boolean} True if error is temporary/retryable
-   */
-  const isRetryableError = (error) => {
+  // Extract numeric HTTP status from various error shapes returned by @google/genai
+  const getErrorStatus = (error) => {
     return (
-      error.status === 503 ||
+      error.status ||
+      error.response?.status ||
+      error.error?.code ||
+      (typeof error.message === 'string' && parseInt(error.message.match(/\b(4\d{2}|5\d{2})\b/)?.[0])) ||
+      null
+    );
+  };
+
+  
+  //  Log full error details for debugging
+  const logError = (attempt, error) => {
+    const status = getErrorStatus(error);
+    console.error(`[AI ERROR] ✗ Attempt ${attempt}/${MAX_RETRIES + 1} failed`);
+    console.error(`  error.status         : ${error.status ?? 'N/A'}`);
+    console.error(`  error.response.status: ${error.response?.status ?? 'N/A'}`);
+    console.error(`  error.error.code     : ${error.error?.code ?? 'N/A'}`);
+    console.error(`  Resolved status      : ${status ?? 'unknown'}`);
+    console.error(`  Message              : ${error.message}`);
+    try {
+      console.error(`  Full error (JSON)    :`, JSON.stringify(error, Object.getOwnPropertyNames(error), 2));
+    } catch {
+      console.error(`  Full error (raw)     :`, error);
+    }
+  };
+
+  // Only retry 503 and network errors (not 429 - makes rate limit worse)
+  const isRetryableError = (error) => {
+    const status = getErrorStatus(error);
+    return (
+      status === 503 ||  // Service temporarily unavailable
       error.code === 'ECONNRESET' ||
       error.code === 'ETIMEDOUT' ||
-      error.message?.includes('503') ||
       error.message?.includes('UNAVAILABLE')
     );
   };
 
-  // Retry loop: Total attempts = MAX_RETRIES + 1 (initial attempt)
+  const getFallbackMessage = (error) => {
+    const status = getErrorStatus(error);
+    if (status === 429) {
+      return "⚠️ Clario is receiving too many requests right now. Please wait a moment and try again.";
+    }
+    if (status === 503) {
+      return "⚠️ Clario's AI service is temporarily unavailable due to high traffic. Please try again shortly.";
+    }
+    if (status === 404) {
+      return "⚠️ Clario encountered a configuration issue. Please contact support if this persists.";
+    }
+    return "⚠️ Clario is having trouble responding right now. Please try again in a moment.";
+  };
+
   for (let attempt = 1; attempt <= MAX_RETRIES + 1; attempt++) {
     try {
-      // Call Gemini with optimized config
+      const reqId = `${Date.now()}-${Math.random().toString(36).slice(2,8)}`;
+      console.log(`[AI TRACE] PID:${process.pid} CALL reqId:${reqId} ts:${new Date().toISOString()} model:${model}`);
+      console.log(`[AI DEBUG] prompt.length: ${prompt.length} chars, model: ${model}, maxTokens: ${options.maxTokens || maxTokens}`);
+
       const response = await ai.models.generateContent({
         model,
         contents: prompt,
@@ -64,7 +97,6 @@ async function generateAIResponse(prompt, options = {}) {
         throw new Error("Empty AI response");
       }
 
-      // Success - log if retry was needed
       if (attempt > 1) {
         console.log(`[AI SUCCESS] ✓ Response received on attempt ${attempt}`);
       }
@@ -73,30 +105,35 @@ async function generateAIResponse(prompt, options = {}) {
 
     } catch (error) {
       const isLastAttempt = attempt === MAX_RETRIES + 1;
+      const status = getErrorStatus(error);
 
-      // Log detailed error information
-      console.error(
-        `[AI ERROR] ✗ Attempt ${attempt}/${MAX_RETRIES + 1} failed\n` +
-        `  Status: ${error.status || 'N/A'}\n` +
-        `  Code: ${error.code || 'N/A'}\n` +
-        `  Message: ${error.message}`
-      );
+      logError(attempt, error);
 
-      // Retry logic for temporary errors
-      if (isRetryableError(error) && !isLastAttempt) {
-        console.log(`[AI RETRY] ⟳ Retrying in ${RETRY_DELAY_MS}ms...`);
-        await new Promise(resolve => setTimeout(resolve, RETRY_DELAY_MS));
-        continue; // Retry
+      if (status === 429) {
+        console.error(`[AI FALLBACK] ✗ Rate limited (429). Not retrying to avoid consuming more quota.`);
+        return getFallbackMessage(error);
       }
 
-      // All retries exhausted or non-retryable error
-      console.error(
-        `[AI FALLBACK] ⚠️  ${isLastAttempt ? 'All retries exhausted' : 'Non-retryable error'}. ` +
-        `Returning friendly fallback message.`
-      );
+      if (status === 404) {
+        console.error(`[AI FALLBACK] ✗ Model not found (404). Check model name: "${model}"`);
+        return getFallbackMessage(error);
+      }
 
-      // Return friendly message instead of throwing
-      return "⚠️ Our AI assistant is currently experiencing high traffic. Please try again in a moment.";
+      if (status === 400) {
+        console.error(`[AI FALLBACK] ✗ Bad request (400). Check prompt format.`);
+        return getFallbackMessage(error);
+      }
+
+      if (isRetryableError(error) && !isLastAttempt) {
+        console.log(`[AI RETRY] ⟳ Retrying (${status ?? 'network error'}) in ${RETRY_DELAY_MS}ms...`);
+        await new Promise(resolve => setTimeout(resolve, RETRY_DELAY_MS));
+        continue;
+      }
+
+      console.error(
+        `[AI FALLBACK] ⚠️  ${isLastAttempt ? 'All retries exhausted' : 'Non-retryable error'} (status: ${status ?? 'unknown'}).`
+      );
+      return getFallbackMessage(error);
     }
   }
 }
