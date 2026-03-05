@@ -111,7 +111,7 @@ const MainContent = ({ isParticipantListOpen = true }) => {
                 setActiveView("quiz");
                 setShowQuizImport(true);
               }}
-              className="inline-flex items-center px-3 py-1.5 bg-purple-600 text-white rounded-lg text-xs hover:bg-purple-700 focus:ring-2 focus:ring-purple-500"
+              className="inline-flex items-center px-3 py-1.5 bg-blue-600 text-white rounded-lg text-xs hover:bg-blue-700 focus:ring-2 focus:ring-blue-500"
             >
               <FileQuestion className="w-3 h-3 mr-1" />
               Launch Quiz
