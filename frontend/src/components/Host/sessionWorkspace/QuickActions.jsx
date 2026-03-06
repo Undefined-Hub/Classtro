@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { BarChart3, ChartNoAxesColumn, HelpCircle, MessageCircleQuestionMark, Maximize, Minimize, Expand, Shrink, QrCode } from "lucide-react";
+import { BarChart3, ChartNoAxesColumn, HelpCircle, MessageCircleQuestionMark, Maximize, Minimize, Expand, Shrink, QrCode, ClipboardCheck } from "lucide-react";
 
 const QuickActions = ({ questions, onSetActiveView, activeView }) => {
   const unansweredQuestions = questions.filter((q) => !q.answered).length;
@@ -149,6 +149,24 @@ const QuickActions = ({ questions, onSetActiveView, activeView }) => {
               </button>
               <div className="absolute bottom-10 left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-black/80 text-white text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap pointer-events-none">
                 Polls
+              </div>
+            </div>
+
+            {/* Quiz Button */}
+            <div className="relative group">
+              <button
+                onClick={() => handleToggle("quiz")}
+                className={`w-9 h-9 rounded-full shadow-md flex items-center justify-center transition-all duration-200 hover:scale-105 ${
+                  activeView === "quiz" 
+                    ? 'bg-purple-600 text-white' 
+                    : 'bg-gray-600/50 dark:bg-white/10 hover:bg-gray-500/60 dark:hover:bg-white/20 text-white'
+                }`}
+                aria-pressed={activeView === "quiz"}
+              >
+                <ClipboardCheck className="w-4 h-4" />
+              </button>
+              <div className="absolute bottom-10 left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-black/80 text-white text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap pointer-events-none">
+                Quiz
               </div>
             </div>
 

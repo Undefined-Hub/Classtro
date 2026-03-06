@@ -8,6 +8,12 @@ const {
   getFeedbackById,
   updateFeedbackStatus,
 } = require("../controllers/feedbackController");
+const {
+  submitSessionFeedback,
+  getSessionFeedback,
+} = require("../controllers/sessionFeedbackController");
+const { setFeedbackType, setBugType } = require("../middlewares/setFeedbackType");
+const authenticateJWT = require("../middlewares/authenticateJWT");
 
 const router = express.Router();
 
@@ -23,14 +29,31 @@ const submitLimit = rateLimit({
   legacyHeaders: false,
 });
 
-// Routes
+// System Feedback Routes (type: feedback)
 router.post(
-  "/",
+  "/systemFeedback",
   submitLimit,
   uploadScreenshot,
   handleUploadError,
+  setFeedbackType,
   createFeedback,
 );
+
+// System Bug Report Routes (type: bug)
+router.post(
+  "/systemBug",
+  submitLimit,
+  uploadScreenshot,
+  handleUploadError,
+  setBugType,
+  createFeedback,
+);
+
+// Session Feedback Routes
+router.post("/:sessionId/sessionFeedback", authenticateJWT, submitSessionFeedback);
+router.get("/:sessionId/sessionFeedback", authenticateJWT, getSessionFeedback);
+
+// Common routes for system feedback/bugs
 router.get("/", getAllFeedback);
 router.get("/stats/overview", getFeedbackStats);
 router.get("/:id", getFeedbackById);

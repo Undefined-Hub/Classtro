@@ -28,6 +28,42 @@ const SessionSchema = new mongoose.Schema(
 
     metadata: { type: mongoose.Schema.Types.Mixed }, // poll configs, Q&A, etc.
 
+    // Session broadcasts/announcements
+    broadcasts: [
+      {
+        message: { type: String, required: true },
+        urls: [{ type: String }], // Extracted URLs from message
+        urlMetadata: { type: mongoose.Schema.Types.Mixed }, // Map of URL -> metadata object
+        files: [
+          {
+            filename: { type: String, required: true }, // Stored filename
+            originalName: { type: String, required: true }, // Original filename
+            type: { type: String, enum: ["pdf", "ppt", "pptx", "image"], required: true },
+            mimeType: { type: String, required: true },
+            size: { type: Number, required: true }, // Size in bytes
+            url: { type: String, required: true }, // Access URL
+            uploadedAt: { type: Date, default: Date.now },
+          },
+        ],
+        reactions: [
+          {
+            emoji: { type: String, required: true }, // 👍, ❤️, 🎉, ✅
+            userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+            userName: { type: String, required: true },
+            timestamp: { type: Date, default: Date.now },
+          },
+        ],
+        views: [
+          {
+            userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+            userName: { type: String },
+            viewedAt: { type: Date, default: Date.now },
+          },
+        ],
+        timestamp: { type: Date, default: Date.now },
+      },
+    ],
+
     createdAt: { type: Date, default: Date.now },
     updatedAt: { type: Date, default: Date.now },
     archivedAt: { type: Date },

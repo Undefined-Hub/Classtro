@@ -127,7 +127,7 @@ function RoomDetailPage() {
 
   const handleSessionClick = (session) => {
     // Navigate to the session workspace with session data as state
-    navigate("/test/sessionWorkspace", {
+    navigate("/sessionWorkspace", {
       state: {
         sessionId: session._id,
         sessionData: session,

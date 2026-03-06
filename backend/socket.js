@@ -5,9 +5,44 @@ const voteMap = {}; // { [pollId]: { [participantId]: optionIndex } }
 const pollCounts = {}; // { [pollId]: [count, count, ...] }
 
 const { Server } = require("socket.io");
+const { registerQuizSocket } = require("./socket/quizSocket");
+const jwt = require("jsonwebtoken");
 
 let ioInstance = null;
 const Poll = require("./models/Polls");
+
+// Socket authentication middleware
+const authenticateSocket = (socket, next) => {
+  try {
+    const token = socket.handshake.auth?.token;
+    
+    if (!token) {
+      socket.user = null;
+      return next();
+    }
+
+    jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
+      if (err) {
+        console.error("❌ JWT verification failed:", err.message);
+        socket.user = null;
+        return next();
+      }
+      
+      // JWT payload is { user: { id: ... } }
+      socket.user = {
+        id: decoded.user?.id || decoded.id,
+        email: decoded.user?.email || decoded.email,
+        name: decoded.user?.name || decoded.name,
+      };
+      console.log("✅ Socket authenticated for user:", socket.user.id);
+      next();
+    });
+  } catch (error) {
+    socket.user = null;
+    next();
+  }
+};
+
 function setupSockets(server) {
   const io = new Server(server, {
     cors: {
@@ -19,6 +54,9 @@ function setupSockets(server) {
   ioInstance = io;
 
   const sessionNamespace = io.of("/sessions");
+  
+  // Apply authentication middleware to the namespace
+  sessionNamespace.use(authenticateSocket);
 
   function emitRoomUpdate(namespace, code) {
     const roomName = `session:${code}`;
@@ -36,6 +74,10 @@ function setupSockets(server) {
 
   sessionNamespace.on("connection", (socket) => {
     console.log("🔌 Socket connected:", socket.id);
+    
+    // Register quiz socket handlers
+    registerQuizSocket(sessionNamespace, socket);
+    
     socket.on("poll:close", ({ code, pollId }) => {
       // Optionally: mark poll as closed in DB here
       sessionNamespace.to(`session:${code}`).emit("poll:closed", { pollId });
@@ -94,7 +136,7 @@ function setupSockets(server) {
     });
 
     // --- TEACHER BROADCAST MESSAGE ---
-    socket.on("broadcast:teacher", ({ code, message, teacherId }) => {
+    socket.on("broadcast:teacher", ({ code, message, urls = [], urlMetadata = null, files = [], teacherId, broadcastId }) => {
       console.log(
         `📢 Teacher ${teacherId} broadcast in session ${code}: ${message}`,
       );
@@ -103,8 +145,12 @@ function setupSockets(server) {
       sessionNamespace.to(`session:${code}`).emit("broadcast:message", {
         from: "teacher",
         message,
+        urls,
+        urlMetadata,
+        files,
         code,
-        time: new Date(),
+        broadcastId,
+        timestamp: new Date(),
       });
     });
 
@@ -153,6 +199,24 @@ function setupSockets(server) {
       console.log("❌ Socket disconnected:", socket.id);
     });
 
+    // --- BROADCAST REACTIONS ---
+    socket.on("broadcast:reaction", ({ code, broadcastId, emoji, userId, userName, action }) => {
+      console.log(
+        `${action === "added" ? "👍" : "🚫"} User ${userName} ${action} reaction ${emoji} to broadcast ${broadcastId}`
+      );
+      console.log(`[SOCKET:reaction] Emitting to room: session:${code}`);
+
+      // Notify all participants in the session about the reaction update
+      sessionNamespace.to(`session:${code}`).emit("broadcast:reaction-update", {
+        broadcastId,
+        emoji,
+        userId,
+        userName,
+        action, // "added" or "removed"
+        timestamp: new Date(),
+      });
+    });
+
     socket.on("poll:create", async ({ code, poll }) => {
       sessionNamespace.to(`session:${code}`).emit("polls:new-poll", poll);
     });
@@ -191,4 +255,8 @@ function getSessionNamespace() {
   return ioInstance.of("/sessions");
 }
 
-module.exports = { setupSockets, getSessionNamespace };
+function getIOInstance() {
+  return ioInstance;
+}
+
+module.exports = { setupSockets, getSessionNamespace, getIOInstance };

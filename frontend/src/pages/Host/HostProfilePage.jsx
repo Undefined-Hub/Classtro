@@ -203,41 +203,42 @@ const HostProfilePage = () => {
   }
 
   return (
-    <div className="h-screen bg-gray-50 dark:bg-gray-900 overflow-hidden flex flex-col">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col">
       {/* Header */}
       <div className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center h-16">
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8">
+          <div className="flex items-center h-14 sm:h-16">
             <button
               onClick={() => navigate("/dashboard/rooms")}
-              className="p-2 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-gray-700 transition-colors"
+              className="p-1.5 sm:p-2 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-gray-700 transition-colors"
             >
-              <ArrowLeft className="w-5 h-5" />
+              <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
             </button>
-            <h1 className="ml-3 text-xl font-semibold text-gray-900 dark:text-white">
+            <h1 className="ml-2 sm:ml-3 text-base sm:text-xl font-semibold text-gray-900 dark:text-white">
               Profile Settings
             </h1>
           </div>
         </div>
       </div>
 
-      <div className="flex-1 overflow-hidden">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 sm:pt-8 h-full">
-          <div className="flex flex-col lg:flex-row gap-4 sm:gap-8 h-full">
+      <div className="flex-1 overflow-y-auto">
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-3 sm:py-4 lg:pt-8">
+          <div className="flex flex-col lg:flex-row gap-3 sm:gap-4 lg:gap-8">
             {/* Left Sidebar */}
-            <ProfileSidebar
-              user={user}
-              activeTab={activeTab}
-              setActiveTab={setActiveTab}
-              onLogout={handleLogout}
-              userType="host"
-            />
+            <div className="lg:w-80">
+              <ProfileSidebar
+                user={user}
+                activeTab={activeTab}
+                setActiveTab={setActiveTab}
+                onLogout={handleLogout}
+                userType="host"
+              />
+            </div>
 
             {/* Main Content */}
-            <div className="flex-1 overflow-hidden">
-              <div className="h-full overflow-y-auto pr-2 no-scrollbar">
+            <div className="flex-1 min-w-0">
                 {activeTab === "profile" && (
-                  <div className="space-y-6 pb-8">
+                  <div className="space-y-3 sm:space-y-4 lg:space-y-6 pb-4 sm:pb-6 lg:pb-8">
                     <ProfileDetailsSection
                       user={user}
                       isEditingProfile={isEditingProfile}
@@ -290,7 +291,7 @@ const HostProfilePage = () => {
                 )}
 
                 {activeTab === "archived" && (
-                  <div className="pb-8">
+                  <div className="pb-4 sm:pb-6 lg:pb-8">
                     <ArchivedRoomsSection
                       archivedRooms={archivedRooms}
                       archivedRoomsLoading={archivedRoomsLoading}
@@ -298,7 +299,6 @@ const HostProfilePage = () => {
                     />
                   </div>
                 )}
-              </div>
             </div>
           </div>
         </div>

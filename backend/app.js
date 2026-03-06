@@ -5,6 +5,7 @@ const http = require("http");
 const { Server } = require("socket.io");
 const { connectDB } = require("./config/db");
 const { errorHandler } = require("./middlewares/errorHandler");
+const { getSessionNamespace } = require("./socket");
 const cookieParser = require("cookie-parser");
 const passport = require("passport");
 const router = require("./routes");
@@ -71,11 +72,16 @@ app.use(
 );
 
 app.use(express.json());
-app.use(morgan("dev"));
-app.use(errorHandler);
+  app.use(morgan("dev"));
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(passport.initialize());
+
+// Middleware to attach Socket.IO /sessions namespace to requests
+app.use((req, res, next) => {
+  req.io = getSessionNamespace();
+  next();
+});
 
 // Serve uploaded screenshots statically
 app.use("/uploads", express.static("uploads"));
@@ -91,6 +97,9 @@ app.get("/test-error", (req, res, next) => {
   error.status = 400;
   next(error);
 });
+
+// Error handler must be AFTER all routes
+app.use(errorHandler);
 
 // ✅ Export the server instead of app
 module.exports = { server };

@@ -110,7 +110,7 @@ function DashboardLayout() {
                   <>
                     {/* Invisible bridge to prevent gap issues */}
                     <div className="absolute right-0 top-full h-1 w-full"></div>
-                    <div className="absolute right-0 mt-1 w-40 sm:w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-2 z-50">
+                    <div className="absolute left-0 sm:right-0 sm:left-auto mt-1 w-40 sm:w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-2 z-50">
                     <button
                       onClick={() => navigate("/teacher/profile")}
                       className="w-full flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
@@ -160,7 +160,7 @@ function DashboardLayout() {
                 }`
               }
             >
-              All Sessions
+              All Quizzes
             </NavLink>
           </div>
         </div>

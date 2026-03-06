@@ -1,7 +1,7 @@
 import React, { useEffect } from "react";
 import SessionStats from "./SessionStats";
 import { useHostSession } from "../../../context/HostSessionContext";
-import { ChartNoAxesColumn, MessageCircleQuestionMark } from "lucide-react";
+import { ChartNoAxesColumn, MessageCircleQuestionMark, ClipboardCheck } from "lucide-react";
 
 const MainContent = ({ isParticipantListOpen = true }) => {
   // * Context
@@ -14,6 +14,7 @@ const MainContent = ({ isParticipantListOpen = true }) => {
     setActiveView,
     setShowPollForm,
     setActiveParticipantsCount,
+    setShowQuizImport,
   } = useHostSession();
 
   // * Active Participants Count
@@ -78,7 +79,7 @@ const MainContent = ({ isParticipantListOpen = true }) => {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-3 mb-6">
+        <div className="grid grid-cols-3 gap-3 mb-6">
           <div className="bg-white dark:bg-gray-700 rounded-lg shadow-md p-4 text-left">
             <h3 className="font-semibold text-base text-gray-900 dark:text-white mb-2">
               Student Engagement
@@ -100,10 +101,29 @@ const MainContent = ({ isParticipantListOpen = true }) => {
 
           <div className="bg-white dark:bg-gray-700 rounded-lg shadow-md p-4 text-left">
             <h3 className="font-semibold text-base text-gray-900 dark:text-white mb-2">
+              Launch Quiz
+            </h3>
+            <p className="text-gray-600 dark:text-gray-300 mb-3 text-sm">
+              Import and launch quizzes to test student knowledge.
+            </p>
+            <button
+              onClick={() => {
+                setActiveView("quiz");
+                setShowQuizImport(true);
+              }}
+              className="inline-flex items-center px-3 py-1.5 bg-blue-600 text-white rounded-lg text-xs hover:bg-blue-700 focus:ring-2 focus:ring-blue-500"
+            >
+              <ClipboardCheck className="w-3 h-3 mr-1" />
+              Launch Quiz
+            </button>
+          </div>
+
+          <div className="bg-white dark:bg-gray-700 rounded-lg shadow-md p-4 text-left">
+            <h3 className="font-semibold text-base text-gray-900 dark:text-white mb-2">
               Q&A Session
             </h3>
             <p className="text-gray-600 dark:text-gray-300 mb-3 text-sm">
-              View student questions and doubts, clear their confusion and get insights.
+              View student questions and doubts, clear their confusion.
             </p>
             <button
               onClick={() => setActiveView("qa")}

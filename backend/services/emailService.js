@@ -203,6 +203,6 @@ module.exports = new EmailService();
   const isEmailServiceReady = await emailService.verifyConnection();
   if (!isEmailServiceReady) {
     console.error("Email service is not ready. Check your Brevo API key and configuration.");
-    process.exit(1); // Exit if email service is not ready
+    // process.exit(1); // Exit if email service is not ready
   }
 })();

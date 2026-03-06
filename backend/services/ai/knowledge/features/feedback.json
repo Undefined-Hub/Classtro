@@ -1,0 +1,217 @@
+{
+  "feature": "feedback",
+  "title": "Session Feedback System",
+  "description": "Collect structured feedback from students after sessions to improve teaching quality and student experience",
+  
+  "teacher": {
+    "overview": "Gather valuable feedback from students after each session to understand what worked well and what needs improvement.",
+    
+    "howTo": {
+      "request": [
+        "At end of session, click 'Request Feedback'",
+        "Choose feedback type (Quick Rating, Detailed Form, Custom)",
+        "Select questions to ask students",
+        "Set deadline for submission (optional)",
+        "Click 'Send' - students receive feedback request"
+      ],
+      "view": [
+        "Go to session details page",
+        "Click 'View Feedback' tab",
+        "See aggregate ratings and statistics",
+        "Read individual student comments",
+        "Filter by rating, date, or specific questions"
+      ],
+      "analyze": [
+        "View average ratings per question",
+        "Read all student comments",
+        "Identify common themes in feedback",
+        "Compare feedback across multiple sessions",
+        "Export feedback data as CSV/PDF"
+      ]
+    },
+    
+    "feedbackTypes": [
+      {
+        "type": "Quick Rating",
+        "description": "Simple 1-5 star rating with optional comment",
+        "bestFor": "Every session, quick pulse check",
+        "questions": ["How would you rate today's session?", "Any suggestions?"],
+        "timeToComplete": "30 seconds"
+      },
+      {
+        "type": "Detailed Form",
+        "description": "Multiple questions covering different aspects",
+        "bestFor": "Weekly or after important topics",
+        "questions": [
+          "Content clarity (1-5)",
+          "Teaching pace (too slow/just right/too fast)",
+          "Engagement level (1-5)",
+          "Usefulness of examples (1-5)",
+          "What did you like most?",
+          "What needs improvement?"
+        ],
+        "timeToComplete": "2-3 minutes"
+      },
+      {
+        "type": "Custom",
+        "description": "Create your own questions",
+        "bestFor": "Specific topics or experimental sessions",
+        "questions": "You design them",
+        "timeToComplete": "Varies"
+      }
+    ],
+    
+    "tips": [
+      "Request feedback after every session for consistent data",
+      "Keep feedback forms short to encourage completion",
+      "Make feedback anonymous for honest responses",
+      "Act on feedback - students appreciate being heard",
+      "Share summary of feedback and actions taken with students",
+      "Compare feedback over time to track improvement"
+    ],
+    
+    "canDo": [
+      "Request feedback after any session",
+      "Customize feedback questions",
+      "See individual responses (unless anonymous)",
+      "View aggregate statistics and trends",
+      "Export feedback data",
+      "Compare feedback across sessions",
+      "Set feedback deadlines",
+      "Send reminders to students who haven't submitted"
+    ],
+    
+    "cannotDo": [
+      "Force students to provide feedback",
+      "Edit student responses",
+      "See who gave what feedback in anonymous mode",
+      "Delete negative feedback",
+      "Request feedback for sessions from other teachers"
+    ],
+    
+    "bestPractices": [
+      "Use quick ratings for every session, detailed forms periodically",
+      "Read all comments, not just ratings",
+      "Look for patterns in feedback",
+      "Follow up on specific concerns",
+      "Thank students for honest feedback",
+      "Implement at least one suggestion per month and communicate it"
+    ],
+    
+    "analytics": {
+      "available": [
+        "Average rating per session",
+        "Rating trends over time",
+        "Response rate (% of students who submitted)",
+        "Question-wise breakdowns",
+        "Word cloud from comments",
+        "Comparison with previous sessions",
+        "Student engagement correlation"
+      ],
+      "insights": [
+        "Identify consistently low-rated aspects",
+        "Find what students enjoy most",
+        "Track improvement over semester",
+        "Correlate feedback with poll participation"
+      ]
+    }
+  },
+  
+  "student": {
+    "overview": "Provide honest feedback to help your teacher improve sessions. Your input shapes how future classes are conducted.",
+    
+    "howTo": {
+      "submit": [
+        "After session ends, you'll see feedback request",
+        "Click 'Provide Feedback' button",
+        "Answer rating questions (1-5 stars or scale)",
+        "Write comments in text boxes (optional but encouraged)",
+        "Choose to submit anonymously or with your name",
+        "Click 'Submit Feedback'",
+        "See confirmation message"
+      ],
+      "view": [
+        "Check your submitted feedback in session history",
+        "See if teacher responded to your suggestions",
+        "Track your feedback submissions"
+      ]
+    },
+    
+    "tips": [
+      "Be honest - anonymous feedback helps teacher improve without consequences for you",
+      "Be constructive - say what can improve, not just what's wrong",
+      "Mention specific examples when possible",
+      "Balance criticism with positive comments",
+      "Submit feedback while session is fresh in memory",
+      "Don't skip feedback - your voice matters"
+    ],
+    
+    "canDo": [
+      "Submit feedback for any session you attended",
+      "Provide ratings and written comments",
+      "Submit anonymously if preferred",
+      "Edit feedback before submission",
+      "View your feedback history",
+      "Submit feedback within deadline if set"
+    ],
+    
+    "cannotDo": [
+      "Edit feedback after submission",
+      "See other students' feedback",
+      "Submit feedback for sessions you didn't attend",
+      "Give feedback before session ends",
+      "Submit multiple times for same session"
+    ],
+    
+    "feedbackGuidelines": {
+      "helpful": [
+        "\"The pace was too fast during the calculus section. More examples would help.\"",
+        "\"I loved the real-world examples! They made concepts clear.\"",
+        "\"Could we spend more time on Q&A at the end?\"",
+        "\"The polls helped me stay engaged throughout the session.\""
+      ],
+      "notHelpful": [
+        "\"It was bad\" (too vague)",
+        "\"I didn't understand anything\" (not specific)",
+        "\"Boring\" (no constructive suggestion)",
+        "Inappropriate or disrespectful comments"
+      ]
+    },
+    
+    "commonIssues": [
+      {
+        "problem": "Cannot submit feedback",
+        "solution": "Check if deadline passed, ensure you attended the session, verify all required fields filled, try refreshing"
+      },
+      {
+        "problem": "Feedback form not appearing",
+        "solution": "Check session history for feedback link, ensure session ended, verify teacher requested feedback"
+      },
+      {
+        "problem": "Want to change submitted feedback",
+        "solution": "Cannot edit after submission. Contact teacher directly if urgent correction needed"
+      },
+      {
+        "problem": "Unsure what to write",
+        "solution": "Think about: What helped you learn? What confused you? What would you change? Be specific and honest"
+      }
+    ],
+    
+    "whyItMatters": [
+      "Teachers use your feedback to improve future sessions",
+      "Your suggestions directly influence teaching methods",
+      "Honest feedback helps everyone learn better",
+      "Anonymous option ensures safe, honest communication",
+      "Collective feedback shapes course structure"
+    ],
+    
+    "anonymityExplained": {
+      "description": "When you submit anonymously, teacher cannot see who submitted which feedback",
+      "whenToUse": "Sensitive comments, constructive criticism, fear of consequences",
+      "privacy": "Your identity is completely hidden from teacher",
+      "recommendation": "Use anonymous mode for critical feedback you might hesitate to share otherwise"
+    }
+  },
+  
+  "relatedFeatures": ["sessions", "analytics", "polls", "qna"]
+}

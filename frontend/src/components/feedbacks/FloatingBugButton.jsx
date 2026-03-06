@@ -2,6 +2,27 @@ import React, { useState } from "react";
 import FloatingButton from "./FloatingButton";
 import OptionsPanel from "./OptionsPanel";
 import FeedbackModal from "./FeedbackModal";
+import ChatBotWindow from "./ChatBot/ChatBotWindow.jsx";
+import toast from "../../utils/toastUtils";
+
+// Static list of bug report modules
+const BUG_MODULES = [
+  "Authentication",
+  "Room Management",
+  "Session Dashboard",
+  "QR Code Joining",
+  "Polls",
+  "Q&A",
+  "Live Chat",
+  "Attendance Tracking",
+  "Analytics",
+  "Session Feedback",
+  "System Feedback",
+  "User Profile",
+  "Notifications",
+  "File Upload",
+  "Other"
+];
 
 const FloatingBugButton = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -9,13 +30,16 @@ const FloatingBugButton = () => {
   const [reportType, setReportType] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [screenshotPreview, setScreenshotPreview] = useState(null);
+  const [showChatBot, setShowChatBot] = useState(false);
   const [formData, setFormData] = useState({
     title: "",
     description: "",
     stepsToReproduce: "",
+    module: "",
     severity: "medium",
     userEmail: "",
     screenshot: null,
+    rating: 0,
   });
 
   const handleFloatingButtonClick = () => {
@@ -23,9 +47,18 @@ const FloatingBugButton = () => {
   };
 
   const handleOptionSelect = (type) => {
-    setReportType(type);
-    setShowModal(true);
-    setIsOpen(false);
+    if (type === "chatbot") {
+      setShowChatBot(true);
+      setIsOpen(false);
+    } else {
+      setReportType(type);
+      setShowModal(true);
+      setIsOpen(false);
+    }
+  };
+
+  const handleCloseChatBot = () => {
+    setShowChatBot(false);
   };
 
   const handleCloseModal = () => {
@@ -39,9 +72,11 @@ const FloatingBugButton = () => {
       title: "",
       description: "",
       stepsToReproduce: "",
+      module: "",
       severity: "medium",
       userEmail: "",
       screenshot: null,
+      rating: 0,
     });
   };
 
@@ -62,14 +97,15 @@ const FloatingBugButton = () => {
     }
   };
 
+  const handleRatingChange = (rating) => {
+    setFormData((prev) => ({ ...prev, rating }));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
 
     const formDataToSend = new FormData();
-    formDataToSend.append("type", reportType);
-    formDataToSend.append("title", formData.title.trim());
-    formDataToSend.append("description", formData.description.trim());
 
     const metadata = {
       userAgent: navigator.userAgent,
@@ -80,18 +116,23 @@ const FloatingBugButton = () => {
       console: [],
     };
     formDataToSend.append("metadata", JSON.stringify(metadata));
+    formDataToSend.append("description", formData.description.trim());
 
     if (reportType === "bug") {
+      formDataToSend.append("title", formData.title.trim());
       formDataToSend.append(
         "stepsToReproduce",
         formData.stepsToReproduce.trim(),
       );
+      formDataToSend.append("module", formData.module);
       formDataToSend.append("severity", formData.severity);
       formDataToSend.append("userEmail", formData.userEmail.trim());
       if (formData.screenshot) {
         formDataToSend.append("screenshot", formData.screenshot);
       }
     } else {
+      // Feedback - add rating
+      formDataToSend.append("rating", formData.rating);
       if (formData.userEmail.trim()) {
         formDataToSend.append("userEmail", formData.userEmail.trim());
       }
@@ -100,34 +141,44 @@ const FloatingBugButton = () => {
     try {
       const BACKEND_BASE_URL =
         import.meta.env.VITE_BACKEND_BASE_URL || "http://localhost:5000";
-      const response = await fetch(`${BACKEND_BASE_URL}/api/feedback`, {
+      const endpoint = reportType === "bug" ? "systemBug" : "systemFeedback";
+      const response = await fetch(`${BACKEND_BASE_URL}/api/feedback/${endpoint}`, {
         method: "POST",
         body: formDataToSend,
       });
 
       if (response.ok) {
         const result = await response.json();
-        alert(
+        toast.success(
           `${reportType === "bug" ? "Bug report" : "Feedback"} submitted successfully! Report #${result.reportNumber || result.id}`,
+          { duration: 4000 }
         );
         handleCloseModal();
       } else {
         const errorData = await response
           .json()
-          .catch(() => ({ error: "Unknown error" }));
-        let errorMessage = "Failed to submit report. ";
+          .catch(() => ({ error: "Unknown error occurred" }));
+        
+        let errorMessage = "";
+        
+        // Handle validation errors from backend
         if (errorData.details && Array.isArray(errorData.details)) {
-          errorMessage += errorData.details.map((d) => d.msg).join(", ");
+          errorMessage = errorData.details.map((d) => d.msg || d.message).join(", ");
         } else if (errorData.error) {
-          errorMessage += errorData.error;
+          errorMessage = errorData.error;
+        } else if (errorData.message) {
+          errorMessage = errorData.message;
         } else {
-          errorMessage += "Please try again.";
+          errorMessage = "Failed to submit report. Please try again.";
         }
-        alert(errorMessage);
+        
+        toast.error(errorMessage, { duration: 5000 });
       }
     } catch (error) {
       console.error("Error submitting report:", error);
-      alert("Network error. Please check your connection and try again.");
+      toast.error("Network error. Please check your connection and try again.", {
+        duration: 5000
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -155,11 +206,15 @@ const FloatingBugButton = () => {
         formData={formData}
         screenshotPreview={screenshotPreview}
         isSubmitting={isSubmitting}
+        modules={BUG_MODULES}
         onClose={handleCloseModal}
         onInputChange={handleInputChange}
+        onRatingChange={handleRatingChange}
         onSubmit={handleSubmit}
         onRemoveScreenshot={handleRemoveScreenshot}
       />
+
+      <ChatBotWindow isOpen={showChatBot} onClose={handleCloseChatBot} />
     </>
   );
 };

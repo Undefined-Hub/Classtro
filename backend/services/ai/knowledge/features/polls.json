@@ -1,0 +1,185 @@
+{
+  "feature": "polls",
+  "title": "Live Polling & Quizzes",
+  "description": "Real-time interactive polls and quizzes to gauge student understanding and gather instant feedback",
+  
+  "teacher": {
+    "overview": "Create and launch polls to check student understanding in real-time. Polls can be multiple choice, true/false, or open-ended.",
+    
+    "howTo": {
+      "create": [
+        "During an active session, click 'Create Poll' button",
+        "Choose poll type (Multiple Choice, True/False, Rating, Open-ended)",
+        "Enter your question text",
+        "Add answer options (for multiple choice)",
+        "Set correct answer if it's a quiz",
+        "Set time limit (optional)",
+        "Click 'Create' to save the poll"
+      ],
+      "launch": [
+        "Click 'Launch Poll' to send it to students",
+        "Poll appears on all students' screens instantly",
+        "Watch real-time responses come in",
+        "See live participation count",
+        "View response distribution graph"
+      ],
+      "manage": [
+        "Close poll manually or let timer expire",
+        "View detailed results and analytics",
+        "See individual student responses",
+        "Download results as CSV or PDF",
+        "Share results with students if desired"
+      ]
+    },
+    
+    "pollTypes": [
+      {
+        "type": "Multiple Choice",
+        "description": "Students select one or multiple answers from options",
+        "bestFor": "Knowledge checks, concept understanding, quick assessments",
+        "example": "Which of these are programming languages? (A) Python (B) HTML (C) Java (D) CSS",
+        "tips": "Use 4-5 options, include one 'All of the above' or 'None of the above' when relevant"
+      },
+      {
+        "type": "True/False",
+        "description": "Binary choice questions",
+        "bestFor": "Quick comprehension checks, fact verification, warm-up questions",
+        "example": "True or False: Photosynthesis occurs in mitochondria",
+        "tips": "Best for clear, unambiguous statements. Avoid tricky wording"
+      },
+      {
+        "type": "Rating Scale",
+        "description": "Students rate on a scale (1-5 or 1-10)",
+        "bestFor": "Gauging confidence levels, understanding depth, opinions",
+        "example": "How confident are you with today's topic? (1=Not at all, 5=Very confident)",
+        "tips": "Use consistent scales throughout session, explain what each number means"
+      },
+      {
+        "type": "Open-ended",
+        "description": "Students type text responses",
+        "bestFor": "Gathering opinions, explanations, creative answers, feedback",
+        "example": "In one sentence, explain what you learned today",
+        "tips": "Keep questions focused, review responses after session for insights"
+      }
+    ],
+    
+    "tips": [
+      "Use polls every 10-15 minutes to maintain engagement",
+      "Mix different poll types for variety",
+      "Set appropriate time limits (30-60 seconds for MCQ, 2-3 minutes for open-ended)",
+      "Review results before moving to next topic",
+      "Use results to adapt your teaching in real-time",
+      "Don't reveal correct answers during session to prevent cheating"
+    ],
+    
+    "canDo": [
+      "Create unlimited polls per session",
+      "See real-time student responses as they submit",
+      "View individual student answers",
+      "Export poll data (CSV, PDF, Excel)",
+      "Set time limits on polls",
+      "Mark correct answers for quiz mode",
+      "Reuse polls from previous sessions",
+      "Close polls manually anytime"
+    ],
+    
+    "cannotDo": [
+      "Edit poll after launching (must delete and recreate)",
+      "Force students to answer polls",
+      "See who answered what in anonymous mode",
+      "Restart a closed poll in same session"
+    ],
+    
+    "bestPractices": [
+      "Prepare polls before session for smooth flow",
+      "Use polls to identify knowledge gaps",
+      "Review results to see if reteaching is needed",
+      "Keep questions clear and concise",
+      "Use quiz mode for assessments, regular polls for engagement"
+    ],
+    
+    "analytics": {
+      "available": [
+        "Total responses vs total students",
+        "Response time distribution",
+        "Answer distribution (percentage per option)",
+        "Individual student responses",
+        "Correct/incorrect breakdown (quiz mode)",
+        "Participation rate",
+        "Average response time"
+      ]
+    }
+  },
+  
+  "student": {
+    "overview": "Participate in live polls during sessions to demonstrate your understanding and engage with the class.",
+    
+    "howTo": {
+      "participate": [
+        "Poll appears automatically on your screen when teacher launches it",
+        "Read the question carefully",
+        "Select your answer or type response",
+        "Click 'Submit' button",
+        "See confirmation message",
+        "Wait for next poll or continue with session"
+      ],
+      "viewResults": [
+        "Some teachers show results after everyone submits",
+        "Check your response history in session details",
+        "Review your answers after session ends"
+      ]
+    },
+    
+    "tips": [
+      "Answer honestly to help teacher understand class progress",
+      "Don't wait too long - polls may have time limits",
+      "Read all options before selecting (for multiple choice)",
+      "Pay attention to 'select all that apply' vs 'select one'",
+      "If confused, ask question in Q&A instead of guessing"
+    ],
+    
+    "canDo": [
+      "Submit one response per poll",
+      "View your submission confirmation",
+      "See your response history after session",
+      "Participate in all poll types",
+      "Submit within time limit if set"
+    ],
+    
+    "cannotDo": [
+      "Change answer after submission",
+      "See other students' answers before submitting",
+      "See correct answers during session (teacher decides when to reveal)",
+      "Skip mandatory polls",
+      "Submit after poll is closed"
+    ],
+    
+    "commonIssues": [
+      {
+        "problem": "Poll not appearing on screen",
+        "solution": "Refresh page, check internet connection, ensure you're in the correct session, verify session is still active"
+      },
+      {
+        "problem": "Cannot submit answer",
+        "solution": "Check if you selected an option, verify poll is still open, ensure you didn't already submit, try refreshing page"
+      },
+      {
+        "problem": "Submitted wrong answer by mistake",
+        "solution": "Unfortunately cannot change after submission. Be careful next time. Teacher can see genuine mistakes in analytics"
+      },
+      {
+        "problem": "Time ran out before I could answer",
+        "solution": "Read questions faster next time, ask teacher to extend time limits if consistently too short"
+      }
+    ],
+    
+    "participationTips": [
+      "Answer every poll - it helps you and your teacher",
+      "Don't copy answers from classmates - defeats the purpose",
+      "Use open-ended polls to share your thoughts",
+      "If you don't know the answer, it's okay - polls are for learning"
+    ]
+  },
+  
+  "relatedFeatures": ["sessions", "qna", "analytics", "feedback"]
+}
