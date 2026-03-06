@@ -2,10 +2,9 @@ import React, { useEffect, useState, useCallback, useRef } from "react";
 import api from "../../../utils/api";
 import { useHostSession } from "../../../context/HostSessionContext";
 import {
-  FileQuestion,
+  ClipboardCheck,
   Users,
   Play,
-  Square,
   Import,
   CheckCircle,
   XCircle,
@@ -23,6 +22,7 @@ import {
   SkipForward,
   Timer,
   Medal,
+  Search
 } from "lucide-react";
 
 const QuizManager = ({ isParticipantListOpen = true }) => {
@@ -44,6 +44,8 @@ const QuizManager = ({ isParticipantListOpen = true }) => {
   const [templates, setTemplates] = useState([]);
   const [loadingTemplates, setLoadingTemplates] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState(null);
+  const [templateSearch, setTemplateSearch] = useState("");
+  const [importStep, setImportStep] = useState(1);
   const [launching, setLaunching] = useState(false);
   const [closing, setClosing] = useState(false);
   const [showResults, setShowResults] = useState(false);
@@ -63,6 +65,34 @@ const QuizManager = ({ isParticipantListOpen = true }) => {
   const [isPublishing, setIsPublishing] = useState(false);
   const [isClosingQuestion, setIsClosingQuestion] = useState(false);
   const [showLeaderboard, setShowLeaderboard] = useState(false);
+
+  const getModeLabel = (mode) =>
+    mode === "HOST_CONTROLLED" ? "Live Guided" : "Self-Paced";
+
+  const getValidationMessage = () => {
+    if (!templateValidation) return "";
+    if (templateValidation.reason) return templateValidation.reason;
+
+    const firstIssue = templateValidation.issues?.[0];
+    if (firstIssue) {
+      if (firstIssue.toLowerCase().includes("multi_select")) {
+        return "This template includes multi-select questions. Live Guided supports only single-correct MCQ questions.";
+      }
+      return firstIssue;
+    }
+
+    return "This template is not compatible with the selected launch type.";
+  };
+
+  const filteredTemplates = templates.filter((template) => {
+    const query = templateSearch.trim().toLowerCase();
+    if (!query) return true;
+
+    const title = (template.title || "").toLowerCase();
+    const description = (template.description || "").toLowerCase();
+
+    return title.includes(query) || description.includes(query);
+  });
 
   // Ref to track current activeQuiz for socket handlers (avoids stale closure during race conditions)
   const activeQuizRef = useRef(activeQuiz);
@@ -137,7 +167,9 @@ const QuizManager = ({ isParticipantListOpen = true }) => {
       fetchTemplates();
       setSelectedMode("ONE_SHOT");
       setSelectedTemplate(null);
+      setTemplateSearch("");
       setTemplateValidation(null);
+      setImportStep(1);
     }
   }, [showQuizImport]);
 
@@ -250,7 +282,7 @@ const QuizManager = ({ isParticipantListOpen = true }) => {
     
     // Check validation for HOST_CONTROLLED
     if (selectedMode === "HOST_CONTROLLED" && templateValidation && !templateValidation.compatible) {
-      alert("This template is not compatible with HOST_CONTROLLED mode.");
+      alert("This template is not compatible with Live Guided mode.");
       return;
     }
     
@@ -388,7 +420,7 @@ const QuizManager = ({ isParticipantListOpen = true }) => {
     <div className="mt-4 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl space-y-4">
       <div className="flex items-center gap-2 mb-3">
         <Zap className="w-5 h-5 text-amber-500" />
-        <span className="font-semibold text-slate-900 dark:text-white">Quiz Mode</span>
+        <span className="font-semibold text-slate-900 dark:text-white">Launch Type</span>
       </div>
       
       <div className="grid grid-cols-2 gap-3">
@@ -400,9 +432,9 @@ const QuizManager = ({ isParticipantListOpen = true }) => {
               : "border-slate-200 dark:border-slate-700 hover:border-slate-300"
           }`}
         >
-          <div className="font-semibold text-slate-900 dark:text-white mb-1">One Shot</div>
+          <div className="font-semibold text-slate-900 dark:text-white mb-1">Self-Paced</div>
           <div className="text-xs text-slate-500 dark:text-slate-400">
-            Students see all questions at once and submit when ready
+            Students answer at their own pace and submit when ready
           </div>
         </button>
         
@@ -415,11 +447,11 @@ const QuizManager = ({ isParticipantListOpen = true }) => {
           }`}
         >
           <div className="font-semibold text-slate-900 dark:text-white mb-1 flex items-center gap-2">
-            Host Controlled
+            Live Guided
             <Zap className="w-4 h-4 text-amber-500" />
           </div>
           <div className="text-xs text-slate-500 dark:text-slate-400">
-            You control question timing. Speed bonus scoring!
+            You control each question timing in a live guided flow
           </div>
         </button>
       </div>
@@ -468,10 +500,10 @@ const QuizManager = ({ isParticipantListOpen = true }) => {
                 <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
                 <div>
                   <div className="font-medium text-red-700 dark:text-red-300">
-                    Incompatible Template
+                    Can’t use this template for Live Guided
                   </div>
                   <div className="text-sm text-red-600 dark:text-red-400 mt-1">
-                    {templateValidation.reason}
+                    {getValidationMessage()}
                   </div>
                   {templateValidation.invalidQuestions?.length > 0 && (
                     <div className="text-xs text-red-500 mt-2">
@@ -487,7 +519,7 @@ const QuizManager = ({ isParticipantListOpen = true }) => {
             <div className="p-3 bg-green-50 dark:bg-green-900/30 rounded-lg border border-green-200 dark:border-green-800">
               <div className="flex items-center gap-2 text-green-700 dark:text-green-300">
                 <CheckCircle className="w-5 h-5" />
-                <span className="font-medium">Template compatible with Host Controlled mode</span>
+                <span className="font-medium">Template compatible with Live Guided mode</span>
               </div>
             </div>
           )}
@@ -495,6 +527,13 @@ const QuizManager = ({ isParticipantListOpen = true }) => {
       )}
     </div>
   );
+
+  const closeImportModal = () => {
+    setShowQuizImport(false);
+    setSelectedTemplate(null);
+    setTemplateSearch("");
+    setImportStep(1);
+  };
 
   // Render import modal
   const renderImportModal = () => (
@@ -509,18 +548,17 @@ const QuizManager = ({ isParticipantListOpen = true }) => {
               </div>
               <div>
                 <h2 className="text-xl font-bold text-slate-900 dark:text-white">
-                  Import Quiz Template
+                  {importStep === 1 ? "Select Quiz Template" : "Configure Launch"}
                 </h2>
                 <p className="text-sm text-slate-500 dark:text-slate-400">
-                  Select a quiz to launch in this session
+                  {importStep === 1
+                    ? "Choose the template you want to launch"
+                    : "Pick how this quiz should run"}
                 </p>
               </div>
             </div>
             <button
-              onClick={() => {
-                setShowQuizImport(false);
-                setSelectedTemplate(null);
-              }}
+              onClick={closeImportModal}
               className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
             >
               <X className="w-5 h-5 text-slate-500" />
@@ -528,15 +566,39 @@ const QuizManager = ({ isParticipantListOpen = true }) => {
           </div>
         </div>
 
+        <div className="px-6 py-3 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/40">
+          <div className="flex items-center gap-2 text-xs font-medium">
+            <span
+              className={`px-2.5 py-1 rounded-full ${
+                importStep === 1
+                  ? "bg-blue-600 text-white"
+                  : "bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-300"
+              }`}
+            >
+              1. Template
+            </span>
+            <span className="text-slate-400">→</span>
+            <span
+              className={`px-2.5 py-1 rounded-full ${
+                importStep === 2
+                  ? "bg-blue-600 text-white"
+                  : "bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-300"
+              }`}
+            >
+              2. Launch Type
+            </span>
+          </div>
+        </div>
+
         {/* Content */}
-        <div className="p-6 overflow-y-auto max-h-[50vh]">
+        <div className="p-6 overflow-y-auto max-h-[55vh]">
           {loadingTemplates ? (
             <div className="flex items-center justify-center py-12">
               <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
             </div>
           ) : templates.length === 0 ? (
             <div className="text-center py-12">
-              <FileQuestion className="w-16 h-16 text-slate-300 dark:text-slate-600 mx-auto mb-4" />
+              <ClipboardCheck className="w-16 h-16 text-slate-300 dark:text-slate-600 mx-auto mb-4" />
               <h3 className="text-lg font-semibold text-slate-700 dark:text-slate-300 mb-2">
                 No Quiz Templates
               </h3>
@@ -551,69 +613,144 @@ const QuizManager = ({ isParticipantListOpen = true }) => {
               </button>
             </div>
           ) : (
-            <div className="space-y-3">
-              {templates.map((template) => (
-                <div
-                  key={template._id}
-                  onClick={() => setSelectedTemplate(template)}
-                  className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${
-                    selectedTemplate?._id === template._id
-                      ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20 shadow-md"
-                      : "border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600"
-                  }`}
-                >
-                  <div>
-                    <div className="flex items-center gap-2 mb-1">
-                      <h3 className="font-semibold text-slate-900 dark:text-white">
-                        {template.title}
-                      </h3>
-                      {selectedTemplate?._id === template._id && (
-                        <CheckCircle className="w-5 h-5 text-blue-500 flex-shrink-0" />
-                      )}
+            <>
+              {importStep === 1 ? (
+                <div className="space-y-3">
+                  <div className="relative">
+                    <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                    <input
+                      type="text"
+                      value={templateSearch}
+                      onChange={(e) => setTemplateSearch(e.target.value)}
+                      placeholder="Search templates by title or description"
+                      className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+
+                  {filteredTemplates.length === 0 ? (
+                    <div className="py-10 text-center rounded-xl border border-dashed border-slate-300 dark:border-slate-700">
+                      <Search className="w-8 h-8 text-slate-300 dark:text-slate-600 mx-auto mb-2" />
+                      <p className="text-sm font-medium text-slate-600 dark:text-slate-300">
+                        No templates found
+                      </p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                        Try a different keyword
+                      </p>
                     </div>
-                    <p className="text-sm text-slate-500 dark:text-slate-400 line-clamp-2">
-                      {template.description || "No description"}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-4 mt-3">
-                    <span className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
-                      <Target className="w-3.5 h-3.5" />
-                      {(template.questionsCount ?? template.questions?.length ?? 0)} questions
-                    </span>
-                    <span className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
-                      <Award className="w-3.5 h-3.5" />
-                      {template.totalPoints} points
-                    </span>
-                  </div>
+                  ) : (
+                    filteredTemplates.map((template) => (
+                      <div
+                        key={template._id}
+                        onClick={() => setSelectedTemplate(template)}
+                        className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${
+                          selectedTemplate?._id === template._id
+                            ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20 shadow-md"
+                            : "border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600"
+                        }`}
+                      >
+                        <div>
+                          <div className="flex items-center gap-2 mb-1">
+                            <h3 className="font-semibold text-slate-900 dark:text-white">
+                              {template.title}
+                            </h3>
+                            {selectedTemplate?._id === template._id && (
+                              <CheckCircle className="w-5 h-5 text-blue-500 flex-shrink-0" />
+                            )}
+                          </div>
+                          <p className="text-sm text-slate-500 dark:text-slate-400 line-clamp-2">
+                            {template.description || "No description"}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-4 mt-3">
+                          <span className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
+                            <Target className="w-3.5 h-3.5" />
+                            {(template.questionsCount ?? template.questions?.length ?? 0)} questions
+                          </span>
+                          <span className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
+                            <Award className="w-3.5 h-3.5" />
+                            {template.totalPoints} points
+                          </span>
+                        </div>
+                      </div>
+                    ))
+                  )}
                 </div>
-              ))}
-            </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="p-4 rounded-xl border border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-900/20">
+                    <div className="text-xs font-medium text-blue-700 dark:text-blue-300 mb-1">
+                      Selected Template
+                    </div>
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <h3 className="font-semibold text-slate-900 dark:text-white">
+                          {selectedTemplate?.title}
+                        </h3>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                          {(selectedTemplate?.questionsCount ?? selectedTemplate?.questions?.length ?? 0)} questions • {selectedTemplate?.totalPoints} points
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => setImportStep(1)}
+                        className="px-3 py-1.5 text-xs font-medium rounded-lg border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+                      >
+                        Change
+                      </button>
+                    </div>
+                  </div>
+                  {renderModeSelector()}
+                </div>
+              )}
+            </>
           )}
-          
-          {/* Mode Selector - show when template is selected */}
-          {selectedTemplate && renderModeSelector()}
         </div>
 
-        {/* Launch Button */}
-        {selectedTemplate && (
-          <div className="p-6 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50">
-            <button
-              onClick={handleLaunchQuiz}
-              disabled={launching || validatingTemplate || (selectedMode === "HOST_CONTROLLED" && templateValidation && !templateValidation.compatible)}
-              className="w-full py-3 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white rounded-xl font-semibold flex items-center justify-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-green-500/25"
-            >
-              {launching ? (
-                <>
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                  Launching...
-                </>
-              ) : (
-                <>
-                  <Play className="w-5 h-5" />
-                  Launch {selectedMode === "HOST_CONTROLLED" ? "Host Controlled" : ""} Quiz
-                </>
-              )}
-            </button>
+        {/* Footer Actions */}
+        {!loadingTemplates && templates.length > 0 && (
+          <div className="p-6 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 flex items-center justify-between gap-3">
+            {importStep === 1 ? (
+              <>
+                <button
+                  onClick={closeImportModal}
+                  className="px-4 py-2 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 rounded-xl font-medium hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => setImportStep(2)}
+                  disabled={!selectedTemplate}
+                  className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Continue
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  onClick={() => setImportStep(1)}
+                  className="px-4 py-2 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 rounded-xl font-medium hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                >
+                  Back
+                </button>
+                <button
+                  onClick={handleLaunchQuiz}
+                  disabled={launching || validatingTemplate || (selectedMode === "HOST_CONTROLLED" && templateValidation && !templateValidation.compatible)}
+                  className="px-5 py-2 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white rounded-xl font-semibold flex items-center justify-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-green-500/25"
+                >
+                  {launching ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      Launching...
+                    </>
+                  ) : (
+                    <>
+                      <Play className="w-5 h-5" />
+                      Launch {getModeLabel(selectedMode)} Quiz
+                    </>
+                  )}
+                </button>
+              </>
+            )}
           </div>
         )}
       </div>
@@ -687,7 +824,7 @@ const QuizManager = ({ isParticipantListOpen = true }) => {
             {closing ? (
               <Loader2 className="w-5 h-5 animate-spin" />
             ) : (
-              <Square className="w-5 h-5" />
+              <XCircle className="w-5 h-5" />
             )}
             End Quiz
           </button>
@@ -790,7 +927,7 @@ const QuizManager = ({ isParticipantListOpen = true }) => {
             <div>
               <div className="flex items-center gap-2 mb-2">
                 <span className="px-2.5 py-1 bg-white/20 rounded-full text-xs font-semibold uppercase tracking-wide">
-                  🎮 Host Controlled
+                  🎮 Live Guided
                 </span>
                 <span className="px-2.5 py-1 bg-white/20 rounded-full text-xs font-semibold">
                   {activeQuiz.status === "LIVE" ? "🔴 Live" : "Closed"}
@@ -987,7 +1124,7 @@ const QuizManager = ({ isParticipantListOpen = true }) => {
                 onClick={handleEndHCQuiz}
                 className="w-full py-2 bg-slate-100 dark:bg-slate-800 hover:bg-red-50 dark:hover:bg-red-900/30 text-slate-600 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400 rounded-xl font-medium flex items-center justify-center gap-2 transition-all border border-slate-200 dark:border-slate-700 hover:border-red-300 dark:hover:border-red-800"
               >
-                <Square className="w-4 h-4" />
+                <XCircle className="w-4 h-4" />
                 End Quiz Early
               </button>
             )}
@@ -1025,7 +1162,7 @@ const QuizManager = ({ isParticipantListOpen = true }) => {
         <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl p-6 text-white">
           <div className="flex items-center gap-2 mb-2">
             <span className="px-2.5 py-1 bg-white/20 rounded-full text-xs font-semibold uppercase tracking-wide">
-              🎮 Host Controlled
+              🎮 Live Guided
             </span>
             <span className="px-2.5 py-1 bg-green-500/40 rounded-full text-xs font-semibold">
               ✅ Completed
@@ -1210,7 +1347,7 @@ const QuizManager = ({ isParticipantListOpen = true }) => {
           </button>
           <div>
             <h1 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-              <FileQuestion className="w-7 h-7 text-blue-600 dark:text-blue-400" />
+              <ClipboardCheck className="w-7 h-7 text-blue-600 dark:text-blue-400" />
               Quiz Manager
             </h1>
             <p className="text-slate-500 dark:text-slate-400 text-sm">
@@ -1241,7 +1378,7 @@ const QuizManager = ({ isParticipantListOpen = true }) => {
           {/* Empty State or Past Quizzes */}
           {pastQuizzes.length === 0 ? (
             <div className="bg-white dark:bg-slate-900 rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-700 p-12 text-center">
-              <FileQuestion className="w-16 h-16 text-slate-300 dark:text-slate-600 mx-auto mb-4" />
+              <ClipboardCheck className="w-16 h-16 text-slate-300 dark:text-slate-600 mx-auto mb-4" />
               <h3 className="text-lg font-semibold text-slate-700 dark:text-slate-300 mb-2">
                 No Quizzes Yet
               </h3>
@@ -1285,7 +1422,7 @@ const QuizManager = ({ isParticipantListOpen = true }) => {
                         {quiz.mode === "HOST_CONTROLLED" ? (
                           <Zap className="w-5 h-5 text-amber-500" />
                         ) : (
-                          <FileQuestion className="w-5 h-5 text-slate-500 dark:text-slate-400" />
+                          <ClipboardCheck className="w-5 h-5 text-slate-500 dark:text-slate-400" />
                         )}
                       </div>
                       <div>
@@ -1295,7 +1432,7 @@ const QuizManager = ({ isParticipantListOpen = true }) => {
                           </div>
                           {quiz.mode === "HOST_CONTROLLED" && (
                             <span className="text-xs bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 px-1.5 py-0.5 rounded-full">
-                              HC
+                              Live Guided
                             </span>
                           )}
                         </div>

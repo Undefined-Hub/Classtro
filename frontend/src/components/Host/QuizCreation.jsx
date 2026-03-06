@@ -589,14 +589,33 @@ function QuizCreation({ quizName, quizDescription, onBack, existingQuiz }) {
               >
                 Negative Points: {showNegativePoints ? "ON" : "OFF"}
               </button>
-              <button
-                onClick={() => setLayoutMode(layoutMode === "horizontal" ? "vertical" : "horizontal")}
-                className="px-3 py-1 rounded-full text-xs tracking-wider border transition-all bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700 flex items-center gap-1.5"
-                title={layoutMode === "horizontal" ? "Switch to Vertical Layout" : "Switch to Horizontal Layout"}
-              >
-                {layoutMode === "horizontal" ? <LayoutGrid size={14} /> : <Rows3 size={14} />}
-                {layoutMode === "horizontal" ? "Horizontal" : "Vertical"}
-              </button>
+              <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-full px-1 py-1">
+                <button
+                  onClick={() => setLayoutMode("horizontal")}
+                  className={`p-1.5 rounded-full transition-all ${
+                    layoutMode === "horizontal"
+                      ? "bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-sm"
+                      : "text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700"
+                  }`}
+                  title="Horizontal Layout"
+                  aria-label="Horizontal Layout"
+                >
+                  <LayoutGrid size={14} />
+                </button>
+
+                <button
+                  onClick={() => setLayoutMode("vertical")}
+                  className={`p-1.5 rounded-full transition-all ${
+                    layoutMode === "vertical"
+                      ? "bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-sm"
+                      : "text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700"
+                  }`}
+                  title="Vertical Layout"
+                  aria-label="Vertical Layout"
+                >
+                  <Rows3 size={14} />
+                </button>
+              </div>
             </div>
           </div>
           <div className="flex items-center gap-3">

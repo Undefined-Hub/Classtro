@@ -182,7 +182,7 @@ const registerQuizSocket = (io, socket) => {
       }
 
       if (quiz.mode !== "HOST_CONTROLLED") {
-        socket.emit("quiz:hc:error", { error: "Quiz is not in HOST_CONTROLLED mode" });
+        socket.emit("quiz:hc:error", { error: "Quiz is not in Live Guided mode" });
         return;
       }
 
@@ -569,7 +569,7 @@ const registerQuizSocket = (io, socket) => {
       }
 
       if (quiz.mode !== "HOST_CONTROLLED") {
-        socket.emit("quiz:hc:error", { error: "Quiz is not HOST_CONTROLLED" });
+        socket.emit("quiz:hc:error", { error: "Quiz is not Live Guided" });
         return;
       }
 

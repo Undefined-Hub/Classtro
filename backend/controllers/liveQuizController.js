@@ -3,6 +3,41 @@ const QuizTemplate = require("../models/QuizTemplate");
 const QuizSubmission = require("../models/QuizSubmission");
 const Session = require("../models/Session");
 
+const getFriendlyModeLabel = (mode) =>
+  mode === "HOST_CONTROLLED" ? "Live Guided" : "Self-Paced";
+
+const buildModeCompatibility = (template, mode) => {
+  const invalidQuestions = [];
+
+  template.questions.forEach((question, index) => {
+    if (mode === "HOST_CONTROLLED" && question.type === "MULTI_SELECT") {
+      invalidQuestions.push({
+        index,
+        reason: "Multi-select question",
+      });
+    }
+  });
+
+  if (invalidQuestions.length === 0) {
+    return { compatible: true, reason: "", invalidQuestions: [] };
+  }
+
+  if (mode === "HOST_CONTROLLED") {
+    return {
+      compatible: false,
+      reason:
+        "This template includes multi-select questions. Live Guided supports only single-correct MCQ questions.",
+      invalidQuestions,
+    };
+  }
+
+  return {
+    compatible: false,
+    reason: `This template is not compatible with ${getFriendlyModeLabel(mode)} mode.`,
+    invalidQuestions,
+  };
+};
+
 // Create a live quiz (draft state)
 const createLiveQuiz = async (req, res) => {
   try {
@@ -31,7 +66,7 @@ const createLiveQuiz = async (req, res) => {
         const hasMultiSelect = template.questions.some(q => q.type === "MULTI_SELECT");
         if (hasMultiSelect) {
           return res.status(400).json({ 
-            error: "HOST_CONTROLLED mode does not support MULTI_SELECT questions. Please use a template with only MCQ questions." 
+            error: "Live Guided mode does not support MULTI_SELECT questions. Please use a template with only MCQ questions." 
           });
         }
       }
@@ -60,7 +95,7 @@ const createLiveQuiz = async (req, res) => {
       const hasMultiSelect = quizQuestions.some(q => q.type === "MULTI_SELECT");
       if (hasMultiSelect) {
         return res.status(400).json({ 
-          error: "HOST_CONTROLLED mode does not support MULTI_SELECT questions." 
+          error: "Live Guided mode does not support MULTI_SELECT questions." 
         });
       }
     }
@@ -298,16 +333,20 @@ const validateTemplateForMode = async (req, res) => {
     });
     
     // Check HOST_CONTROLLED compatibility
-    if (result.questionTypes.MULTI_SELECT > 0) {
+    const hostControlledCheck = buildModeCompatibility(template, "HOST_CONTROLLED");
+    if (!hostControlledCheck.compatible) {
       result.compatible.HOST_CONTROLLED = false;
-      result.issues.push(`Contains ${result.questionTypes.MULTI_SELECT} MULTI_SELECT question(s). HOST_CONTROLLED mode only supports MCQ questions.`);
+      result.issues.push(hostControlledCheck.reason);
     }
     
     // If specific mode requested, return simple boolean
     if (mode) {
+      const modeCheck = buildModeCompatibility(template, mode);
       return res.json({
-        compatible: result.compatible[mode] ?? false,
-        issues: result.compatible[mode] ? [] : result.issues,
+        compatible: modeCheck.compatible,
+        reason: modeCheck.reason,
+        issues: modeCheck.compatible ? [] : [modeCheck.reason],
+        invalidQuestions: modeCheck.invalidQuestions,
       });
     }
     

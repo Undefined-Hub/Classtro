@@ -118,7 +118,7 @@ const SessionWorkspace = () => {
   // * Participant List Collapse State
   const [isParticipantListOpen, setIsParticipantListOpen] = useState(true);
 
-  // * Mobile Detection
+  // * Mobile Detection - Check only on initial mount, not on resize
   const [isMobile, setIsMobile] = useState(false);
 
   // * Broadcast Modal State
@@ -127,14 +127,23 @@ const SessionWorkspace = () => {
   const [loadingBroadcasts, setLoadingBroadcasts] = useState(false);
 
   useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 1024); // lg breakpoint
+    // Detect actual mobile/tablet devices, not just small windows
+    const checkActualMobileDevice = () => {
+      const userAgent = navigator.userAgent.toLowerCase();
+      const isMobileUA = /mobile|android|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent);
+      const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+      console.log("User Agent:", navigator.userAgent);
+      const isSmallScreen = window.innerWidth < 1024;
+      
+      // Only block if it's an actual mobile device (has mobile UA AND touch capability AND small screen)
+      // Or if it's a tablet (touch + small screen but might not have mobile UA)
+      const isActualMobile = (isMobileUA && isTouchDevice) || (isTouchDevice && isSmallScreen && window.innerHeight < 900);
+      
+      setIsMobile(isActualMobile);
     };
     
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    
-    return () => window.removeEventListener('resize', checkMobile);
+    checkActualMobileDevice();
+    // Don't add resize listener - desktop users should be able to resize their windows
   }, []);
 
   // * Load session data from navigation state
