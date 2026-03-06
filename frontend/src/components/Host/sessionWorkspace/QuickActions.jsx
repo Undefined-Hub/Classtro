@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { BarChart3, ChartNoAxesColumn, HelpCircle, MessageCircleQuestionMark, Maximize, Minimize, Expand, Shrink, QrCode, FileQuestion } from "lucide-react";
+import { BarChart3, ChartNoAxesColumn, HelpCircle, MessageCircleQuestionMark, Maximize, Minimize, Expand, Shrink, QrCode, ClipboardCheck } from "lucide-react";
 
 const QuickActions = ({ questions, onSetActiveView, activeView }) => {
   const unansweredQuestions = questions.filter((q) => !q.answered).length;
@@ -163,7 +163,7 @@ const QuickActions = ({ questions, onSetActiveView, activeView }) => {
                 }`}
                 aria-pressed={activeView === "quiz"}
               >
-                <FileQuestion className="w-4 h-4" />
+                <ClipboardCheck className="w-4 h-4" />
               </button>
               <div className="absolute bottom-10 left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-black/80 text-white text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap pointer-events-none">
                 Quiz

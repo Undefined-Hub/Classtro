@@ -64,9 +64,19 @@ function Navbar() {
             className="flex items-center space-x-3 rtl:space-x-reverse"
           >
             <img src={classtroLogo} className="h-8" alt="Classtro Logo" />
-            <span className="self-center text-2xl font-semibold whitespace-nowrap dark:text-white">
-              Classtro
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="self-center text-2xl font-semibold whitespace-nowrap dark:text-white">
+                Classtro
+              </span>
+              <div className="flex items-center gap-1.5 mt-2 whitespace-nowrap">
+                <span className="px-2 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wide bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 border border-blue-200 dark:border-blue-800 leading-none">
+                  v0.4.0
+                </span>
+                <span className="px-2 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wide bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300 border border-amber-200 dark:border-amber-800 leading-none">
+                  Beta
+                </span>
+              </div>
+            </div>
           </Link>
 
           <div className="flex md:order-2 space-x-3 md:space-x-4 rtl:space-x-reverse items-center">

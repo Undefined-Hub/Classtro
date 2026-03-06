@@ -108,7 +108,7 @@ function App() {
             <Route path="sessions" element={<SessionsPage />} />
           </Route>
 
-          <Route path="/test/sessionWorkspace" element={<SessionWorkspace />} />
+          <Route path="/sessionWorkspace" element={<SessionWorkspace />} />
           <Route path="/analytics" element={<AnalyticsPage />} />
           <Route path="/teacher/profile" element={<HostProfilePage />} />
         </Route>

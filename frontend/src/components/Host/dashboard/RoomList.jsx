@@ -38,29 +38,21 @@ const RoomList = ({
     setOpenMenuId(openMenuId === roomId ? null : roomId);
   };
 
-  const handleMenuAction = (action, room) => {
-    // Handle the menu actions
-    switch (action) {
-      case 'archive':
-        if (onArchiveRoom) {
-          onArchiveRoom(room);
-        }
-        break;
-      case 'delete':
-        if (onDeleteRoom) {
-          onDeleteRoom(room);
-        }
-        break;
-      case 'manage':
-        if (onManageRoom) {
-          onManageRoom(room);
-        }
-        break;
-      default:
-        break;
+  // Log room details for debugging
+  useEffect(() => {
+    if (rooms.length > 0) {
+      console.log("Rooms data:", rooms);
+      rooms.forEach(room => {
+        console.log(`Room: ${room.name}`, {
+          id: room._id,
+          activeSessions: room.activeSessions,
+          totalSessions: room.totalSessions,
+          defaultMaxStudents: room.defaultMaxStudents,
+          createdAt: room.createdAt
+        });
+      });
     }
-    setOpenMenuId(null);
-  };
+  }, [rooms]);
 
   return (
   <div>

@@ -51,8 +51,46 @@ function RoomsPage() {
         if (res.status != 200) throw new Error("Failed to fetch rooms");
         const data = res.data || {};
 
-        // Set rooms from API response
-        setRooms(data.rooms || []);
+        const fetchedRooms = data.rooms || [];
+
+        // Fetch active sessions count for each room
+        if (fetchedRooms.length > 0) {
+          // Get teacher ID from localStorage or user data
+          const userStr = localStorage.getItem("user");
+          const user = userStr ? JSON.parse(userStr) : null;
+          const teacherId = user?._id || user?.id;
+
+          if (teacherId) {
+            // Fetch active sessions for all rooms in parallel
+            const roomsWithActiveSessions = await Promise.all(
+              fetchedRooms.map(async (room) => {
+                try {
+                  const sessionsRes = await api.get(
+                    `/api/sessions/active?teacherId=${teacherId}&roomId=${room._id}&limit=10`
+                  );
+                  const activeSessions = sessionsRes.data|| [];
+                  console.log(`Room ${room._id} has ${sessionsRes.data?.length || 0} active sessions`);
+                  return {
+                    ...room,
+                    activeSessions: activeSessions.length,
+                  };
+                } catch (err) {
+                  console.error(`Failed to fetch active sessions for room ${room._id}:`, err);
+                  return {
+                    ...room,
+                    activeSessions: 0,
+                  };
+                }
+              })
+            );
+            setRooms(roomsWithActiveSessions);
+          } else {
+            // If no teacher ID, set activeSessions to 0
+            setRooms(fetchedRooms.map(room => ({ ...room, activeSessions: 0 })));
+          }
+        } else {
+          setRooms(fetchedRooms);
+        }
 
         // Set pagination data if available
         if (data.pagination) {

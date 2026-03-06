@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { FileQuestion, Calendar, Target, Award, Plus, Trash2 } from "lucide-react";
+import { ClipboardCheck, Calendar, Target, Award, Plus, Trash2 } from "lucide-react";
 
 /* Components import  */
 import AllSessionsTable from "../../components/Host/dashboard/AllSessionsTable";
@@ -54,7 +54,7 @@ function SessionsPage() {
 
   const handleSessionClick = (session) => {
     // Navigate to the session workspace with session data as state
-    navigate("/test/sessionWorkspace", {
+    navigate("/sessionWorkspace", {
       state: {
         sessionId: session._id,
         sessionData: session,
@@ -224,7 +224,7 @@ function SessionsPage() {
                       <div className="flex items-start justify-between mb-3">
                         <div className="flex items-center gap-3">
                           <div className="p-2 bg-blue-100 dark:bg-blue-900/40 rounded-lg group-hover:bg-blue-200 dark:group-hover:bg-blue-800/60 transition-colors">
-                            <FileQuestion className="text-blue-600 dark:text-blue-400" size={20} />
+                            <ClipboardCheck className="text-blue-600 dark:text-blue-400" size={20} />
                           </div>
                           <div className="flex-1 min-w-0">
                             <h3 className="text-lg font-bold text-slate-900 dark:text-white truncate group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
@@ -297,7 +297,7 @@ function SessionsPage() {
 
       {/* Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
           <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg max-w-md w-full">
             <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">
               Create New Quiz

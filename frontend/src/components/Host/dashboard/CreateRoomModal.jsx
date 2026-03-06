@@ -77,7 +77,7 @@ const CreateRoomModal = ({
                 disabled={isLoading}
               ></textarea>
             </div>
-            <div>
+            {/* <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Default Max Students
               </label>
@@ -97,7 +97,7 @@ const CreateRoomModal = ({
                 required
                 disabled={isLoading}
               />
-            </div>
+            </div> */}
           </div>
           <div className="px-6 py-4 bg-gray-50 dark:bg-gray-700 rounded-b-lg flex justify-end space-x-2">
             <button

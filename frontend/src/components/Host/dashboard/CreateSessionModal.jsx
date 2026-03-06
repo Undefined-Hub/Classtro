@@ -70,25 +70,78 @@ const CreateSessionModal = ({
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
                 Max Students
               </label>
-              <input
-                type="number"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                placeholder="e.g., 200"
-                value={formData.maxStudents}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    maxStudents: parseInt(e.target.value),
-                  })
-                }
-                min="1"
-                max="1000"
-                required
-                disabled={isLoading}
-              />
+              
+              {/* Stepper Input */}
+              <div className="flex justift-between gap-4 w-full">
+              <div className="mb-4 flex items-center gap-2 ">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const newValue = Math.max(1, formData.maxStudents - 1);
+                    setFormData({ ...formData, maxStudents: newValue });
+                  }}
+                  disabled={isLoading || formData.maxStudents <= 1}
+                  className="p-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition-colors duration-200"
+                >
+                  <svg className="w-5 h-5 text-gray-700 dark:text-gray-300" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd" />
+                  </svg>
+                </button>
+
+                <input
+                  type="number"
+                  className="w-20 px-3 py-2 text-center border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white text-sm font-semibold"
+                  placeholder="0"
+                  value={formData.maxStudents}
+                  onChange={(e) => {
+                    const value = parseInt(e.target.value) || 0;
+                    if (value >= 1 && value <= 1000) {
+                      setFormData({ ...formData, maxStudents: value });
+                    }
+                  }}
+                  min="1"
+                  max="1000"
+                  required
+                  disabled={isLoading}
+                />
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    const newValue = Math.min(1000, formData.maxStudents + 1);
+                    setFormData({ ...formData, maxStudents: newValue });
+                  }}
+                  disabled={isLoading || formData.maxStudents >= 200}
+                  className="p-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition-colors duration-200"
+                >
+                  <svg className="w-5 h-5 text-gray-700 dark:text-gray-300" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
+                  </svg>
+                </button>
+              </div>
+
+              {/* Quick Select Buttons */}
+              <div className="grid grid-cols-4 gap-2">
+                {[25, 50, 100, 200].map((count) => (
+                  <button
+                    key={count}
+                    type="button"
+                    onClick={() => setFormData({ ...formData, maxStudents: count })}
+                    disabled={isLoading}
+                    className={`px-2 py-1 w-10 h-10 text-sm font-medium rounded-lg transition-all duration-200 ${
+                      formData.maxStudents === count
+                        ? "bg-blue-600 text-white shadow-md"
+                        : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
+                    } disabled:opacity-50 disabled:cursor-not-allowed`}
+                  >
+                    {count}
+                  </button>
+                ))}
+              </div>
+              </div>
             </div>
           </div>
           <div className="px-6 py-4 bg-gray-50 dark:bg-gray-700 rounded-b-lg flex justify-end space-x-2">

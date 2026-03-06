@@ -215,7 +215,7 @@ function DashboardPage() {
       setSessionFormData({ title: "", maxStudents: 200 });
 
       // // Optional: Navigate to the new session workspace
-      // navigate('/test/sessionWorkspace', {
+      // navigate('/sessionWorkspace', {
       //   state: {
       //     sessionId: sessionData._id,
       //     sessionData,
@@ -241,7 +241,7 @@ function DashboardPage() {
   const handleSessionClick = (session) => {
     // Navigate to the session workspace with session data as state
 
-    navigate("/test/sessionWorkspace", {
+    navigate("/sessionWorkspace", {
       state: {
         sessionId: session._id,
         sessionData: session,
