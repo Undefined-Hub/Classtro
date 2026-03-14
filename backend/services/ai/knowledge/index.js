@@ -152,47 +152,135 @@ class KnowledgeBase {
   }
 
   /**
-   * Select minimal relevant knowledge based on context
-   * Optimized to reduce token usage
+   * Detect topic from user message and return matched feature names
+   * Supports both explicit mentions and semantic matching
    */
-  selectRelevantKnowledge(query, role, page) {
+  detectTopics(query) {
     const queryLower = query.toLowerCase();
-    const keywords = queryLower.split(' ').filter(w => w.length > 2);
+    const topics = [];
 
-    // 1. Check for explicit feature mentions
-    const featureNames = Object.keys(this.knowledge);
-    const mentionedFeature = featureNames.find(name => 
-      queryLower.includes(name) || keywords.some(kw => name.includes(kw))
-    );
+    // Topic detection patterns
+    const patterns = {
+      rooms: ['room', 'classroom', 'create room', 'join room', 'room code'],
+      sessions: ['session', 'class', 'live session', 'join session', 'start session', 'session code'],
+      polls: ['poll', 'quiz', 'survey', 'vote', 'multiple choice', 'question'],
+      qna: ['q&a', 'question', 'ask', 'answer', 'upvote'],
+      feedback: ['feedback', 'rating', 'review', 'comment', 'emoji']
+    };
 
-    if (mentionedFeature) {
-      return this.formatKnowledgeCompact(this.knowledge[mentionedFeature], role);
+    // Check each pattern
+    Object.keys(patterns).forEach(topic => {
+      if (patterns[topic].some(pattern => queryLower.includes(pattern))) {
+        topics.push(topic);
+      }
+    });
+
+    // Fallback: check for direct feature name mention
+    if (topics.length === 0) {
+      const featureNames = Object.keys(this.knowledge);
+      featureNames.forEach(name => {
+        if (queryLower.includes(name)) {
+          topics.push(name);
+        }
+      });
     }
 
-    // 2. Check page context (only if no direct match)
-    const pageContext = this.getPageContext(page, role);
-    if (pageContext.length > 0) {
-      // Return first relevant feature from page context
-      const firstFeature = Object.values(this.knowledge).find(f => f.title === pageContext[0].title);
-      return this.formatKnowledgeCompact(firstFeature, role);
-    }
-
-    // 3. No specific knowledge needed - AI will use general knowledge
-    return '';
+    return topics.slice(0, 2); // Max 2 topics to keep context small
   }
 
   /**
-   * Build compressed knowledge context for prompts
-   * Returns minimal, formatted text instead of raw JSON
+   * Get relevant knowledge dynamically based on user intent
+   * Converts JSON knowledge into compressed readable text
+   * Max context length: 1000-1500 characters
    */
-  buildKnowledgeContext(query, role, page) {
-    const compactKnowledge = this.selectRelevantKnowledge(query, role, page);
-
-    if (!compactKnowledge) {
-      return ''; // No knowledge injection needed
+  getRelevantKnowledge(userMessage, role = 'guest', page = 'general') {
+    const topics = this.detectTopics(userMessage);
+    
+    // If no specific topic detected, check page context
+    if (topics.length === 0 && page !== 'general') {
+      const pageContext = this.getPageContext(page, role);
+      if (pageContext.length > 0) {
+        topics.push(pageContext[0].feature);
+      }
     }
 
-    return `\n**Relevant Feature:**\n${compactKnowledge}`;
+    // Still no topics? Return empty (generic AI response)
+    if (topics.length === 0) {
+      return '';
+    }
+
+    // Build compressed knowledge text
+    let knowledgeText = '';
+    let charCount = 0;
+    const MAX_CHARS = 1500;
+
+    topics.forEach(topic => {
+      const featureData = this.knowledge[topic];
+      if (!featureData || charCount >= MAX_CHARS) return;
+
+      const roleContent = featureData[role] || featureData['guest'];
+      if (!roleContent) return;
+
+      // Build structured knowledge block
+      let block = `## ${featureData.title}\n`;
+      block += `${roleContent.overview}\n\n`;
+
+      // Add how-to steps if available (compressed)
+      if (roleContent.howTo) {
+        const howToKeys = Object.keys(roleContent.howTo);
+        if (howToKeys.length > 0) {
+          block += `**How to:**\n`;
+          const firstAction = howToKeys[0];
+          const steps = roleContent.howTo[firstAction];
+          if (Array.isArray(steps)) {
+            steps.slice(0, 4).forEach((step, i) => {
+              block += `${i + 1}. ${step}\n`;
+            });
+          }
+          block += `\n`;
+        }
+      }
+
+      // Add key capabilities (max 5)
+      if (roleContent.canDo && roleContent.canDo.length > 0) {
+        block += `**Key features:**\n`;
+        roleContent.canDo.slice(0, 5).forEach(item => {
+          block += `• ${item}\n`;
+        });
+        block += `\n`;
+      }
+
+      // Add tips (max 3)
+      if (roleContent.tips && roleContent.tips.length > 0) {
+        block += `**Tips:**\n`;
+        roleContent.tips.slice(0, 3).forEach(tip => {
+          block += `• ${tip}\n`;
+        });
+        block += `\n`;
+      }
+
+      // Check length and add block
+      if (charCount + block.length <= MAX_CHARS) {
+        knowledgeText += block;
+        charCount += block.length;
+      }
+    });
+
+    return knowledgeText.trim();
+  }
+
+  /**
+   * Build knowledge context for prompts (new structured format)
+   * Returns filtered knowledge in CONTEXT section format
+   */
+  buildKnowledgeContext(query, role, page) {
+    const knowledge = this.getRelevantKnowledge(query, role, page);
+    
+    if (!knowledge) {
+      return ''; // No knowledge injection
+    }
+
+    return knowledge;
   }
 
   getAllFeatures() {
