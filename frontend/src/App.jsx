@@ -15,18 +15,10 @@ const DashboardLayout = lazy(() => import("./components/DashboardLayout.jsx"));
 const RoomsPage = lazy(() => import("./pages/Host/RoomsPage.jsx"));
 const SessionsPage = lazy(() => import("./pages/Host/SessionsPage.jsx"));
 const RoomDetailPage = lazy(() => import("./pages/Host/RoomDetailPage.jsx"));
-const SessionWorkspace = lazy(
-  () => import("./pages/Host/SessionWorkspace.jsx"),
-);
-const ParticipantHome = lazy(
-  () => import("./pages/Participant/ParticipantHome"),
-);
-const ParticipantSession = lazy(
-  () => import("./pages/Participant/ParticipantSession"),
-);
-const ParticipantJoin = lazy(
-  () => import("./pages/Participant/ParticipantJoin"),
-);
+const SessionWorkspace = lazy(() => import("./pages/Host/SessionWorkspace.jsx"));
+const ParticipantHome = lazy(() => import("./pages/Participant/ParticipantHome"));
+const ParticipantSession = lazy(() => import("./pages/Participant/ParticipantSession"));
+const ParticipantJoin = lazy(() => import("./pages/Participant/ParticipantJoin"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const Unauthorized = lazy(() => import("./pages/Unauthorized"));
 const Register = lazy(() => import("./pages/Register"));
@@ -49,9 +41,8 @@ const ProfileRedirect = () => {
   return <Navigate to="/login" replace />;
 };
 
-const BACKEND_BASE_URL =
-  import.meta.env.VITE_BACKEND_BASE_URL || "http://localhost:3000";
-//
+//const BACKEND_BASE_URL = import.meta.env.VITE_BACKEND_BASE_URL || "http://localhost:3000";
+
 
 function App() {
   const navigate = useNavigate();

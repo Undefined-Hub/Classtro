@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../context/UserContext";
 import { ArrowLeft } from "lucide-react";
 import LogoutModal from "../../components/LogoutModal";
 import ProfileSidebar from "../../components/shared/ProfileSidebar";
@@ -11,6 +12,7 @@ import api from "../../utils/api";
 
 const HostProfilePage = () => {
   const navigate = useNavigate();
+  const { logout } = useAuth();
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
@@ -155,9 +157,8 @@ const HostProfilePage = () => {
     setShowLogoutModal(true);
   };
 
-  const confirmLogout = () => {
-    localStorage.removeItem("accessToken");
-    localStorage.removeItem("user");
+  const confirmLogout = async () => {
+    await logout();
     setShowLogoutModal(false);
     navigate("/login");
   };

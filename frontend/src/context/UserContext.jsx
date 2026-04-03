@@ -18,6 +18,15 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(null);
   const [loading, setLoading] = useState(true);
+  const baseURL =
+    import.meta.env.VITE_BACKEND_BASE_URL || "http://localhost:3000";
+
+  const clearLocalAuthState = useCallback(() => {
+    setUser(null);
+    setToken(null);
+    localStorage.removeItem(LS_TOKEN_KEY);
+    localStorage.removeItem(LS_USER_KEY);
+  }, []);
 
   // Hydrate from localStorage and refresh token if needed
   useEffect(() => {
@@ -37,9 +46,6 @@ export function AuthProvider({ children }) {
         // If no stored token but user exists, try to refresh
         if (storedUser && !storedToken) {
           try {
-            const baseURL =
-              import.meta.env.VITE_BACKEND_BASE_URL || "http://localhost:3000";
-            
             // Try to refresh the token using the HTTP-only cookie
             const refreshResponse = await axios.post(
               `${baseURL}/api/auth/refresh`,
@@ -85,12 +91,22 @@ export function AuthProvider({ children }) {
     localStorage.setItem(LS_USER_KEY, JSON.stringify(userObj));
   }, []);
 
-  const logout = useCallback(() => {
-    setUser(null);
-    setToken(null);
-    localStorage.removeItem(LS_TOKEN_KEY);
-    localStorage.removeItem(LS_USER_KEY);
-  }, []);
+  const logout = useCallback(async () => {
+    try {
+      await axios.post(
+        `${baseURL}/api/auth/logout`,
+        {},
+        {
+          withCredentials: true,
+        },
+      );
+    } catch (error) {
+      // Best-effort logout: clear local auth even if backend call fails.
+      console.warn("Backend logout failed, clearing local auth", error);
+    } finally {
+      clearLocalAuthState();
+    }
+  }, [baseURL, clearLocalAuthState]);
 
   const value = useMemo(
     () => ({ user, token, loading, login, logout, isAuthenticated: !!user }),
