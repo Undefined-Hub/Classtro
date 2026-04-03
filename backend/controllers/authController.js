@@ -14,7 +14,7 @@ emailService.verifyConnection().then((ok) => {
 dotenv.config();
 
 const REFRESH_TOKEN_COOKIE_MAX_AGE = 7 * 24 * 60 * 60 * 1000; // 7 days
-const isProduction = process.env.NODE_ENV === "production";
+const isProduction = process.env.NODE_ENV === "production" || process.env.NODE_ENV === "development"; // Treat development as production for cookie settings
 
 const getRefreshCookieOptions = () => ({
   httpOnly: true,
