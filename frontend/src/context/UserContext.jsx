@@ -6,6 +6,7 @@ import React, {
   useCallback,
   useState,
 } from "react";
+import axios from "axios";
 
 // Keys for storage
 const LS_TOKEN_KEY = "accessToken";
@@ -18,20 +19,61 @@ export function AuthProvider({ children }) {
   const [token, setToken] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Hydrate from localStorage on mount
+  // Hydrate from localStorage and refresh token if needed
   useEffect(() => {
-    try {
-      const storedToken = localStorage.getItem(LS_TOKEN_KEY);
-      const storedUser = localStorage.getItem(LS_USER_KEY);
-      if (storedToken && storedUser) {
-        setToken(storedToken);
-        setUser(JSON.parse(storedUser));
+    const initializeAuth = async () => {
+      try {
+        const storedToken = localStorage.getItem(LS_TOKEN_KEY);
+        const storedUser = localStorage.getItem(LS_USER_KEY);
+
+        // If both token and user exist, restore them
+        if (storedToken && storedUser) {
+          setToken(storedToken);
+          setUser(JSON.parse(storedUser));
+          setLoading(false);
+          return;
+        }
+
+        // If no stored token but user exists, try to refresh
+        if (storedUser && !storedToken) {
+          try {
+            const baseURL =
+              import.meta.env.VITE_BACKEND_BASE_URL || "http://localhost:3000";
+            
+            // Try to refresh the token using the HTTP-only cookie
+            const refreshResponse = await axios.post(
+              `${baseURL}/api/auth/refresh`,
+              {},
+              {
+                withCredentials: true, // Include HTTP-only cookie
+              }
+            );
+
+            const { accessToken } = refreshResponse.data;
+            localStorage.setItem(LS_TOKEN_KEY, accessToken);
+            setToken(accessToken);
+            setUser(JSON.parse(storedUser));
+            setLoading(false);
+            return;
+          } catch (refreshError) {
+            // Refresh failed, clear auth data
+            console.warn("Token refresh failed on app load", refreshError);
+            localStorage.removeItem(LS_TOKEN_KEY);
+            localStorage.removeItem(LS_USER_KEY);
+            setLoading(false);
+            return;
+          }
+        }
+
+        // No stored token or user, not authenticated
+        setLoading(false);
+      } catch (e) {
+        console.warn("Failed to initialize auth", e);
+        setLoading(false);
       }
-    } catch (e) {
-      console.warn("Failed to read auth from localStorage", e);
-    } finally {
-      setLoading(false);
-    }
+    };
+
+    initializeAuth();
   }, []);
 
   const login = useCallback((userObj, accessToken) => {
