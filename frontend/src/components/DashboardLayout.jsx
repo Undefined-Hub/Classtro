@@ -1,10 +1,12 @@
 import React, { useState } from "react";
 import { Outlet, useNavigate, useLocation, NavLink } from "react-router-dom";
+import { useAuth } from "../context/UserContext";
 import { User, LogOut } from "lucide-react";
 import LogoutModal from "./LogoutModal.jsx";
 import ProfileImageOrInitials from "./ProfileImageOrInitials.jsx";
 
 function DashboardLayout() {
+  const { logout } = useAuth();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
   const navigate = useNavigate();
@@ -59,13 +61,9 @@ function DashboardLayout() {
     setShowLogoutModal(true);
   };
 
-  const confirmLogout = () => {
-    // Clear user data and token
-    localStorage.removeItem("accessToken");
-    localStorage.removeItem("user");
-    // Close the modal
+  const confirmLogout = async () => {
+    await logout();
     setShowLogoutModal(false);
-    // Redirect to login page
     navigate("/login");
   };
 

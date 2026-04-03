@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../context/UserContext";
 
 /* Components import  */
 import RoomList from "../../components/Host/dashboard/RoomList";
@@ -13,6 +14,7 @@ import LogoutModal from "../../components/LogoutModal";
 import api from "../../utils/api";
 
 function DashboardPage() {
+  const { logout } = useAuth();
   const [activeTab, setActiveTab] = useState("rooms");
   const [selectedRoom, setSelectedRoom] = useState(null);
   const [showCreateRoomModal, setShowCreateRoomModal] = useState(false);
@@ -256,16 +258,10 @@ function DashboardPage() {
     setShowLogoutModal(true);
   };
 
-  const confirmLogout = () => {
-    // Clear user data and token
-    localStorage.removeItem("accessToken");
-    localStorage.removeItem("user");
-    // Clear any other app state if needed
-
-    // Close the modal
+  const confirmLogout = async () => {
+    // Call context logout which handles API call and state clearing
+    await logout();
     setShowLogoutModal(false);
-
-    // Redirect to login page
     navigate("/login");
   };
 
