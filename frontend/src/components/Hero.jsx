@@ -1,24 +1,11 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../context/UserContext";
 
 function Hero() {
   const navigate = useNavigate();
-  const { user, isAuthenticated } = useAuth();
 
   const handleGetStarted = () => {
-    if (isAuthenticated && user?.role) {
-      // Redirect to appropriate dashboard based on role
-      if (user.role === "TEACHER") {
-        navigate("/dashboard", { replace: true });
-      } else if (user.role === "STUDENT") {
-        navigate("/participant/home", { replace: true });
-      } else {
-        navigate("/login");
-      }
-    } else {
-      navigate("/login");
-    }
+    navigate("/login");
   };
 
   const handleJoinSession = () => {
@@ -43,7 +30,7 @@ function Hero() {
               onClick={handleGetStarted}
               className="inline-flex justify-center items-center py-3 px-5 text-base font-medium text-center text-white rounded-lg bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 dark:focus:ring-blue-900"
             >
-                {isAuthenticated ? "Go to Dashboard" : "Get Started"}
+              Get Started
             </button>
 
             <button

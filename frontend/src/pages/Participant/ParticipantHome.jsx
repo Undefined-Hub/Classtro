@@ -1,14 +1,14 @@
 import React, { useState } from "react";
 import { useAuth } from "../../context/UserContext";
-import { useNavigate } from "react-router-dom";
 import Header from "../../components/Participant/Header";
 import TabNavigation from "../../components/Participant/TabNavigation";
 import JoinSessionTab from "../../components/Participant/JoinSessionTab";
 import ClassroomTab from "../../components/Participant/ClassroomTab";
 import LogoutModal from "../../components/LogoutModal";
+import { useNavigate } from "react-router-dom";
 
 const ParticipantHome = () => {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState("join");
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedClassroom, setSelectedClassroom] = useState(null);
@@ -125,9 +125,15 @@ const ParticipantHome = () => {
     setShowLogoutModal(true);
   };
 
-  const confirmLogout = async () => {
-    await logout();
+  const confirmLogout = () => {
+    // Clear user data and token
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("user");
+
+    // Close the modal
     setShowLogoutModal(false);
+
+    // Redirect to login page
     navigate("/login");
   };
 

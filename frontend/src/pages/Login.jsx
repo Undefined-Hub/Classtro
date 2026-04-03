@@ -147,7 +147,7 @@ function Login({ onLogin }) {
           <div className="text-center">
             <h1 className="text-4xl font-bold mb-4">Welcome Back</h1>
             <p className="text-blue-100 text-lg">
-              Log in to your Classtro account to continue
+              Sign in to your Classtro account to continue
             </p>
           </div>
         </div>
@@ -264,7 +264,7 @@ function Login({ onLogin }) {
                     d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"
                   />
                 </svg>
-                Log In
+                Sign In
               </button>
               <div className="text-center">
                 <p className="text-sm flex items-center justify-center gap-2 text-gray-600 dark:text-gray-400">
@@ -310,7 +310,7 @@ function Login({ onLogin }) {
                   </g>
                 </svg>
                 <span className="font-medium text-gray-700 dark:text-gray-200">
-                  Log in with Google
+                  Sign in with Google
                 </span>
               </button>
             </form>

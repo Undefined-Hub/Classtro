@@ -256,7 +256,7 @@ export default function Register() {
                     d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"
                   />
                 </svg>
-                Sign up
+                Register
               </button>
               <div className="text-center">
                 <p className="text-sm flex items-center justify-center gap-2 text-gray-600 dark:text-gray-400">
@@ -265,7 +265,7 @@ export default function Register() {
                     className="text-blue-600 hover:cursor-pointer hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300 font-medium"
                     onClick={() => navigate("/login")}
                   >
-                    Log in here
+                    Sign in here
                   </a>
                 </p>
               </div>
