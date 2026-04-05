@@ -50,6 +50,15 @@ const AISummary = () => {
       model: "heuristic-preview",
       generatedAt: new Date().toISOString(),
       overallScore,
+      scoreMeta: {
+        showScore: true,
+        isReliable: true,
+        reason: "frontend-fallback",
+        message: "Fallback score generated from visible activity signals.",
+        availableSignals: 5,
+        totalSignals: 5,
+        coveragePercent: 100,
+      },
       executiveSummary: `This ${duration}-minute session on "${sessionInfo.title || "Session"}" reached ${sessionInfo.peakParticipants || 0} peak participants and delivered enough interaction to extract coaching signals.`,
       overview: `The session brought together ${sessionInfo.totalParticipants || 0} participants with a peak of ${sessionInfo.peakParticipants || 0}.`,
       engagementAnalysis: `${questions.length} questions were asked, ${answeredQuestions} were answered, and the response rate landed at ${responseRate}%. ${mostUpvotedQuestion?.text ? `The most active question was "${String(mostUpvotedQuestion.text).slice(0, 80)}".` : ""}`,
@@ -126,20 +135,26 @@ const AISummary = () => {
         recommendations: safeArray(aiData.recommendations),
         priorityActions: safeArray(aiData.priorityActions),
         scoreBreakdown: aiData.scoreBreakdown || {},
+        scoreMeta: aiData.scoreMeta || null,
       }
     : buildFallbackInsights();
 
   const fallbackInsights = buildFallbackInsights();
 
-  const resolvedScore =
-    Number.isFinite(Number(aiSummary.overallScore)) && Number(aiSummary.overallScore) > 0
+  const resolvedScoreMeta = aiSummary.scoreMeta || fallbackInsights.scoreMeta;
+  const shouldShowScore = resolvedScoreMeta?.showScore !== false;
+
+  const resolvedScore = shouldShowScore
+    ? Number.isFinite(Number(aiSummary.overallScore)) && Number(aiSummary.overallScore) > 0
       ? Number(aiSummary.overallScore)
-      : Number(fallbackInsights.overallScore) || 35;
+      : Number(fallbackInsights.overallScore) || 35
+    : null;
 
   const resolvedSummary = {
     ...fallbackInsights,
     ...aiSummary,
     overallScore: resolvedScore,
+    scoreMeta: resolvedScoreMeta,
     executiveSummary:
       aiSummary.executiveSummary || fallbackInsights.executiveSummary,
     engagementAnalysis:
@@ -244,16 +259,16 @@ const AISummary = () => {
     }
 
   const scoreColorClass =
-    resolvedSummary.overallScore >= 75
+    (resolvedSummary.overallScore || 0) >= 75
       ? "text-emerald-600 dark:text-emerald-400"
-      : resolvedSummary.overallScore >= 50
+      : (resolvedSummary.overallScore || 0) >= 50
         ? "text-amber-600 dark:text-amber-400"
         : "text-rose-600 dark:text-rose-400";
 
   const meterColorClass =
-    resolvedSummary.overallScore >= 75
+    (resolvedSummary.overallScore || 0) >= 75
       ? "bg-emerald-500"
-      : resolvedSummary.overallScore >= 50
+      : (resolvedSummary.overallScore || 0) >= 50
         ? "bg-amber-500"
         : "bg-rose-500";
 
@@ -409,22 +424,41 @@ const AISummary = () => {
           </p>
         </div>
         <div className="flex-shrink-0 text-right">
-          <div className={`text-lg font-bold ${scoreColorClass}`}>
-            {resolvedSummary.overallScore || 0}/100
-          </div>
-          <div className="text-[11px] text-gray-500 dark:text-gray-400 uppercase tracking-wide">
-            session score
-          </div>
+          {resolvedSummary.scoreMeta?.showScore !== false ? (
+            <>
+              <div className={`text-lg font-bold ${scoreColorClass}`}>
+                {resolvedSummary.overallScore || 0}/100
+              </div>
+              <div className="text-[11px] text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                session score
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="text-sm font-semibold text-slate-600 dark:text-slate-300">
+                Score hidden
+              </div>
+              <div className="text-[11px] text-gray-500 dark:text-gray-400">
+                low data coverage
+              </div>
+            </>
+          )}
         </div>
       </div>
 
       <div className="mb-4">
-        <div className="h-2 rounded-full bg-white/70 dark:bg-gray-800/70 overflow-hidden border border-blue-200 dark:border-blue-800">
-          <div
-            className={`h-full ${meterColorClass}`}
-            style={{ width: `${Math.min(100, Math.max(0, resolvedSummary.overallScore || 0))}%` }}
-          />
-        </div>
+        {resolvedSummary.scoreMeta?.showScore !== false ? (
+          <div className="h-2 rounded-full bg-white/70 dark:bg-gray-800/70 overflow-hidden border border-blue-200 dark:border-blue-800">
+            <div
+              className={`h-full ${meterColorClass}`}
+              style={{ width: `${Math.min(100, Math.max(0, resolvedSummary.overallScore || 0))}%` }}
+            />
+          </div>
+        ) : (
+          <div className="text-xs text-amber-700 dark:text-amber-300 bg-amber-50/80 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-900/40 rounded-md px-3 py-2">
+            {resolvedSummary.scoreMeta?.message || "Session score is hidden because available signals are too limited for a reliable benchmark."}
+          </div>
+        )}
         <div className="mt-2 text-[11px] text-gray-500 dark:text-gray-400 flex items-center justify-between">
           <span>Generated {resolvedSummary.generatedAt ? new Date(resolvedSummary.generatedAt).toLocaleString() : "now"}</span>
           <button

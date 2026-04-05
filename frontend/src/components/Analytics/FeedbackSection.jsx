@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { useAnalyticsData } from "../../context/AnalyticsContext";
 
 const FeedbackSection = () => {
@@ -31,6 +31,43 @@ const FeedbackSection = () => {
   }
 
   const { feedback } = analyticsData;
+
+  const feedbackThemeInsights = useMemo(() => {
+    if (!Array.isArray(feedback?.wordCloud) || !feedback.wordCloud.length) {
+      return {
+        cloudWords: [],
+      };
+    }
+
+    const cloudWords = feedback.wordCloud.map((item, index) => {
+      const label = String(item.word || "").trim();
+      const tokenCount = label.split(/\s+/).filter(Boolean).length;
+      const baseFontSize = Number(item.fontSize) || 14;
+      const adjustedFontSize = tokenCount > 1
+        ? Math.max(12, Math.min(18, Math.round(baseFontSize * 0.78)))
+        : Math.max(12, Math.min(24, baseFontSize));
+
+      return {
+      word: label,
+      count: item.count,
+      fontSize: adjustedFontSize,
+      rotationClass:
+        tokenCount > 1
+          ? "rotate-0"
+          : item.rotationClass || (index % 4 === 0 ? "-rotate-2" : index % 5 === 0 ? "rotate-2" : "rotate-0"),
+      toneClass:
+        item.toneClass ||
+        (index % 3 === 0
+          ? "bg-cyan-100/80 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-300"
+          : index % 3 === 1
+            ? "bg-emerald-100/80 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300"
+            : "bg-amber-100/80 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300"),
+    }});
+
+    return {
+      cloudWords,
+    };
+  }, [feedback]);
 
   const renderStars = (rating) => {
     return Array.from({ length: 5 }, (_, index) => {
@@ -212,27 +249,31 @@ const FeedbackSection = () => {
               </div>
             </div>
 
-            {/* Future placeholder for word cloud */}
-            <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-6 text-center">
-              <svg
-                className="w-12 h-12 text-gray-400 dark:text-gray-500 mx-auto mb-3"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"
-                />
-              </svg>
-              <h5 className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">
-                Word Cloud
-              </h5>
-              <p className="text-xs text-gray-500 dark:text-gray-500">
-                Coming soon - visual representation of common feedback themes
-              </p>
+            <div className="rounded-xl border border-cyan-200/70 dark:border-cyan-800 bg-gradient-to-br from-cyan-50 via-white to-emerald-50 dark:from-cyan-950/30 dark:via-gray-900 dark:to-emerald-950/20 p-4">
+              <div className="flex items-start justify-between mb-3">
+                <h5 className="text-sm font-semibold text-gray-800 dark:text-gray-100">
+                 Comment Insights
+                </h5>
+              </div>
+
+              <div className="flex flex-wrap items-start gap-2 mb-4 min-h-24 content-start">
+                {feedbackThemeInsights.cloudWords.length ? (
+                  feedbackThemeInsights.cloudWords.map((item) => (
+                    <span
+                      key={item.word}
+                      className={`inline-flex items-center max-w-full px-2.5 py-1 rounded-2xl font-semibold text-center break-words whitespace-normal leading-tight ${item.rotationClass} ${item.toneClass}`}
+                      style={{ fontSize: `${item.fontSize}px` }}
+                      title={`${item.word}: ${item.count} mentions`}
+                    >
+                      {item.word}
+                    </span>
+                  ))
+                ) : (
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    Word cloud will appear once feedback comments are processed.
+                  </p>
+                )}
+              </div>
             </div>
           </div>
 
