@@ -220,7 +220,7 @@ function AnalyticsPageContent() {
             {/* AI Summary */}
             {includedSections.ai !== undefined && (
               <div className="lg:col-span-1">
-                <div className="bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-2xl shadow-lg border border-blue-200 dark:border-blue-800 min-h-[320px]">
+                <div className="bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-2xl shadow-lg border border-blue-200 dark:border-blue-800 h-[620px]">
                   {includedSections.ai ? (
                     <AISummary />
                   ) : (

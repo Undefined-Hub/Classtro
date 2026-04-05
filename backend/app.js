@@ -72,7 +72,7 @@ app.use(
 );
 
 app.use(express.json());
-  app.use(morgan("dev"));
+app.use(morgan("dev"));
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(passport.initialize());

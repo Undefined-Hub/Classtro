@@ -6,6 +6,7 @@ const Question = require("../models/Question");
 const SessionFeedback = require("../models/SessionFeedback");
 const Session = require("../models/Session");
 const Room = require("../models/Room");
+const { generateAIResponse } = require("./ai/core");
 
 // Main function to build analytics
 const buildAnalytics = async (sessionId, sections) => {
@@ -50,7 +51,11 @@ const buildAnalytics = async (sessionId, sections) => {
     }
 
     if (sections.ai) {
-      result.sections.ai = await generateAiInsights(sessionId);
+      result.sections.ai = await generateAiInsights({
+        sessionId,
+        session,
+        builtSections: result.sections,
+      });
     }
 
     return result;
@@ -88,6 +93,19 @@ const buildFrontendAnalytics = async (sessionId) => {
     const timeline = await generateTimeline(sessionId);
     
     // Build frontend-compatible structure
+    const aiInsights = await generateAiInsights({
+      sessionId,
+      session,
+      builtSections: {
+        participants: participantStats,
+        timeline,
+        polls: await generatePollStats(sessionId),
+        qna: await generateQnaStats(sessionId),
+        attendance: await generateAttendance(sessionId),
+        feedback: await generateFeedbackStats(sessionId),
+      },
+    });
+
     return {
       includedSections: {
         participants: true,
@@ -112,6 +130,7 @@ const buildFrontendAnalytics = async (sessionId) => {
       participantsTimeline: formatTimelineForFrontend(timeline),
       polls: formatPollsForFrontend(polls),
       questions: formatQuestionsForFrontend(questions),
+      ai: aiInsights,
       feedback: await formatFeedbackForFrontend(feedbacks),
     };
   } catch (error) {
@@ -786,14 +805,346 @@ const generateFeedbackStats = async (sessionId) => {
   }
 };
 
-const generateAiInsights = async (sessionId) => {
-  // Placeholder for AI insights - premium feature
+const buildAiFacts = ({ session, builtSections }) => {
+  const participants = builtSections.participants || {};
+  const timeline = builtSections.timeline || [];
+  const polls = builtSections.polls || [];
+  const qna = builtSections.qna || {};
+  const attendance = builtSections.attendance || [];
+  const feedback = builtSections.feedback || {};
+
+  const durationMinutes = Math.max(
+    1,
+    Math.round(
+      ((new Date(session.endAt || new Date()) - new Date(session.startAt)) /
+        1000 /
+        60) || 1,
+    ),
+  );
+
+  const avgPollResponses = polls.length
+    ? Math.round(
+        polls.reduce((sum, poll) => sum + (poll.totalResponses || 0), 0) /
+          polls.length,
+      )
+    : 0;
+
+  const bestPoll = polls.reduce(
+    (best, poll) =>
+      (poll.totalResponses || 0) > (best.totalResponses || 0) ? poll : best,
+    { question: "", totalResponses: 0 },
+  );
+
+  const lowestActivePoint = timeline.reduce(
+    (lowest, point) =>
+      lowest.activeParticipants === null ||
+      (point.activeParticipants || 0) < lowest.activeParticipants
+        ? point
+        : lowest,
+    { minute: 0, activeParticipants: null },
+  );
+
+  const attendanceFullCount = attendance.filter(
+    (item) => item.attendanceStatus === "full",
+  ).length;
+
+  const attendanceRate = attendance.length
+    ? Math.round((attendanceFullCount / attendance.length) * 100)
+    : 0;
+
+  const topQuestion = (qna.questions || []).reduce(
+    (max, current) =>
+      (current.upvotes || 0) > (max.upvotes || 0) ? current : max,
+    { text: "", upvotes: 0 },
+  );
+
+  const peakTimelinePoint = timeline.reduce(
+    (max, point) =>
+      (point.activeParticipants || 0) > (max.activeParticipants || 0)
+        ? point
+        : max,
+    { minute: 0, activeParticipants: 0 },
+  );
+
   return {
-    available: false,
-    message: "AI insights are a premium feature. Upgrade to unlock detailed AI-powered analytics.",
-    insights: [],
-    recommendations: [],
+    session: {
+      title: session.title || "Untitled session",
+      durationMinutes,
+      startAt: session.startAt,
+      endAt: session.endAt || null,
+    },
+    participants: {
+      total: participants.totalParticipants || 0,
+      peakConcurrent: participants.peakConcurrentUsers || 0,
+      avgConcurrent: participants.averageConcurrentUsers || 0,
+      avgSessionDurationMinutes: participants.averageSessionDuration || 0,
+      engagementRate: participants.engagementRate || 0,
+      attendanceRate,
+    },
+    qna: {
+      totalQuestions: qna.totalQuestions || 0,
+      answeredQuestions: qna.answeredQuestions || 0,
+      answerRate: qna.answerRate || 0,
+      avgUpvotes: qna.averageUpvotes || 0,
+      topQuestion: {
+        text: String(topQuestion.text || "").slice(0, 120),
+        upvotes: topQuestion.upvotes || 0,
+      },
+    },
+    polls: {
+      totalPolls: polls.length,
+      avgResponsesPerPoll: avgPollResponses,
+      bestPollQuestion: String(bestPoll.question || "").slice(0, 120),
+      bestPollResponses: bestPoll.totalResponses || 0,
+    },
+    feedback: {
+      totalFeedbacks: feedback.totalFeedbacks || 0,
+      averageRating: feedback.averageRating || 0,
+      sentiment: feedback.sentiment || "neutral",
+    },
+    interactionPatterns: {
+      timelinePoints: timeline.length,
+      peakMinute: peakTimelinePoint.minute || 0,
+      peakParticipantsAtMinute: peakTimelinePoint.activeParticipants || 0,
+      lowMinute: lowestActivePoint.minute || 0,
+      lowParticipantsAtMinute:
+        lowestActivePoint.activeParticipants === null
+          ? 0
+          : lowestActivePoint.activeParticipants,
+    },
   };
+};
+
+const getAiInsightsFallback = (facts, reason = "AI unavailable") => {
+  const answered = facts.qna.answeredQuestions;
+  const totalQuestions = facts.qna.totalQuestions;
+  const answerRate = facts.qna.answerRate;
+  const hasMeaningfulSignals =
+    (facts.participants.total || 0) > 0 ||
+    (facts.qna.totalQuestions || 0) > 0 ||
+    (facts.polls.totalPolls || 0) > 0 ||
+    (facts.feedback.totalFeedbacks || 0) > 0;
+
+  const computedScore = Math.round(
+    (facts.participants.engagementRate || 0) * 0.35 +
+      (facts.qna.answerRate || 0) * 0.2 +
+      (facts.feedback.averageRating || 0) * 14 +
+      (facts.participants.attendanceRate || 0) * 0.2 +
+      Math.min(15, (facts.polls.totalPolls || 0) * 3),
+  );
+
+  const overallScore = hasMeaningfulSignals
+    ? Math.max(35, Math.min(100, computedScore || 35))
+    : 50;
+
+  return {
+    available: true,
+    source: "fallback",
+    generatedAt: new Date().toISOString(),
+    model: "deterministic-fallback",
+    reason,
+    overallScore,
+    executiveSummary: `This session showed ${facts.participants.total > 0 ? "active" : "limited"} participation with peak attendance of ${facts.participants.peakConcurrent} and an overall engagement score of ${overallScore}/100.`,
+    overview: `The ${facts.session.durationMinutes}-minute session on "${facts.session.title}" kept ${facts.participants.total} participants engaged, reaching a peak of ${facts.participants.peakConcurrent} concurrent attendees.`,
+    engagementAnalysis: `Q&A response rate is ${answerRate}% (${answered}/${totalQuestions}). Average participant session duration is ${facts.participants.avgSessionDurationMinutes} minutes, with attendance completion at ${facts.participants.attendanceRate}%.`,
+    interactionPatterns: `The session used ${facts.polls.totalPolls} polls with an average of ${facts.polls.avgResponsesPerPoll} responses per poll. Peak live participation reached ${facts.interactionPatterns.peakParticipantsAtMinute} around minute ${facts.interactionPatterns.peakMinute}, while activity dipped near minute ${facts.interactionPatterns.lowMinute}.`,
+    strengths: [
+      facts.feedback.averageRating >= 4
+        ? "Feedback sentiment is positive, which suggests the session structure was generally well received."
+        : "The session generated enough activity to produce actionable improvement signals.",
+      facts.polls.totalPolls >= 2
+        ? "Poll usage created touchpoints that helped re-engage participants during the session."
+        : "The session maintained at least one interactive mechanism for participant response.",
+      facts.participants.attendanceRate >= 70
+        ? "Attendance retention was strong enough to indicate the content stayed relevant for many participants."
+        : "A meaningful subset of learners stayed engaged long enough to provide behavior data."
+    ],
+    risks: [
+      answerRate < 70
+        ? "A sizable portion of questions remained unanswered, which can create the impression that concerns were left unresolved."
+        : "Q&A responsiveness is solid, so the main risk is sustaining that momentum across longer sessions.",
+      facts.participants.peakConcurrent < facts.participants.total
+        ? "The live peak was below total attendance, which can indicate uneven participation timing or drop-off at certain points."
+        : "No major attendance collapse was visible, but peak activity still needs reinforcement through structured interaction.",
+      facts.feedback.averageRating < 4
+        ? "Feedback is not yet strong enough to assume the current pace and format are ideal."
+        : "High satisfaction is a strength, but it can hide weak spots if the session remains mostly presenter-driven."
+    ],
+    recommendations: [
+      answerRate < 70
+        ? "Reserve a dedicated Q&A checkpoint before the final segment so unanswered questions are not deferred silently."
+        : "Keep the current Q&A rhythm, but call out especially good questions to model deeper participation.",
+      facts.polls.totalPolls < 3
+        ? "Add one early pulse-check poll and one late reflection poll to create clearer engagement anchors."
+        : "Use poll results to steer the next topic instead of treating them as isolated interaction moments.",
+      facts.participants.attendanceRate < 75
+        ? "Break long explanations into shorter blocks and insert a recap prompt after each block to reduce silent drop-off."
+        : "Maintain the current pacing, but add one higher-cognitive-demand activity to challenge the strongest learners.",
+      facts.feedback.averageRating < 4
+        ? "Review the low-rated feedback themes and adjust pacing, examples, or clarity in the next delivery."
+        : "Build on the well-received structure by repeating the strongest interaction pattern earlier in the next session.",
+      "Send a short post-session follow-up that answers the top unanswered question and summarizes the main action items.",
+    ],
+    priorityActions: [
+      {
+        label: "Address unanswered questions",
+        priority: answerRate < 70 ? "high" : "medium",
+        why: `${totalQuestions - answered} questions were not answered during the session.`,
+      },
+      {
+        label: "Increase mid-session interaction",
+        priority: facts.polls.totalPolls < 3 ? "high" : "medium",
+        why: `${facts.polls.totalPolls} polls were used, which may not be enough to sustain participation throughout the session.`,
+      },
+      {
+        label: "Tighten pacing around drop-off points",
+        priority: facts.interactionPatterns.lowParticipantsAtMinute > 0 ? "medium" : "low",
+        why: `Participation dipped around minute ${facts.interactionPatterns.lowMinute}, suggesting a good spot to insert a recap or poll.`,
+      },
+    ],
+    scoreBreakdown: {
+      overall: overallScore,
+      engagement: Math.round((facts.participants.engagementRate || 0) * 0.6 + (facts.qna.answerRate || 0) * 0.4),
+      participation: Math.round((facts.participants.attendanceRate || 0) * 0.7 + (facts.participants.peakConcurrent || 0) * 0.3),
+      clarity: Math.round((facts.feedback.averageRating || 0) * 20),
+    },
+    metrics: facts,
+  };
+};
+
+const parseAiInsightsJson = (rawText) => {
+  if (!rawText || typeof rawText !== "string") {
+    throw new Error("AI returned an empty response");
+  }
+
+  try {
+    return JSON.parse(rawText);
+  } catch (error) {
+    const match = rawText.match(/\{[\s\S]*\}/);
+    if (!match) throw new Error("AI response is not valid JSON");
+    return JSON.parse(match[0]);
+  }
+};
+
+const generateAiInsights = async ({ sessionId, session, builtSections }) => {
+  try {
+    const safeSession =
+      session || (await Session.findById(sessionId).lean()) || { title: "Session" };
+
+    const facts = buildAiFacts({
+      session: safeSession,
+      builtSections,
+    });
+
+    const prompt = `You are an analytics assistant for teaching sessions.\n` +
+      `Generate concise, action-focused coaching insights for a host from structured session metrics.\n` +
+      `Return ONLY JSON with this exact schema:\n` +
+      `{\n` +
+      `  "executiveSummary": string,\n` +
+      `  "overview": string,\n` +
+      `  "engagementAnalysis": string,\n` +
+      `  "interactionPatterns": string,\n` +
+      `  "strengths": string[],\n` +
+      `  "risks": string[],\n` +
+      `  "priorityActions": [{"label": string, "priority": "high|medium|low", "why": string}],\n` +
+      `  "recommendations": string[],\n` +
+      `  "scoreBreakdown": {"overall": number, "engagement": number, "participation": number, "clarity": number}\n` +
+      `}\n` +
+      `Rules:\n` +
+      `- Keep each text field to 1-2 short sentences (max 35 words each).\n` +
+      `- strengths: exactly 2 or 3 items.\n` +
+      `- risks: exactly 2 or 3 items.\n` +
+      `- priorityActions: exactly 2 or 3 items.\n` +
+      `- recommendations: exactly 3 or 4 items.\n` +
+      `- Avoid generic filler and avoid repeating the same metric in multiple fields.\n` +
+      `- If a section has no meaningful signal, return an empty array for that section.\n` +
+      `- Do not include markdown. JSON only.\n\n` +
+      `Session metrics:\n${JSON.stringify(facts, null, 2)}`;
+
+    const raw = await generateAIResponse(prompt, {
+      maxTokens: 520,
+      temperature: 0.25,
+    });
+
+    const parsed = parseAiInsightsJson(raw);
+    const recommendations = Array.isArray(parsed.recommendations)
+      ? parsed.recommendations.filter(Boolean).map((r) => String(r).trim()).slice(0, 6)
+      : [];
+
+    if (
+      !parsed ||
+      !parsed.overview ||
+      !parsed.engagementAnalysis ||
+      !parsed.interactionPatterns ||
+      recommendations.length < 3
+    ) {
+      throw new Error("AI response did not match expected insights schema");
+    }
+
+    const overallScore = Math.max(
+      1,
+      Math.min(
+        100,
+        Math.round(
+          (facts.participants.engagementRate || 0) * 0.45 +
+            (facts.qna.answerRate || 0) * 0.25 +
+            (facts.feedback.averageRating || 0) * 15 +
+            (facts.participants.attendanceRate || 0) * 0.15,
+        ),
+      ),
+    );
+
+    const strengths = Array.isArray(parsed.strengths)
+      ? parsed.strengths.filter(Boolean).map((item) => String(item).trim()).slice(0, 4)
+      : [];
+    const risks = Array.isArray(parsed.risks)
+      ? parsed.risks.filter(Boolean).map((item) => String(item).trim()).slice(0, 4)
+      : [];
+    const priorityActions = Array.isArray(parsed.priorityActions)
+      ? parsed.priorityActions
+          .filter(Boolean)
+          .map((item) => ({
+            label: String(item.label || item.title || "Action").trim(),
+            priority: ["high", "medium", "low"].includes(String(item.priority).toLowerCase())
+              ? String(item.priority).toLowerCase()
+              : "medium",
+            why: String(item.why || item.reason || "").trim(),
+          }))
+          .slice(0, 4)
+      : [];
+
+    return {
+      available: true,
+      source: "ai",
+      generatedAt: new Date().toISOString(),
+      model: "gemini-2.5-flash-lite",
+      overallScore,
+      executiveSummary: String(parsed.executiveSummary || parsed.overview).trim(),
+      overview: String(parsed.overview).trim(),
+      engagementAnalysis: String(parsed.engagementAnalysis).trim(),
+      interactionPatterns: String(parsed.interactionPatterns).trim(),
+      recommendations,
+      strengths: strengths.length ? strengths : getAiInsightsFallback(facts).strengths,
+      risks: risks.length ? risks : getAiInsightsFallback(facts).risks,
+      priorityActions: priorityActions.length
+        ? priorityActions
+        : getAiInsightsFallback(facts).priorityActions,
+      scoreBreakdown: parsed.scoreBreakdown || getAiInsightsFallback(facts).scoreBreakdown,
+      metrics: facts,
+    };
+  } catch (error) {
+    console.error("Error generating AI insights:", error);
+
+    const fallbackFacts = buildAiFacts({
+      session: session || { title: "Session", startAt: new Date(), endAt: new Date() },
+      builtSections: builtSections || {},
+    });
+
+    return getAiInsightsFallback(
+      fallbackFacts,
+      error?.message || "AI generation failed",
+    );
+  }
 };
 
 // Helper to format stored analytics into frontend format
@@ -850,6 +1201,7 @@ const formatStoredAnalytics = async (storedAnalytics) => {
       participantsTimeline: formatStoredTimeline(sections.timeline),
       polls: sections.polls || [],
       questions: sections.qna?.questions || [],
+      ai: sections.ai || null,
       feedback: sections.feedback ? {
         averageRating: sections.feedback.averageRating || 0,
         comments: sections.feedback.feedbacks?.map(f => f.description).filter(Boolean) || [],
