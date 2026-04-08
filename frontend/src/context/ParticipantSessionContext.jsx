@@ -104,7 +104,7 @@ export const ParticipantSessionProvider = ({ children }) => {
 
   // Socket lifecycle - create once per provider when sessionData exists
   const SOCKET_URL =
-    (import.meta.env?.VITE_BACKEND_BASE_URL || "http://localhost:3000") +
+    ("") +
     "/sessions";
   useEffect(() => {
     // only create when we have session data and no socket
