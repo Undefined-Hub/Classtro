@@ -6,7 +6,8 @@ import api from "../utils/api.js";
 import { useSubmitDebounce } from "../hooks/useDebounce.js";
 export default function Register() {
   const { login } = useAuth();
-  const BACKEND_URL ="";
+  const BACKEND_URL =
+    import.meta.env.VITE_BACKEND_BASE_URL || "http://localhost:3000";
   const [form, setForm] = useState({
     name: "",
     username: "",

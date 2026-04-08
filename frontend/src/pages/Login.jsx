@@ -9,7 +9,8 @@ function Login({ onLogin }) {
   const navigate = useNavigate();
   const { login } = useAuth();
   const [searchParams] = useSearchParams();
-  const BACKEND_URL ="";
+  const BACKEND_URL =
+    import.meta.env.VITE_BACKEND_BASE_URL || "http://localhost:3000";
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
 
