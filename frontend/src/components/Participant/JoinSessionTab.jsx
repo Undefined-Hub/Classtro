@@ -4,7 +4,8 @@ import { useNavigate } from "react-router-dom";
 import { useParticipantSession } from "../../context/ParticipantSessionContext.jsx";
 import { STORAGE_KEY } from "../../context/ParticipantSessionContext.jsx";
 import api from "../../utils/api.js";
-const BACKEND_BASE_URL = "" ;
+const BACKEND_BASE_URL =
+  import.meta.env.VITE_BACKEND_BASE_URL || "http://localhost:3000";
 const JoinSessionTab = () => {
   const { user } = useAuth();
   const navigate = useNavigate();

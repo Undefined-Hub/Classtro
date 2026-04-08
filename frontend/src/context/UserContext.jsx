@@ -18,7 +18,8 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(null);
   const [loading, setLoading] = useState(true);
-  const baseURL ="";
+  const baseURL =
+    import.meta.env.VITE_BACKEND_BASE_URL || "http://localhost:3000";
 
   const clearLocalAuthState = useCallback(() => {
     setUser(null);
