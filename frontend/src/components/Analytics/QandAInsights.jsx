@@ -77,6 +77,11 @@ const QandAInsights = () => {
     return null;
   };
 
+  const getQuestionKey = (question, index) =>
+    question.id ||
+    question._id ||
+    `${question.createdAt || "no-time"}-${question.author || "anon"}-${index}`;
+
   const QuestionCard = ({ question, isInModal = false }) => (
     <div
       className={`border border-gray-200 dark:border-gray-700 rounded-lg ${
@@ -192,9 +197,9 @@ const QandAInsights = () => {
 
           {/* Questions list in modal */}
           <div className="overflow-y-auto max-h-[calc(90vh-200px)] space-y-4 hide-scrollbar">
-            {sortedQuestions.map((question) => (
+            {sortedQuestions.map((question, index) => (
               <QuestionCard
-                key={question.id}
+                key={getQuestionKey(question, index)}
                 question={question}
                 isInModal={true}
               />
@@ -313,8 +318,11 @@ const QandAInsights = () => {
             )}
           </div>
           <div className="flex-1 overflow-y-auto space-y-3 pr-2 hide-scrollbar">
-            {sortedQuestions.slice(0, maxVisibleQuestions).map((question) => (
-              <QuestionCard key={question.id} question={question} />
+            {sortedQuestions.slice(0, maxVisibleQuestions).map((question, index) => (
+              <QuestionCard
+                key={getQuestionKey(question, index)}
+                question={question}
+              />
             ))}
 
             {sortedQuestions.length > maxVisibleQuestions && (

@@ -54,6 +54,12 @@ const PollAnalytics = () => {
     return null;
   };
 
+  const getPollKey = (poll, index) =>
+    poll.id || poll._id || `${poll.question || "poll"}-${index}`;
+
+  const getPollOptionKey = (option, optionIndex) =>
+    option.id || option.optionId || `${option.text || "option"}-${optionIndex}`;
+
   const PollCard = ({ poll, index, isInModal = false }) => (
     <div
       className={`border border-gray-200 dark:border-gray-700 rounded-xl p-3 sm:p-4 ${
@@ -107,7 +113,7 @@ const PollAnalytics = () => {
       >
         {poll.options.map((option, optionIndex) => (
           <div
-            key={optionIndex}
+            key={getPollOptionKey(option, optionIndex)}
             className="text-center p-2 bg-gray-50 dark:bg-gray-700 rounded-lg"
           >
             <div className="text-sm font-semibold text-gray-900 dark:text-white">
@@ -155,7 +161,7 @@ const PollAnalytics = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
             {polls.map((poll, index) => (
               <PollCard
-                key={poll.id}
+                key={getPollKey(poll, index)}
                 poll={poll}
                 index={index}
                 isInModal={true}
@@ -219,7 +225,7 @@ const PollAnalytics = () => {
             <div className="h-full overflow-y-auto hide-scrollbar">
               <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
                 {polls.slice(0, 2).map((poll, index) => (
-                  <PollCard key={poll.id} poll={poll} index={index} />
+                  <PollCard key={getPollKey(poll, index)} poll={poll} index={index} />
                 ))}
               </div>
 
@@ -241,7 +247,7 @@ const PollAnalytics = () => {
                 style={{ width: "max-content" }}
               >
                 {polls.map((poll, index) => (
-                  <PollCard key={poll.id} poll={poll} index={index} />
+                  <PollCard key={getPollKey(poll, index)} poll={poll} index={index} />
                 ))}
               </div>
             </div>

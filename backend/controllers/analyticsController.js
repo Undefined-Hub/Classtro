@@ -24,7 +24,7 @@ const generateAnalytics = async (req, res, next) => {
       qna: true,
       attendance: true,
       feedback: true,
-      ai: false,
+      ai: true,
       ...sections,
     };
 
