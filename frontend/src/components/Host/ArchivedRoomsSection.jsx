@@ -4,7 +4,7 @@ import { Archive, RotateCcw } from "lucide-react";
 const ArchivedRoomsSection = ({
   archivedRooms,
   archivedRoomsLoading,
-  onUnarchiveRoom
+  onUnarchiveRoom,
 }) => {
   return (
     <div className="space-y-6">
@@ -37,9 +37,9 @@ const ArchivedRoomsSection = ({
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {archivedRooms?.map((room) => (
-                <RoomCard 
-                  key={room._id} 
-                  room={room} 
+                <RoomCard
+                  key={room._id}
+                  room={room}
                   onUnarchive={onUnarchiveRoom}
                 />
               ))}

@@ -39,7 +39,7 @@ export const ParticipantSessionProvider = ({ children }) => {
       return null;
     }
   });
-  
+
   // Quiz state
   const [activeQuiz, setActiveQuiz] = useState(() => {
     try {
@@ -52,7 +52,7 @@ export const ParticipantSessionProvider = ({ children }) => {
   const [quizAnswers, setQuizAnswers] = useState({});
   const [quizSubmitted, setQuizSubmitted] = useState(false);
   const [quizResult, setQuizResult] = useState(null);
-  
+
   // HOST_CONTROLLED quiz state
   const [hcCurrentQuestion, setHcCurrentQuestion] = useState(null);
   const [hcQuestionIndex, setHcQuestionIndex] = useState(-1);
@@ -62,7 +62,7 @@ export const ParticipantSessionProvider = ({ children }) => {
   const [hcLeaderboard, setHcLeaderboard] = useState([]);
   const [hcFinalResults, setHcFinalResults] = useState(null);
   const [hcShowResults, setHcShowResults] = useState(false);
-  
+
   useEffect(() => {
     try {
       if (sessionData) {
@@ -90,7 +90,7 @@ export const ParticipantSessionProvider = ({ children }) => {
     setQuizAnswers({});
     setQuizSubmitted(false);
     setQuizResult(null);
-    
+
     // Clear HOST_CONTROLLED state
     setHcCurrentQuestion(null);
     setHcQuestionIndex(-1);
@@ -121,10 +121,13 @@ export const ParticipantSessionProvider = ({ children }) => {
     // emit join on connect
     socket.on("connect", () => {
       try {
-        console.log("[SOCKET:ParticipantContext] Connected, emitting join-session:", {
-          code: sessionData.joinCode,
-          participantId: sessionData.participantId,
-        });
+        console.log(
+          "[SOCKET:ParticipantContext] Connected, emitting join-session:",
+          {
+            code: sessionData.joinCode,
+            participantId: sessionData.participantId,
+          },
+        );
         socket.emit("join-session", {
           code: sessionData.joinCode,
           participantId: sessionData.participantId,
@@ -202,7 +205,7 @@ export const ParticipantSessionProvider = ({ children }) => {
       setQuizSubmitted,
       quizResult,
       setQuizResult,
-      
+
       // HOST_CONTROLLED quiz context
       hcCurrentQuestion,
       setHcCurrentQuestion,
@@ -221,7 +224,21 @@ export const ParticipantSessionProvider = ({ children }) => {
       hcShowResults,
       setHcShowResults,
     }),
-    [sessionData, activePoll, socketReady, activeQuiz, quizAnswers, quizSubmitted, quizResult, hcCurrentQuestion, hcQuestionIndex, hcAnswerSubmitted, hcLeaderboard, hcFinalResults, hcShowResults],
+    [
+      sessionData,
+      activePoll,
+      socketReady,
+      activeQuiz,
+      quizAnswers,
+      quizSubmitted,
+      quizResult,
+      hcCurrentQuestion,
+      hcQuestionIndex,
+      hcAnswerSubmitted,
+      hcLeaderboard,
+      hcFinalResults,
+      hcShowResults,
+    ],
   );
 
   return (

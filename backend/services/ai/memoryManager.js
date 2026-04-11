@@ -6,9 +6,11 @@ const MAX_MEMORY_AGE_MS = 10 * 60 * 1000; // 10 minutes
 
 // Generate session ID from IP and user agent for unauthenticated users
 function generateSessionId(req) {
-  const ip = req.ip || req.connection?.remoteAddress || 'unknown';
-  const userAgent = req.get('user-agent') || 'unknown';
-  return `session_${Buffer.from(ip + userAgent).toString('base64').slice(0, 20)}`;
+  const ip = req.ip || req.connection?.remoteAddress || "unknown";
+  const userAgent = req.get("user-agent") || "unknown";
+  return `session_${Buffer.from(ip + userAgent)
+    .toString("base64")
+    .slice(0, 20)}`;
 }
 
 // Get user identifier (userId for auth, sessionId for guests)
@@ -58,15 +60,15 @@ function clearMemory(userId) {
 
 // Extract summary from AI response
 function extractSummary(aiResponse) {
-  if (!aiResponse || typeof aiResponse !== 'string') {
-    return { summary: 'AI response', cleanResponse: aiResponse };
+  if (!aiResponse || typeof aiResponse !== "string") {
+    return { summary: "AI response", cleanResponse: aiResponse };
   }
 
   // Try multiple patterns to match [SUMMARY: ...]
   const patterns = [
-    /\[SUMMARY:\s*(.+?)\]\s*$/is,        // At end with optional whitespace
-    /\[SUMMARY:\s*(.+?)\]/is,             // Anywhere in text
-    /\nSUMMARY:\s*(.+?)(?:\n|$)/is,      // Plain SUMMARY: format
+    /\[SUMMARY:\s*(.+?)\]\s*$/is, // At end with optional whitespace
+    /\[SUMMARY:\s*(.+?)\]/is, // Anywhere in text
+    /\nSUMMARY:\s*(.+?)(?:\n|$)/is, // Plain SUMMARY: format
   ];
 
   for (const pattern of patterns) {
@@ -75,36 +77,38 @@ function extractSummary(aiResponse) {
       const summary = match[1].trim();
       // Remove the entire summary block from response
       const cleanResponse = aiResponse
-        .replace(/\[SUMMARY:\s*.+?\]\s*$/is, '')
-        .replace(/\[SUMMARY:\s*.+?\]/is, '')
-        .replace(/\nSUMMARY:\s*.+?(?:\n|$)/is, '\n')
+        .replace(/\[SUMMARY:\s*.+?\]\s*$/is, "")
+        .replace(/\[SUMMARY:\s*.+?\]/is, "")
+        .replace(/\nSUMMARY:\s*.+?(?:\n|$)/is, "\n")
         .trim();
-      
-      console.log('[MEMORY] Extracted summary:', summary);
+
+      console.log("[MEMORY] Extracted summary:", summary);
       return { summary, cleanResponse };
     }
   }
-  
+
   // Fallback: generate simple summary from first line
-  const lines = aiResponse.split('\n').filter(line => line.trim());
-  const firstLine = lines[0]?.trim() || 'AI response';
-  const summary = firstLine.length > 60 
-    ? firstLine.substring(0, 57) + '...' 
-    : firstLine;
-  
-  console.log('[MEMORY] Fallback summary:', summary);
+  const lines = aiResponse.split("\n").filter((line) => line.trim());
+  const firstLine = lines[0]?.trim() || "AI response";
+  const summary =
+    firstLine.length > 60 ? firstLine.substring(0, 57) + "..." : firstLine;
+
+  console.log("[MEMORY] Fallback summary:", summary);
   return { summary, cleanResponse: aiResponse };
 }
 
 // Cleanup old memories periodically
-setInterval(() => {
-  const now = Date.now();
-  for (const [userId, memory] of memoryStore.entries()) {
-    if (now - memory.timestamp > MAX_MEMORY_AGE_MS) {
-      memoryStore.delete(userId);
+setInterval(
+  () => {
+    const now = Date.now();
+    for (const [userId, memory] of memoryStore.entries()) {
+      if (now - memory.timestamp > MAX_MEMORY_AGE_MS) {
+        memoryStore.delete(userId);
+      }
     }
-  }
-}, 5 * 60 * 1000); // Run every 5 minutes
+  },
+  5 * 60 * 1000,
+); // Run every 5 minutes
 
 module.exports = {
   storeMemory,

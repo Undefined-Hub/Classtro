@@ -26,7 +26,12 @@ const buildAiSummary = (analyticsData) => {
   const questions = analyticsData?.questions || [];
   const polls = analyticsData?.polls || [];
 
-  if (!sessionInfo.startAt || !sessionInfo.endAt || questions.length === 0 || polls.length === 0) {
+  if (
+    !sessionInfo.startAt ||
+    !sessionInfo.endAt ||
+    questions.length === 0 ||
+    polls.length === 0
+  ) {
     return null;
   }
 
@@ -42,7 +47,10 @@ const buildAiSummary = (analyticsData) => {
     questions[0],
   );
   const avgPollResponses = polls.length
-    ? Math.round(polls.reduce((sum, p) => sum + (p.totalResponses || 0), 0) / polls.length)
+    ? Math.round(
+        polls.reduce((sum, p) => sum + (p.totalResponses || 0), 0) /
+          polls.length,
+      )
     : 0;
 
   return {
@@ -189,10 +197,14 @@ export const exportAnalyticsToPdf = (analyticsData) => {
     </div>
   </div>
 
-  ${included.timeline ? `
+  ${
+    included.timeline
+      ? `
   <div class="section">
     <h2>Participant Timeline</h2>
-    ${timeline.length ? `
+    ${
+      timeline.length
+        ? `
       <table>
         <thead>
           <tr>
@@ -202,26 +214,36 @@ export const exportAnalyticsToPdf = (analyticsData) => {
         </thead>
         <tbody>
           ${timeline
-            .map((point) => `
+            .map(
+              (point) => `
               <tr>
                 <td>${escapeHtml(point.time)}</td>
                 <td>${escapeHtml(point.activeCount)}</td>
               </tr>
-            `)
+            `,
+            )
             .join("")}
         </tbody>
       </table>
-    ` : `<p class="small">No timeline data available.</p>`}
+    `
+        : `<p class="small">No timeline data available.</p>`
+    }
   </div>
-  ` : ""}
+  `
+      : ""
+  }
 
-  ${included.polls ? `
+  ${
+    included.polls
+      ? `
   <div class="section">
     <h2>Poll Analytics</h2>
-    ${polls.length ? polls
-      .map((poll) => {
-        const options = poll.options || [];
-        return `
+    ${
+      polls.length
+        ? polls
+            .map((poll) => {
+              const options = poll.options || [];
+              return `
           <div class="section">
             <p><strong>${escapeHtml(poll.question)}</strong></p>
             <p class="small">Total responses: ${escapeHtml(poll.totalResponses || 0)}</p>
@@ -234,26 +256,36 @@ export const exportAnalyticsToPdf = (analyticsData) => {
               </thead>
               <tbody>
                 ${options
-                  .map((option) => `
+                  .map(
+                    (option) => `
                     <tr>
                       <td>${escapeHtml(option.text)}</td>
                       <td>${escapeHtml(option.votes || 0)}</td>
                     </tr>
-                  `)
+                  `,
+                  )
                   .join("")}
               </tbody>
             </table>
           </div>
         `;
-      })
-      .join("") : `<p class="small">No poll data available.</p>`}
+            })
+            .join("")
+        : `<p class="small">No poll data available.</p>`
+    }
   </div>
-  ` : ""}
+  `
+      : ""
+  }
 
-  ${included.qna ? `
+  ${
+    included.qna
+      ? `
   <div class="section">
     <h2>Q&A Insights</h2>
-    ${questions.length ? `
+    ${
+      questions.length
+        ? `
       <table>
         <thead>
           <tr>
@@ -265,25 +297,35 @@ export const exportAnalyticsToPdf = (analyticsData) => {
         </thead>
         <tbody>
           ${questions
-            .map((question) => `
+            .map(
+              (question) => `
               <tr>
                 <td>${escapeHtml(question.text)}</td>
                 <td>${escapeHtml(question.author || question.askedBy || "Anonymous")}</td>
                 <td>${escapeHtml(question.upvotes || 0)}</td>
                 <td>${question.answered ? "Answered" : "Open"}</td>
               </tr>
-            `)
+            `,
+            )
             .join("")}
         </tbody>
       </table>
-    ` : `<p class="small">No questions available.</p>`}
+    `
+        : `<p class="small">No questions available.</p>`
+    }
   </div>
-  ` : ""}
+  `
+      : ""
+  }
 
-  ${included.attendance ? `
+  ${
+    included.attendance
+      ? `
   <div class="section">
     <h2>Attendance Report</h2>
-    ${participants.length ? `
+    ${
+      participants.length
+        ? `
       <table>
         <thead>
           <tr>
@@ -296,7 +338,8 @@ export const exportAnalyticsToPdf = (analyticsData) => {
         </thead>
         <tbody>
           ${participants
-            .map((participant) => `
+            .map(
+              (participant) => `
               <tr>
                 <td>${escapeHtml(participant.name)}</td>
                 <td>${escapeHtml(formatDateTime(participant.joinAt))}</td>
@@ -304,20 +347,29 @@ export const exportAnalyticsToPdf = (analyticsData) => {
                 <td>${escapeHtml(formatMinutes(participant.duration))}</td>
                 <td>${escapeHtml(participant.attendanceStatus || participant.status || "")}</td>
               </tr>
-            `)
+            `,
+            )
             .join("")}
         </tbody>
       </table>
-    ` : `<p class="small">No attendance data available.</p>`}
+    `
+        : `<p class="small">No attendance data available.</p>`
+    }
   </div>
-  ` : ""}
+  `
+      : ""
+  }
 
-  ${included.feedback ? `
+  ${
+    included.feedback
+      ? `
   <div class="section">
     <h2>Feedback Summary</h2>
     <p>Average rating: <span class="badge">${escapeHtml(feedback.averageRating || 0)}</span></p>
     <p>Sentiment: <span class="badge">${escapeHtml(feedback.sentiment || "neutral")}</span></p>
-    ${feedback.comments && feedback.comments.length ? `
+    ${
+      feedback.comments && feedback.comments.length
+        ? `
       <table>
         <thead>
           <tr>
@@ -326,26 +378,36 @@ export const exportAnalyticsToPdf = (analyticsData) => {
         </thead>
         <tbody>
           ${feedback.comments
-            .map((comment) => `
+            .map(
+              (comment) => `
               <tr>
                 <td>${escapeHtml(comment)}</td>
               </tr>
-            `)
+            `,
+            )
             .join("")}
         </tbody>
       </table>
-    ` : `<p class="small">No feedback comments available.</p>`}
+    `
+        : `<p class="small">No feedback comments available.</p>`
+    }
   </div>
-  ` : ""}
+  `
+      : ""
+  }
 
-  ${included.ai && aiSummary ? `
+  ${
+    included.ai && aiSummary
+      ? `
   <div class="section">
     <h2>AI Insights</h2>
     <p>${escapeHtml(aiSummary.overview)}</p>
     <p>${escapeHtml(aiSummary.engagement)}</p>
     <p>${escapeHtml(aiSummary.interaction)}</p>
   </div>
-  ` : ""}
+  `
+      : ""
+  }
 </body>
 </html>`;
 

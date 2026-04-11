@@ -2,10 +2,10 @@
   "feature": "polls",
   "title": "Live Polling & Quizzes",
   "description": "Real-time interactive polls and quizzes to gauge student understanding and gather instant feedback",
-  
+
   "teacher": {
     "overview": "Create and launch polls to check student understanding in real-time. Polls can be multiple choice, true/false, or open-ended.",
-    
+
     "howTo": {
       "create": [
         "During an active session, click 'Create Poll' button",
@@ -31,7 +31,7 @@
         "Share results with students if desired"
       ]
     },
-    
+
     "pollTypes": [
       {
         "type": "Multiple Choice",
@@ -62,7 +62,7 @@
         "tips": "Keep questions focused, review responses after session for insights"
       }
     ],
-    
+
     "tips": [
       "Use polls every 10-15 minutes to maintain engagement",
       "Mix different poll types for variety",
@@ -71,7 +71,7 @@
       "Use results to adapt your teaching in real-time",
       "Don't reveal correct answers during session to prevent cheating"
     ],
-    
+
     "canDo": [
       "Create unlimited polls per session",
       "See real-time student responses as they submit",
@@ -82,14 +82,14 @@
       "Reuse polls from previous sessions",
       "Close polls manually anytime"
     ],
-    
+
     "cannotDo": [
       "Edit poll after launching (must delete and recreate)",
       "Force students to answer polls",
       "See who answered what in anonymous mode",
       "Restart a closed poll in same session"
     ],
-    
+
     "bestPractices": [
       "Prepare polls before session for smooth flow",
       "Use polls to identify knowledge gaps",
@@ -97,7 +97,7 @@
       "Keep questions clear and concise",
       "Use quiz mode for assessments, regular polls for engagement"
     ],
-    
+
     "analytics": {
       "available": [
         "Total responses vs total students",
@@ -110,10 +110,10 @@
       ]
     }
   },
-  
+
   "student": {
     "overview": "Participate in live polls during sessions to demonstrate your understanding and engage with the class.",
-    
+
     "howTo": {
       "participate": [
         "Poll appears automatically on your screen when teacher launches it",
@@ -129,7 +129,7 @@
         "Review your answers after session ends"
       ]
     },
-    
+
     "tips": [
       "Answer honestly to help teacher understand class progress",
       "Don't wait too long - polls may have time limits",
@@ -137,7 +137,7 @@
       "Pay attention to 'select all that apply' vs 'select one'",
       "If confused, ask question in Q&A instead of guessing"
     ],
-    
+
     "canDo": [
       "Submit one response per poll",
       "View your submission confirmation",
@@ -145,7 +145,7 @@
       "Participate in all poll types",
       "Submit within time limit if set"
     ],
-    
+
     "cannotDo": [
       "Change answer after submission",
       "See other students' answers before submitting",
@@ -153,7 +153,7 @@
       "Skip mandatory polls",
       "Submit after poll is closed"
     ],
-    
+
     "commonIssues": [
       {
         "problem": "Poll not appearing on screen",
@@ -172,7 +172,7 @@
         "solution": "Read questions faster next time, ask teacher to extend time limits if consistently too short"
       }
     ],
-    
+
     "participationTips": [
       "Answer every poll - it helps you and your teacher",
       "Don't copy answers from classmates - defeats the purpose",
@@ -180,6 +180,6 @@
       "If you don't know the answer, it's okay - polls are for learning"
     ]
   },
-  
+
   "relatedFeatures": ["sessions", "qna", "analytics", "feedback"]
 }

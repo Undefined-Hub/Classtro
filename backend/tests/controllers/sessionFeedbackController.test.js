@@ -71,7 +71,9 @@ describe("sessionFeedbackController", () => {
 
     expect(res.status).toHaveBeenCalledWith(400);
     expect(res.json).toHaveBeenCalledWith(
-      expect.objectContaining({ message: "Feedback can only be submitted for ended sessions" }),
+      expect.objectContaining({
+        message: "Feedback can only be submitted for ended sessions",
+      }),
     );
   });
 
@@ -132,10 +134,7 @@ describe("sessionFeedbackController", () => {
       populate: jest.fn().mockReturnThis(),
       select: jest.fn().mockReturnThis(),
       sort: jest.fn().mockReturnThis(),
-      lean: jest.fn().mockResolvedValue([
-        { rating: 5 },
-        { rating: 3 },
-      ]),
+      lean: jest.fn().mockResolvedValue([{ rating: 5 }, { rating: 3 }]),
     });
 
     const req = {

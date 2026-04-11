@@ -30,23 +30,28 @@ async function generateAIResponse(prompt, options = {}) {
       error.status ||
       error.response?.status ||
       error.error?.code ||
-      (typeof error.message === 'string' && parseInt(error.message.match(/\b(4\d{2}|5\d{2})\b/)?.[0])) ||
+      (typeof error.message === "string" &&
+        parseInt(error.message.match(/\b(4\d{2}|5\d{2})\b/)?.[0])) ||
       null
     );
   };
 
-  
   //  Log full error details for debugging
   const logError = (attempt, error) => {
     const status = getErrorStatus(error);
     console.error(`[AI ERROR] ✗ Attempt ${attempt}/${MAX_RETRIES + 1} failed`);
-    console.error(`  error.status         : ${error.status ?? 'N/A'}`);
-    console.error(`  error.response.status: ${error.response?.status ?? 'N/A'}`);
-    console.error(`  error.error.code     : ${error.error?.code ?? 'N/A'}`);
-    console.error(`  Resolved status      : ${status ?? 'unknown'}`);
+    console.error(`  error.status         : ${error.status ?? "N/A"}`);
+    console.error(
+      `  error.response.status: ${error.response?.status ?? "N/A"}`,
+    );
+    console.error(`  error.error.code     : ${error.error?.code ?? "N/A"}`);
+    console.error(`  Resolved status      : ${status ?? "unknown"}`);
     console.error(`  Message              : ${error.message}`);
     try {
-      console.error(`  Full error (JSON)    :`, JSON.stringify(error, Object.getOwnPropertyNames(error), 2));
+      console.error(
+        `  Full error (JSON)    :`,
+        JSON.stringify(error, Object.getOwnPropertyNames(error), 2),
+      );
     } catch {
       console.error(`  Full error (raw)     :`, error);
     }
@@ -56,10 +61,10 @@ async function generateAIResponse(prompt, options = {}) {
   const isRetryableError = (error) => {
     const status = getErrorStatus(error);
     return (
-      status === 503 ||  // Service temporarily unavailable
-      error.code === 'ECONNRESET' ||
-      error.code === 'ETIMEDOUT' ||
-      error.message?.includes('UNAVAILABLE')
+      status === 503 || // Service temporarily unavailable
+      error.code === "ECONNRESET" ||
+      error.code === "ETIMEDOUT" ||
+      error.message?.includes("UNAVAILABLE")
     );
   };
 
@@ -79,9 +84,13 @@ async function generateAIResponse(prompt, options = {}) {
 
   for (let attempt = 1; attempt <= MAX_RETRIES + 1; attempt++) {
     try {
-      const reqId = `${Date.now()}-${Math.random().toString(36).slice(2,8)}`;
-      console.log(`[AI TRACE] PID:${process.pid} CALL reqId:${reqId} ts:${new Date().toISOString()} model:${model}`);
-      console.log(`[AI DEBUG] prompt.length: ${prompt.length} chars, model: ${model}, maxTokens: ${options.maxTokens || maxTokens}`);
+      const reqId = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+      console.log(
+        `[AI TRACE] PID:${process.pid} CALL reqId:${reqId} ts:${new Date().toISOString()} model:${model}`,
+      );
+      console.log(
+        `[AI DEBUG] prompt.length: ${prompt.length} chars, model: ${model}, maxTokens: ${options.maxTokens || maxTokens}`,
+      );
 
       const response = await ai.models.generateContent({
         model,
@@ -102,7 +111,6 @@ async function generateAIResponse(prompt, options = {}) {
       }
 
       return text;
-
     } catch (error) {
       const isLastAttempt = attempt === MAX_RETRIES + 1;
       const status = getErrorStatus(error);
@@ -110,28 +118,36 @@ async function generateAIResponse(prompt, options = {}) {
       logError(attempt, error);
 
       if (status === 429) {
-        console.error(`[AI FALLBACK] ✗ Rate limited (429). Not retrying to avoid consuming more quota.`);
+        console.error(
+          `[AI FALLBACK] ✗ Rate limited (429). Not retrying to avoid consuming more quota.`,
+        );
         return getFallbackMessage(error);
       }
 
       if (status === 404) {
-        console.error(`[AI FALLBACK] ✗ Model not found (404). Check model name: "${model}"`);
+        console.error(
+          `[AI FALLBACK] ✗ Model not found (404). Check model name: "${model}"`,
+        );
         return getFallbackMessage(error);
       }
 
       if (status === 400) {
-        console.error(`[AI FALLBACK] ✗ Bad request (400). Check prompt format.`);
+        console.error(
+          `[AI FALLBACK] ✗ Bad request (400). Check prompt format.`,
+        );
         return getFallbackMessage(error);
       }
 
       if (isRetryableError(error) && !isLastAttempt) {
-        console.log(`[AI RETRY] ⟳ Retrying (${status ?? 'network error'}) in ${RETRY_DELAY_MS}ms...`);
-        await new Promise(resolve => setTimeout(resolve, RETRY_DELAY_MS));
+        console.log(
+          `[AI RETRY] ⟳ Retrying (${status ?? "network error"}) in ${RETRY_DELAY_MS}ms...`,
+        );
+        await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS));
         continue;
       }
 
       console.error(
-        `[AI FALLBACK] ⚠️  ${isLastAttempt ? 'All retries exhausted' : 'Non-retryable error'} (status: ${status ?? 'unknown'}).`
+        `[AI FALLBACK] ⚠️  ${isLastAttempt ? "All retries exhausted" : "Non-retryable error"} (status: ${status ?? "unknown"}).`,
       );
       return getFallbackMessage(error);
     }

@@ -56,7 +56,7 @@ function Login({ onLogin }) {
         safeToast.dismiss(pending);
         safeToast.error(
           data.message ||
-            "Login failed. Please check your credentials and try again."
+            "Login failed. Please check your credentials and try again.",
         );
       }
     } catch (err) {

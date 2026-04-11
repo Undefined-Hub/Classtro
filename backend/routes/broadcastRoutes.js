@@ -13,6 +13,9 @@ router.post("/:sessionId/broadcasts", broadcastController.addBroadcast);
 router.get("/:sessionId/broadcasts", broadcastController.getBroadcasts);
 
 // Delete a specific broadcast
-router.delete("/:sessionId/broadcasts/:broadcastId", broadcastController.deleteBroadcast);
+router.delete(
+  "/:sessionId/broadcasts/:broadcastId",
+  broadcastController.deleteBroadcast,
+);
 
 module.exports = router;

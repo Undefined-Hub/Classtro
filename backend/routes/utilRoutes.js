@@ -20,7 +20,9 @@ router.post("/fetch-url-metadata", async (req, res) => {
 
     // Limit to 10 URLs per request to prevent abuse
     if (urls.length > 10) {
-      return res.status(400).json({ error: "Maximum 10 URLs allowed per request" });
+      return res
+        .status(400)
+        .json({ error: "Maximum 10 URLs allowed per request" });
     }
 
     const metadata = await fetchMultipleUrlMetadata(urls);
@@ -35,10 +37,14 @@ router.post("/fetch-url-metadata", async (req, res) => {
 router.get("/uploads/broadcasts/:filename", (req, res) => {
   try {
     const { filename } = req.params;
-    
+
     // Sanitize filename to prevent directory traversal
     const sanitizedFilename = path.basename(filename);
-    const filePath = path.join(__dirname, "../uploads/broadcasts", sanitizedFilename);
+    const filePath = path.join(
+      __dirname,
+      "../uploads/broadcasts",
+      sanitizedFilename,
+    );
 
     // Check if file exists
     if (!fs.existsSync(filePath)) {
@@ -53,7 +59,8 @@ router.get("/uploads/broadcasts/:filename", (req, res) => {
     const mimeTypes = {
       ".pdf": "application/pdf",
       ".ppt": "application/vnd.ms-powerpoint",
-      ".pptx": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+      ".pptx":
+        "application/vnd.openxmlformats-officedocument.presentationml.presentation",
       ".jpg": "image/jpeg",
       ".jpeg": "image/jpeg",
       ".png": "image/png",
@@ -65,7 +72,10 @@ router.get("/uploads/broadcasts/:filename", (req, res) => {
 
     res.setHeader("Content-Type", contentType);
     res.setHeader("Content-Length", stat.size);
-    res.setHeader("Content-Disposition", `inline; filename="${sanitizedFilename}"`);
+    res.setHeader(
+      "Content-Disposition",
+      `inline; filename="${sanitizedFilename}"`,
+    );
 
     // Stream the file
     const fileStream = fs.createReadStream(filePath);

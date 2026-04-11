@@ -3,6 +3,7 @@
 ## 🎯 Overview
 
 Classtro's quiz functionality allows teachers to create, launch, and manage quizzes during live sessions. The system supports two modes:
+
 - **ONE_SHOT Mode**: Traditional quiz where students see all questions at once and submit when ready
 - **HOST_CONTROLLED Mode** (Kahoot-style): Questions are revealed one at a time by the host, with time limits and leaderboard
 
@@ -55,6 +56,7 @@ Frontend:
 **Purpose**: Stores reusable quiz templates that teachers can create and import into sessions
 
 **Schema** (`backend/models/QuizTemplate.js`):
+
 ```javascript
 {
   title: String,                    // Quiz title
@@ -84,6 +86,7 @@ OptionSchema = {
 ```
 
 **Why this is needed**:
+
 - Allows teachers to create quizzes once and reuse them across multiple sessions
 - Separates quiz content from quiz instances
 - Enables quiz library management
@@ -95,6 +98,7 @@ OptionSchema = {
 **Purpose**: Represents an active quiz launched in a session
 
 **Schema** (`backend/models/LiveQuiz.js`):
+
 ```javascript
 {
   sessionId: ObjectId (Session),           // Session where quiz is launched
@@ -103,22 +107,22 @@ OptionSchema = {
   title: String,
   questions: [LiveQuestionSchema],         // Copied from template
   status: String,                          // "DRAFT" | "LIVE" | "CLOSED"
-  
+
   // Mode configuration
   mode: String,                            // "ONE_SHOT" | "HOST_CONTROLLED"
-  
+
   // ONE_SHOT mode fields
   durationSeconds: Number,                 // Total time limit
   startedAt: Date,
   closedAt: Date,
   allowLateSubmission: Boolean,
-  
+
   // HOST_CONTROLLED mode fields
   currentQuestionIndex: Number,            // -1 = not started, 0+ = current question
   questionDurationSeconds: Number,         // Time per question (default: 30)
   currentQuestionStartedAt: Date,          // When current question was published
   leaderboard: [LeaderboardEntrySchema],   // Running scores
-  
+
   createdAt: Date,
   updatedAt: Date
 }
@@ -141,6 +145,7 @@ LeaderboardEntrySchema = {
 ```
 
 **Why this is needed**:
+
 - Tracks quiz state (LIVE, CLOSED) in real-time
 - Stores HOST_CONTROLLED mode progress (current question, leaderboard)
 - Links quiz to specific session
@@ -153,6 +158,7 @@ LeaderboardEntrySchema = {
 **Purpose**: Stores student submissions and scores
 
 **Schema** (`backend/models/QuizSubmission.js`):
+
 ```javascript
 {
   liveQuizId: ObjectId (LiveQuiz),
@@ -173,7 +179,7 @@ AnswerSchema = {
   questionId: ObjectId,
   selectedOptions: [ObjectId],
   answeredAt: Date,
-  
+
   // HOST_CONTROLLED mode fields
   isCorrect: Boolean,                      // Per-question evaluation
   scoreAwarded: Number,                    // Points with speed bonus
@@ -182,6 +188,7 @@ AnswerSchema = {
 ```
 
 **Why this is needed**:
+
 - Records all student answers
 - Stores evaluation results separately per question (HOST_CONTROLLED)
 - Tracks speed bonuses and late submissions
@@ -195,17 +202,18 @@ AnswerSchema = {
 
 **File**: `backend/routes/quizTemplateRoutes.js`
 
-| Method | Endpoint | Controller | Purpose |
-|--------|----------|------------|---------|
-| POST | `/` | createQuizTemplate | Create new template |
-| GET | `/` | getQuizTemplates | List user's templates |
-| GET | `/:id` | getQuizTemplateById | Get single template |
-| PUT | `/:id` | updateQuizTemplate | Update template |
-| DELETE | `/:id` | deleteQuizTemplate | Delete template |
+| Method | Endpoint | Controller          | Purpose               |
+| ------ | -------- | ------------------- | --------------------- |
+| POST   | `/`      | createQuizTemplate  | Create new template   |
+| GET    | `/`      | getQuizTemplates    | List user's templates |
+| GET    | `/:id`   | getQuizTemplateById | Get single template   |
+| PUT    | `/:id`   | updateQuizTemplate  | Update template       |
+| DELETE | `/:id`   | deleteQuizTemplate  | Delete template       |
 
 **Authentication**: All routes require JWT authentication via `authenticateJWT` middleware
 
 **Key Features**:
+
 - **Option ID mapping**: When creating/updating, temporary `optionId` values are converted to MongoDB ObjectIds
 - **Correct answer mapping**: Maps user-provided answer indices/IDs to option ObjectIds
 - **Total points calculation**: Automatically sums question points
@@ -216,20 +224,21 @@ AnswerSchema = {
 
 **File**: `backend/routes/liveQuizRoutes.js`
 
-| Method | Endpoint | Controller | Purpose |
-|--------|----------|------------|---------|
-| GET | `/validate-template` | validateTemplateForMode | Check template compatibility with modes |
-| POST | `/` | createLiveQuiz | Create quiz instance (DRAFT) |
-| POST | `/:id/launch` | launchQuiz | Launch quiz (DRAFT → LIVE) |
-| POST | `/:id/close` | closeQuiz | Close quiz (LIVE → CLOSED) |
-| GET | `/session/:sessionId` | getSessionQuizzes | List all quizzes for session |
-| GET | `/:id` | getLiveQuizById | Get single quiz |
-| GET | `/:id/results` | getQuizResults | Get submissions and stats |
-| GET | `/:quizId/my-submission` | getParticipantSubmission | Get own submission |
+| Method | Endpoint                 | Controller               | Purpose                                 |
+| ------ | ------------------------ | ------------------------ | --------------------------------------- |
+| GET    | `/validate-template`     | validateTemplateForMode  | Check template compatibility with modes |
+| POST   | `/`                      | createLiveQuiz           | Create quiz instance (DRAFT)            |
+| POST   | `/:id/launch`            | launchQuiz               | Launch quiz (DRAFT → LIVE)              |
+| POST   | `/:id/close`             | closeQuiz                | Close quiz (LIVE → CLOSED)              |
+| GET    | `/session/:sessionId`    | getSessionQuizzes        | List all quizzes for session            |
+| GET    | `/:id`                   | getLiveQuizById          | Get single quiz                         |
+| GET    | `/:id/results`           | getQuizResults           | Get submissions and stats               |
+| GET    | `/:quizId/my-submission` | getParticipantSubmission | Get own submission                      |
 
 **Key Controller Logic**:
 
 #### `createLiveQuiz`
+
 1. Loads template if `templateId` provided
 2. **Mode validation**: Rejects HOST_CONTROLLED if template has MULTI_SELECT questions
 3. Maps template questions preserving option IDs
@@ -237,6 +246,7 @@ AnswerSchema = {
 5. Initializes mode-specific fields (currentQuestionIndex for HOST_CONTROLLED)
 
 #### `launchQuiz`
+
 1. Changes status DRAFT → LIVE
 2. Sets `startedAt` timestamp
 3. **Emits socket event**:
@@ -244,11 +254,13 @@ AnswerSchema = {
    - HOST_CONTROLLED: Emits minimal info (title, question count), no questions yet
 
 #### `closeQuiz`
+
 1. Changes status LIVE → CLOSED
 2. Sets `closedAt` timestamp
 3. **Emits socket event**: Notifies participants quiz ended
 
 #### `validateTemplateForMode`
+
 - Checks if template has MULTI_SELECT questions
 - Returns compatibility boolean and issues list
 - Used by frontend to show validation warnings
@@ -264,9 +276,11 @@ Socket handlers are registered per connection via `registerQuizSocket(io, socket
 ### ONE_SHOT Mode Events
 
 #### 📤 `quiz:submit` (Client → Server)
+
 **Payload**: `{ quizId, answers }`
 
 **Flow**:
+
 1. Validates user authentication
 2. Checks quiz is LIVE
 3. Prevents duplicate submissions
@@ -276,33 +290,40 @@ Socket handlers are registered per connection via `registerQuizSocket(io, socket
 7. Emits `quiz:submission:ack` to student
 8. Emits `quiz:new:submission` to all session participants (including host)
 
-**Why needed**: 
+**Why needed**:
+
 - ONE_SHOT quizzes are evaluated server-side immediately
 - Host sees real-time submission count
 
 ---
 
 #### 📥 `quiz:submission:ack` (Server → Client)
+
 **Payload**: `{ quizId, submissionId, score, maxScore, percentage }`
 
 **Flow**:
+
 - Sent to submitting student only
 - Contains evaluation results
 
 **Why needed**:
+
 - Student sees their score immediately
 - Confirms submission success
 
 ---
 
 #### 📥 `quiz:new:submission` (Server → All)
+
 **Payload**: `{ quizId, participantId, participantName, submissionId, score, total, percentage, submittedAt }`
 
 **Flow**:
+
 - Broadcast to entire session room
 - Host's QuizManager updates submission list
 
 **Why needed**:
+
 - Host sees live submission feed
 - Updates participant count
 
@@ -311,9 +332,11 @@ Socket handlers are registered per connection via `registerQuizSocket(io, socket
 ### HOST_CONTROLLED Mode Events
 
 #### 📤 `quiz:hc:publish` (Host → Server)
+
 **Payload**: `{ quizId }`
 
 **Server Logic** (`backend/socket/quizSocket.js:143`):
+
 1. Validates host is quiz owner
 2. Increments `currentQuestionIndex`
 3. Sets `currentQuestionStartedAt = new Date()`
@@ -321,13 +344,16 @@ Socket handlers are registered per connection via `registerQuizSocket(io, socket
 5. **Broadcasts** `quiz:hc:question` to all participants (WITHOUT correct answers)
 
 **Why needed**:
+
 - Host controls question timing
 - Enforces sequential question flow
 
 ---
 
 #### 📥 `quiz:hc:question` (Server → All)
-**Payload**: 
+
+**Payload**:
+
 ```javascript
 {
   quizId,
@@ -344,19 +370,23 @@ Socket handlers are registered per connection via `registerQuizSocket(io, socket
 ```
 
 **Client Handlers**:
+
 - **Host** (`QuizManager.jsx:175`): Updates `currentQuestion`, resets answer count
 - **Participants** (`ParticipantSession.jsx:380`): Shows question, starts timer
 
 **Why needed**:
+
 - Synchronizes question display across all clients
 - Starts timer countdown on client side
 
 ---
 
 #### 📤 `quiz:hc:answer` (Participant → Server)
+
 **Payload**: `{ quizId, questionId, selectedOptions }`
 
 **Server Logic** (`backend/socket/quizSocket.js:228`):
+
 1. Validates question is current
 2. Checks answer within time limit (calculates responseTimeMs)
 3. Finds/creates QuizSubmission
@@ -370,6 +400,7 @@ Socket handlers are registered per connection via `registerQuizSocket(io, socket
 8. Emits `quiz:hc:answer:received` to session (notify host)
 
 **Why needed**:
+
 - Evaluates answers individually as they arrive
 - Speed bonus rewards faster responses
 - Host sees answer count in real-time
@@ -377,33 +408,41 @@ Socket handlers are registered per connection via `registerQuizSocket(io, socket
 ---
 
 #### 📥 `quiz:hc:answer:ack` (Server → Client)
+
 **Payload**: `{ quizId, questionId, isCorrect, scoreAwarded, totalScore, responseTimeMs }`
 
 **Client Handler** (`ParticipantSession.jsx:404`):
+
 - Marks answer as submitted
 - Shows "Submitted" badge
 
 **Why needed**:
+
 - Confirms answer received
 - Prevents re-submission
 
 ---
 
 #### 📥 `quiz:hc:answer:received` (Server → All)
+
 **Payload**: `{ quizId, questionId, participantId, participantName }`
 
 **Client Handler** (`QuizManager.jsx:167`):
+
 - Increments answer count display
 
 **Why needed**:
+
 - Host sees live answer count (e.g., "12 answers received")
 
 ---
 
 #### 📤 `quiz:hc:close` (Host → Server)
+
 **Payload**: `{ quizId }`
 
 **Server Logic** (`backend/socket/quizSocket.js:380`):
+
 1. Validates host ownership
 2. Fetches all submissions
 3. Calculates answer statistics (correctCount, totalAnswered)
@@ -411,13 +450,16 @@ Socket handlers are registered per connection via `registerQuizSocket(io, socket
 5. **Broadcasts** `quiz:hc:results` to all
 
 **Why needed**:
+
 - Stops answering for current question
 - Reveals correct answers and leaderboard
 
 ---
 
 #### 📥 `quiz:hc:results` (Server → All)
+
 **Payload**:
+
 ```javascript
 {
   quizId, questionIndex, totalQuestions,
@@ -432,10 +474,12 @@ Socket handlers are registered per connection via `registerQuizSocket(io, socket
 ```
 
 **Client Handlers**:
+
 - **Host** (`QuizManager.jsx:187`): Shows question results, leaderboard
 - **Participants** (`ParticipantSession.jsx:415`): Shows leaderboard, correct answer
 
 **Why needed**:
+
 - Reveals answers after question closes
 - Shows intermediate leaderboard
 - Builds engagement between questions
@@ -443,22 +487,27 @@ Socket handlers are registered per connection via `registerQuizSocket(io, socket
 ---
 
 #### 📤 `quiz:hc:end` (Host → Server)
+
 **Payload**: `{ quizId }`
 
 **Server Logic** (`backend/socket/quizSocket.js:460`):
+
 1. Updates quiz status to CLOSED
 2. Marks all submissions as evaluated
 3. Calculates final leaderboard
 4. **Broadcasts** `quiz:hc:final` with complete results
 
 **Why needed**:
+
 - Ends quiz early or after last question
 - Shows final results screen
 
 ---
 
 #### 📥 `quiz:hc:final` (Server → All)
+
 **Payload**:
+
 ```javascript
 {
   quizId, title, totalQuestions,
@@ -469,36 +518,44 @@ Socket handlers are registered per connection via `registerQuizSocket(io, socket
 ```
 
 **Client Handlers**:
+
 - **Host** (`QuizManager.jsx:198`): Shows final results view
 - **Participants** (`ParticipantSession.jsx:428`): Shows final leaderboard with confetti
 
 **Why needed**:
+
 - Celebratory ending
 - Final standings display
 
 ---
 
 #### 📤 `quiz:hc:sync` (Participant → Server)
+
 **Payload**: `{ quizId }`
 
 **Server Logic** (`backend/socket/quizSocket.js:534`):
+
 - Used for late joiners
 - Sends current quiz state
 - Returns current question if not answered yet
 
 **Why needed**:
+
 - Handles reconnections
 - Allows joining mid-quiz
 
 ---
 
 #### 📥 `quiz:hc:error` (Server → Client)
+
 **Payload**: `{ error: string }`
 
 **Client Handler**:
+
 - Shows error alert
 
 **Why needed**:
+
 - Error feedback for invalid actions (already answered, time expired, etc.)
 
 ---
@@ -514,6 +571,7 @@ Socket handlers are registered per connection via `registerQuizSocket(io, socket
 **Location**: `frontend/src/components/Host/QuizCreation.jsx`
 
 **Features**:
+
 - Add/edit/delete questions
 - Multiple question types (MCQ, MULTI_SELECT, TRUE_FALSE, SHORT)
 - Set points and negative marking
@@ -521,24 +579,27 @@ Socket handlers are registered per connection via `registerQuizSocket(io, socket
 - Save to backend via POST `/api/quiz-templates`
 
 **Key State**:
+
 ```javascript
-questions: []                    // Array of question objects
-currentQuestion: ""              // Question being edited
-options: ["", ""]                // Option texts
-optionIds: [null, null]          // Preserve MongoDB ObjectIds
-questionType: "MCQ"
-correctIndex: 0                  // For single-select
-correctIndices: [0]              // For multi-select
-points: 1
-negativePoints: 0
+questions: []; // Array of question objects
+currentQuestion: ""; // Question being edited
+options: ["", ""]; // Option texts
+optionIds: [null, null]; // Preserve MongoDB ObjectIds
+questionType: "MCQ";
+correctIndex: 0; // For single-select
+correctIndices: [0]; // For multi-select
+points: 1;
+negativePoints: 0;
 ```
 
 **Option ID Handling**:
+
 - New options get temporary `optionId: "opt_timestamp_index"`
 - Existing options preserve `_id` from database
 - Backend converts temporary IDs to MongoDB ObjectIds
 
 **Why needed**:
+
 - User-friendly quiz authoring
 - Reusable templates
 - Separate creation from live usage
@@ -554,30 +615,32 @@ negativePoints: 0
 **Context**: Uses `HostSessionContext` for shared session state
 
 **Key State**:
+
 ```javascript
 // Template selection
-templates: []
-selectedTemplate: null
-selectedMode: "ONE_SHOT"
-questionDuration: 30
+templates: [];
+selectedTemplate: null;
+selectedMode: "ONE_SHOT";
+questionDuration: 30;
 
 // Active quiz
-activeQuiz: null
-quizSubmissions: []
-pastQuizzes: []
+activeQuiz: null;
+quizSubmissions: [];
+pastQuizzes: [];
 
 // HOST_CONTROLLED mode
-currentQuestion: null
-currentQuestionIndex: -1
-answerCount: 0
-leaderboard: []
-questionResults: null
-showLeaderboard: false
+currentQuestion: null;
+currentQuestionIndex: -1;
+answerCount: 0;
+leaderboard: [];
+questionResults: null;
+showLeaderboard: false;
 ```
 
 **Main Views**:
 
 ##### A. Import Modal
+
 - Lists user's templates
 - Mode selector (ONE_SHOT vs HOST_CONTROLLED)
 - Template validation for HOST_CONTROLLED
@@ -585,6 +648,7 @@ showLeaderboard: false
 - Launch button
 
 ##### B. ONE_SHOT Active Quiz View
+
 - Shows quiz header (title, question count)
 - Stats cards (submissions, avg score, top score)
 - Refresh results button
@@ -592,6 +656,7 @@ showLeaderboard: false
 - Submissions list with scores
 
 ##### C. HOST_CONTROLLED Control Panel
+
 - Progress bar (question X of Y)
 - Timer display per question
 - Current question preview with options
@@ -604,21 +669,24 @@ showLeaderboard: false
 - Leaderboard display (top 10)
 
 ##### D. HOST_CONTROLLED Results View (Closed)
+
 - Final leaderboard
 - Submission details
 - Back to quiz list
 
 **Socket Event Handlers**:
+
 ```javascript
-socket.on("quiz:new:submission")      // Update submission list
-socket.on("quiz:hc:answer:received")  // Increment answer count
-socket.on("quiz:hc:question")         // Update current question
-socket.on("quiz:hc:results")          // Show question results
-socket.on("quiz:hc:final")            // Show final results
-socket.on("quiz:hc:error")            // Show error alert
+socket.on("quiz:new:submission"); // Update submission list
+socket.on("quiz:hc:answer:received"); // Increment answer count
+socket.on("quiz:hc:question"); // Update current question
+socket.on("quiz:hc:results"); // Show question results
+socket.on("quiz:hc:final"); // Show final results
+socket.on("quiz:hc:error"); // Show error alert
 ```
 
 **Why needed**:
+
 - Central control for quiz lifecycle
 - Real-time monitoring of participation
 - HOST_CONTROLLED flow management
@@ -637,22 +705,24 @@ socket.on("quiz:hc:error")            // Show error alert
 **Context**: Uses `ParticipantSessionContext` for quiz state
 
 **Key State**:
+
 ```javascript
 // ONE_SHOT mode
-currentQuestionIndex: 0
-quizAnswers: {}                  // { questionId: [selectedOptionIds] }
-quizSubmitted: false
-quizResult: null
+currentQuestionIndex: 0;
+quizAnswers: {
+} // { questionId: [selectedOptionIds] }
+quizSubmitted: false;
+quizResult: null;
 
 // HOST_CONTROLLED mode
-hcCurrentQuestion: null
-hcQuestionIndex: -1
-hcTimeRemaining: 0
-hcAnswerSubmitted: false
-hcLeaderboard: []
-hcFinalResults: null
-hcShowResults: false
-hcSelectedOption: null           // Current answer selection
+hcCurrentQuestion: null;
+hcQuestionIndex: -1;
+hcTimeRemaining: 0;
+hcAnswerSubmitted: false;
+hcLeaderboard: [];
+hcFinalResults: null;
+hcShowResults: false;
+hcSelectedOption: null; // Current answer selection
 ```
 
 **Rendering Logic**:
@@ -708,30 +778,33 @@ The component has multiple conditional renders based on quiz mode and state:
    - "Quiz Complete! 🎉"
 
 **Timer Logic** (HOST_CONTROLLED):
+
 ```javascript
 useEffect(() => {
   if (!hcCurrentQuestion || hcAnswerSubmitted || hcShowResults) return;
-  
+
   const timer = setInterval(() => {
-    setHcTimeRemaining(prev => prev > 0 ? prev - 1 : 0);
+    setHcTimeRemaining((prev) => (prev > 0 ? prev - 1 : 0));
   }, 1000);
-  
+
   return () => clearInterval(timer);
 }, [hcCurrentQuestion, hcAnswerSubmitted, hcShowResults]);
 ```
 
 **Socket Event Handlers**:
+
 ```javascript
-socket.on("quiz:launched")        // Initialize quiz
-socket.on("quiz:closed")          // Close quiz view
-socket.on("quiz:hc:question")     // Show new question, start timer
-socket.on("quiz:hc:answer:ack")   // Mark answer submitted
-socket.on("quiz:hc:results")      // Show leaderboard between questions
-socket.on("quiz:hc:final")        // Show final results
-socket.on("quiz:hc:error")        // Show error
+socket.on("quiz:launched"); // Initialize quiz
+socket.on("quiz:closed"); // Close quiz view
+socket.on("quiz:hc:question"); // Show new question, start timer
+socket.on("quiz:hc:answer:ack"); // Mark answer submitted
+socket.on("quiz:hc:results"); // Show leaderboard between questions
+socket.on("quiz:hc:final"); // Show final results
+socket.on("quiz:hc:error"); // Show error
 ```
 
 **Why needed**:
+
 - Immersive quiz-taking experience
 - Real-time timer and feedback (HOST_CONTROLLED)
 - Immediate results display
@@ -746,14 +819,16 @@ socket.on("quiz:hc:error")        // Show error
 **File**: `frontend/src/context/HostSessionContext.jsx`
 
 **Quiz State**:
+
 ```javascript
-activeQuiz: null              // Current live quiz
-quizSubmissions: []           // Submissions for active quiz
-showQuizImport: false         // Import modal visibility
-pastQuizzes: []               // Closed quizzes
+activeQuiz: null; // Current live quiz
+quizSubmissions: []; // Submissions for active quiz
+showQuizImport: false; // Import modal visibility
+pastQuizzes: []; // Closed quizzes
 ```
 
 **Why needed**:
+
 - Share quiz state across SessionWorkspace and QuizManager
 - Persist across component re-renders
 - Single source of truth for host
@@ -765,29 +840,33 @@ pastQuizzes: []               // Closed quizzes
 **File**: `frontend/src/context/ParticipantSessionContext.jsx`
 
 **Quiz State**:
+
 ```javascript
 // ONE_SHOT mode
-activeQuiz: null
-quizAnswers: {}
-quizSubmitted: false
-quizResult: null
+activeQuiz: null;
+quizAnswers: {
+}
+quizSubmitted: false;
+quizResult: null;
 
 // HOST_CONTROLLED mode
-hcCurrentQuestion: null
-hcQuestionIndex: -1
-hcTimeRemaining: 0
-hcQuestionDuration: 30
-hcAnswerSubmitted: false
-hcLeaderboard: []
-hcFinalResults: null
-hcShowResults: false
+hcCurrentQuestion: null;
+hcQuestionIndex: -1;
+hcTimeRemaining: 0;
+hcQuestionDuration: 30;
+hcAnswerSubmitted: false;
+hcLeaderboard: [];
+hcFinalResults: null;
+hcShowResults: false;
 ```
 
 **Persistence**:
+
 - `activeQuiz` saved to `sessionStorage.activeQuiz`
 - Survives page refresh during quiz
 
 **Why needed**:
+
 - Share quiz state between ParticipantSession and ParticipantLiveQuiz
 - Handle socket events in parent, render in child
 - Persist state during navigation
@@ -962,12 +1041,13 @@ hcShowResults: false
 
 ```javascript
 const basePoints = currentQuestion.points || 1;
-const speedFactor = Math.max(0, 1 - (responseTimeMs / timeoutMs));
+const speedFactor = Math.max(0, 1 - responseTimeMs / timeoutMs);
 const speedBonus = basePoints * 0.5 * speedFactor;
 scoreAwarded = Math.round((basePoints + speedBonus) * 100) / 100;
 ```
 
 **Example**:
+
 - Question worth 10 points
 - Time limit: 30 seconds
 - Student answers in 5 seconds
@@ -979,6 +1059,7 @@ scoreAwarded = 10 + 4.165 = 14.17 points
 ```
 
 **Why this formula**:
+
 - Rewards speed without making it impossible for slower students
 - Maximum bonus: 50% extra points (instant answer)
 - Linear decay: proportional to time remaining
@@ -992,7 +1073,7 @@ scoreAwarded = 10 + 4.165 = 14.17 points
 
 ```javascript
 const leaderboardEntry = quiz.leaderboard.find(
-  e => e.participantId.toString() === userId
+  (e) => e.participantId.toString() === userId,
 );
 if (leaderboardEntry) {
   leaderboardEntry.totalScore = submission.score;
@@ -1007,6 +1088,7 @@ await quiz.save();
 ```
 
 **Why this approach**:
+
 - Leaderboard stored directly on LiveQuiz document
 - Updated after each answer
 - Sorted on broadcast for top 10 display
@@ -1021,12 +1103,14 @@ await quiz.save();
 **Code**: `backend/socket/quizSocket.js:534-588`
 
 When a student joins mid-quiz:
+
 1. Checks if player already answered current question
 2. If not answered: sends current question with remaining time
 3. If answered: sends waiting state
 4. Returns current score
 
 **Why needed**:
+
 - Students can join sessions late
 - Graceful degradation: participate in remaining questions
 - Fair: can't see previous questions
@@ -1038,19 +1122,23 @@ When a student joins mid-quiz:
 Based on code analysis, here are the issues in **HOST_CONTROLLED mode**:
 
 ### 1. Timer Resets Incorrectly
+
 **Location**: `ParticipantLiveQuiz.jsx:67-81`
 
 **Issue**: Timer resets when parent component re-renders
 
 **Symptoms**:
+
 - Timer jumps back to full duration during quiz
 - Students see time restored
 
-**Root Cause**: 
+**Root Cause**:
+
 - `hcTimeRemaining` in context is managed in parent
 - Child timer effect doesn't properly sync with socket-provided duration
 
 **Proposed Fix**:
+
 ```javascript
 // In ParticipantSessionContext: initialize from socket event
 socket.on("quiz:hc:question", (data) => {
@@ -1066,19 +1154,23 @@ socket.on("quiz:hc:question", (data) => {
 ---
 
 ### 2. Leaderboard Not Updating Between Questions
+
 **Location**: `QuizManager.jsx:187-196`
 
 **Issue**: Leaderboard state goes stale
 
 **Symptoms**:
+
 - Leaderboard shows old scores after question closes
 - Doesn't update until next refresh
 
 **Root Cause**:
+
 - `quiz:hc:results` event handler uses stale `activeQuiz` ref
 - State updates don't trigger re-render with new leaderboard
 
 **Proposed Fix**:
+
 ```javascript
 const onHCResults = (data) => {
   const currentQuiz = activeQuizRef.current;
@@ -1095,17 +1187,21 @@ const onHCResults = (data) => {
 ---
 
 ### 3. Answer Count Not Resetting
+
 **Location**: `QuizManager.jsx:175`
 
 **Issue**: Answer count accumulates across questions
 
 **Symptoms**:
+
 - "15 answers received" on question 2 even though only 5 answered
 
 **Root Cause**:
+
 - `answerCount` state never reset when new question published
 
 **Proposed Fix**:
+
 ```javascript
 const onHCQuestion = (data) => {
   const currentQuiz = activeQuizRef.current;
@@ -1124,11 +1220,13 @@ const onHCQuestion = (data) => {
 ---
 
 ### 4. HOST_CONTROLLED Mode Disabled in UI
+
 **Location**: `QuizManager.jsx:410`
 
 **Issue**: Button commented out
 
 **Code**:
+
 ```jsx
 <button
   // TODO: In development
@@ -1138,10 +1236,12 @@ const onHCQuestion = (data) => {
 ```
 
 **Why disabled**:
+
 - Likely due to known bugs listed above
 - "Coming Soon.." badge shown
 
 **Fix Required**:
+
 - Uncomment handler once bugs fixed
 - Remove "Coming Soon" badge
 - Test thoroughly before enabling
@@ -1149,17 +1249,20 @@ const onHCQuestion = (data) => {
 ---
 
 ### 5. Duplicate Event Listeners
+
 **Location**: `QuizManager.jsx:153-234`
 
 **Issue**: Socket listeners added on every render if dependencies change
 
 **Risk**:
+
 - Multiple event handlers fire simultaneously
 - State updates race conditions
 
 **Current Dependencies**: `[activeQuiz, socketRef]`
 
 **Proposed Fix**:
+
 ```javascript
 useEffect(() => {
   const socket = socketRef.current;
@@ -1182,16 +1285,25 @@ useEffect(() => {
 ---
 
 ### 6. Results Not Fetched for Closed HC Quiz
+
 **Location**: `QuizManager.jsx:204`
 
 **Issue**: Final submissions not fetched when quiz ends
 
 **Code**:
+
 ```javascript
 const onHCFinal = (data) => {
   // ...
-  setActiveQuiz(prev => ({ ...prev, status: "CLOSED", leaderboard: finalLeaderboard }));
-  setPastQuizzes(prev => [{ ...currentQuiz, status: "CLOSED", leaderboard: finalLeaderboard }, ...prev]);
+  setActiveQuiz((prev) => ({
+    ...prev,
+    status: "CLOSED",
+    leaderboard: finalLeaderboard,
+  }));
+  setPastQuizzes((prev) => [
+    { ...currentQuiz, status: "CLOSED", leaderboard: finalLeaderboard },
+    ...prev,
+  ]);
   // ✅ Already calls fetchQuizResults
   fetchQuizResults(currentQuiz._id);
 };
@@ -1204,6 +1316,7 @@ const onHCFinal = (data) => {
 ## 🧪 Testing Checklist
 
 ### ONE_SHOT Mode
+
 - [ ] Create template with mixed question types
 - [ ] Launch quiz from template
 - [ ] Multiple students submit
@@ -1213,6 +1326,7 @@ const onHCFinal = (data) => {
 - [ ] Relaunch same template in new session
 
 ### HOST_CONTROLLED Mode (After Fixes)
+
 - [ ] Launch HC quiz with MCQ-only template
 - [ ] Verify "Coming Soon" removed
 - [ ] Publish first question
@@ -1226,6 +1340,7 @@ const onHCFinal = (data) => {
 - [ ] Late joiner sees current question
 
 ### Edge Cases
+
 - [ ] Submit answer at exactly time=0
 - [ ] Close quiz while students still answering
 - [ ] Reconnect during HC quiz (sync works)
@@ -1237,22 +1352,25 @@ const onHCFinal = (data) => {
 ## 📊 Performance Considerations
 
 ### Database Queries
+
 - **Quiz Launch**: 2 queries (FindById quiz, FindById session)
 - **Answer Submission (HC)**: 2-3 queries (FindById quiz, FindOne/Create submission, Save x2)
 - **Results Broadcast**: N+1 queries (FindMany submissions, populate participantId)
 
 ### Optimization Opportunities
+
 1. **Index on QuizSubmission**: `{ liveQuizId: 1, participantId: 1 }` ✅ Already exists
 2. **Cache Session**: Store session code in quiz document to avoid lookup
 3. **Batch Leaderboard Updates**: Update leaderboard every 5 answers instead of each
 4. **Projection**: Don't populate full participant objects, just names
 
 ### Socket Room Size
+
 - **Room Name**: `session:{sessionCode}`
 - **Participants**: ~50-100 students typical
-- **Broadcast Frequency**: 
+- **Broadcast Frequency**:
   - ONE_SHOT: 1 emit per submission
-  - HOST_CONTROLLED: 
+  - HOST_CONTROLLED:
     - 1 `quiz:hc:question` per question (all participants)
     - N `quiz:hc:answer:received` per question (all participants)
     - 1 `quiz:hc:results` per question (all participants)
@@ -1264,6 +1382,7 @@ const onHCFinal = (data) => {
 ## 🚀 Future Enhancements
 
 ### Planned Features
+
 1. **Image Support**: Add images to questions and options
 2. **Export Results**: Download CSV of submissions
 3. **Quiz Analytics**: Difficulty analysis, time-to-answer heatmaps
@@ -1276,6 +1395,7 @@ const onHCFinal = (data) => {
 10. **Accessibility**: Screen reader support, keyboard navigation
 
 ### Technical Debt
+
 - [ ] Add TypeScript types for socket events
 - [ ] Extract HOST_CONTROLLED logic into separate hook
 - [ ] Write unit tests for scoring algorithms
@@ -1288,6 +1408,7 @@ const onHCFinal = (data) => {
 ## 📝 Summary
 
 ### What Works Well ✅
+
 - **Clean Separation**: Templates vs Live Quizzes
 - **Real-time Updates**: Socket.io integration smooth
 - **Scoring System**: Speed bonuses well-balanced
@@ -1295,6 +1416,7 @@ const onHCFinal = (data) => {
 - **Validation**: Template compatibility checks
 
 ### What Needs Fixing 🔧
+
 - **Timer Reset Bug**: High priority
 - **Leaderboard Staleness**: High priority
 - **Answer Count Issue**: Medium priority
@@ -1302,6 +1424,7 @@ const onHCFinal = (data) => {
 - **Event Listener Cleanup**: Low priority (preventative)
 
 ### Architecture Strengths 💪
+
 - **Scalable**: Socket rooms handle 100+ participants
 - **Maintainable**: Clear separation of concerns
 - **Extensible**: Easy to add new question types
@@ -1314,6 +1437,7 @@ const onHCFinal = (data) => {
 This quiz system is **80% production-ready**. The ONE_SHOT mode works reliably. The HOST_CONTROLLED mode has the infrastructure but needs bug fixes before launch.
 
 **Recommended Next Steps**:
+
 1. Fix timer reset bug (highest impact)
 2. Fix leaderboard updates (critical for UX)
 3. Fix answer count reset

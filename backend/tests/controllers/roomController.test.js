@@ -133,7 +133,9 @@ describe("roomController", () => {
 
     expect(Session.deleteMany).toHaveBeenCalledWith({ roomId: "r1" });
     expect(Participant.deleteMany).toHaveBeenCalledWith({ roomId: "r1" });
-    expect(res.json).toHaveBeenCalledWith({ message: "Room permanently deleted" });
+    expect(res.json).toHaveBeenCalledWith({
+      message: "Room permanently deleted",
+    });
   });
 
   it("passes validation failures to next", async () => {

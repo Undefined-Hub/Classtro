@@ -15,7 +15,7 @@ const BroadcastAnalyticsSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    
+
     // View tracking
     totalViews: {
       type: Number,
@@ -34,7 +34,7 @@ const BroadcastAnalyticsSchema = new mongoose.Schema(
         },
       },
     ],
-    
+
     // Reaction tracking
     reactionStats: {
       "👍": { type: Number, default: 0 },
@@ -42,7 +42,7 @@ const BroadcastAnalyticsSchema = new mongoose.Schema(
       "🎉": { type: Number, default: 0 },
       "✅": { type: Number, default: 0 },
     },
-    
+
     reactionDetails: [
       {
         emoji: { type: String, required: true },
@@ -57,7 +57,7 @@ const BroadcastAnalyticsSchema = new mongoose.Schema(
         },
       },
     ],
-    
+
     // File tracking
     fileStats: [
       {
@@ -80,7 +80,7 @@ const BroadcastAnalyticsSchema = new mongoose.Schema(
         ],
       },
     ],
-    
+
     // URL tracking
     urlStats: [
       {
@@ -101,24 +101,24 @@ const BroadcastAnalyticsSchema = new mongoose.Schema(
         ],
       },
     ],
-    
+
     // Engagement score (calculated from views + reactions)
     engagementScore: {
       type: Number,
       default: 0,
     },
-    
+
     createdAt: {
       type: Date,
       default: Date.now,
     },
-    
+
     updatedAt: {
       type: Date,
       default: Date.now,
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 // Index for efficient queries
@@ -128,16 +128,22 @@ BroadcastAnalyticsSchema.index({ sessionId: 1, createdAt: -1 });
 // Pre-save hook to calculate engagement score
 BroadcastAnalyticsSchema.pre("save", function (next) {
   // Engagement score = views + (total reactions * 2) + (total downloads * 1.5) + (total clicks * 1)
-  const totalReactions = Object.values(this.reactionStats).reduce((a, b) => a + b, 0);
-  const totalDownloads = this.fileStats.reduce((sum, file) => sum + file.downloads, 0);
+  const totalReactions = Object.values(this.reactionStats).reduce(
+    (a, b) => a + b,
+    0,
+  );
+  const totalDownloads = this.fileStats.reduce(
+    (sum, file) => sum + file.downloads,
+    0,
+  );
   const totalClicks = this.urlStats.reduce((sum, url) => sum + url.clicks, 0);
-  
-  this.engagementScore = 
-    this.totalViews + 
-    (totalReactions * 2) + 
-    (totalDownloads * 1.5) + 
-    (totalClicks * 1);
-  
+
+  this.engagementScore =
+    this.totalViews +
+    totalReactions * 2 +
+    totalDownloads * 1.5 +
+    totalClicks * 1;
+
   this.updatedAt = new Date();
   next();
 });

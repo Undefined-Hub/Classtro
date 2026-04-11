@@ -37,7 +37,12 @@ describe("broadcastController", () => {
   });
 
   it("addBroadcast returns 400 for empty message", async () => {
-    const req = { params: { sessionId: "s1" }, body: { message: "" }, query: {}, files: [] };
+    const req = {
+      params: { sessionId: "s1" },
+      body: { message: "" },
+      query: {},
+      files: [],
+    };
     const res = createMockRes();
     const next = jest.fn();
 
@@ -86,7 +91,10 @@ describe("broadcastController", () => {
     expect(res.json).toHaveBeenCalledWith(
       expect.objectContaining({
         count: 2,
-        broadcasts: [expect.objectContaining({ _id: "b2" }), expect.objectContaining({ _id: "b1" })],
+        broadcasts: [
+          expect.objectContaining({ _id: "b2" }),
+          expect.objectContaining({ _id: "b1" }),
+        ],
       }),
     );
   });
@@ -122,6 +130,8 @@ describe("broadcastController", () => {
     await addReaction(req, res, next);
 
     expect(res.status).toHaveBeenCalledWith(400);
-    expect(res.json).toHaveBeenCalledWith({ message: "Invalid emoji. Allowed: 👍, ❤️, 🎉, ✅" });
+    expect(res.json).toHaveBeenCalledWith({
+      message: "Invalid emoji. Allowed: 👍, ❤️, 🎉, ✅",
+    });
   });
 });

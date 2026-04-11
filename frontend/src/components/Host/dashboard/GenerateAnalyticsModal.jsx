@@ -68,7 +68,7 @@ const GenerateAnalyticsModal = ({ isOpen, onClose, session, onSuccess }) => {
     try {
       const response = await api.post(
         `/api/analytics/generate/${session._id}`,
-        { sections }
+        { sections },
       );
 
       if (response.data?.success) {
@@ -79,7 +79,8 @@ const GenerateAnalyticsModal = ({ isOpen, onClose, session, onSuccess }) => {
     } catch (err) {
       console.error("❌ Failed to generate analytics:", err);
       setError(
-        err.response?.data?.message || "Failed to generate analytics. Please try again."
+        err.response?.data?.message ||
+          "Failed to generate analytics. Please try again.",
       );
     } finally {
       setIsGenerating(false);

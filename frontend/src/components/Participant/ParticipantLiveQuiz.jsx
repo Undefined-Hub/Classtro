@@ -59,14 +59,20 @@ const ParticipantLiveQuiz = () => {
 
   const questions = activeQuiz?.questions || [];
   const currentQuestion = questions[currentQuestionIndex];
-  
+
   // Check if this is a HOST_CONTROLLED quiz
   const isHostControlled = activeQuiz?.mode === "HOST_CONTROLLED";
 
   // Timer effect for HOST_CONTROLLED mode
   useEffect(() => {
-    if (!isHostControlled || !hcCurrentQuestion || hcAnswerSubmitted || hcShowResults) return;
-    
+    if (
+      !isHostControlled ||
+      !hcCurrentQuestion ||
+      hcAnswerSubmitted ||
+      hcShowResults
+    )
+      return;
+
     const timer = setInterval(() => {
       setHcTimeRemaining((prev) => {
         if (prev <= 1) {
@@ -78,7 +84,13 @@ const ParticipantLiveQuiz = () => {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [isHostControlled, hcCurrentQuestion, hcAnswerSubmitted, hcShowResults, setHcTimeRemaining]);
+  }, [
+    isHostControlled,
+    hcCurrentQuestion,
+    hcAnswerSubmitted,
+    hcShowResults,
+    setHcTimeRemaining,
+  ]);
 
   // Reset selected option when new question arrives
   useEffect(() => {
@@ -89,34 +101,63 @@ const ParticipantLiveQuiz = () => {
 
   // Handle HC answer submission
   const handleHCSubmitAnswer = useCallback(() => {
-    if (!hcSelectedOption || hcAnswerSubmitted || !activeQuiz || !hcCurrentQuestion) return;
-    
+    if (
+      !hcSelectedOption ||
+      hcAnswerSubmitted ||
+      !activeQuiz ||
+      !hcCurrentQuestion
+    )
+      return;
+
     setHcSubmitting(true);
     const socket = socketRef.current;
-    
+
     if (socket) {
       socket.emit("quiz:hc:answer", {
         quizId: activeQuiz._id,
         questionId: hcCurrentQuestion._id,
         selectedOptions: [hcSelectedOption],
       });
-      
+
       // Optimistically mark as submitted
       setHcAnswerSubmitted(true);
       setHcSubmitting(false);
     }
-  }, [hcSelectedOption, hcAnswerSubmitted, activeQuiz, hcCurrentQuestion, socketRef, setHcAnswerSubmitted]);
+  }, [
+    hcSelectedOption,
+    hcAnswerSubmitted,
+    activeQuiz,
+    hcCurrentQuestion,
+    socketRef,
+    setHcAnswerSubmitted,
+  ]);
 
   // Auto-submit when time runs out (if answer selected)
   useEffect(() => {
-    if (isHostControlled && hcTimeRemaining === 0 && hcSelectedOption && !hcAnswerSubmitted) {
+    if (
+      isHostControlled &&
+      hcTimeRemaining === 0 &&
+      hcSelectedOption &&
+      !hcAnswerSubmitted
+    ) {
       handleHCSubmitAnswer();
     }
-  }, [isHostControlled, hcTimeRemaining, hcSelectedOption, hcAnswerSubmitted, handleHCSubmitAnswer]);
+  }, [
+    isHostControlled,
+    hcTimeRemaining,
+    hcSelectedOption,
+    hcAnswerSubmitted,
+    handleHCSubmitAnswer,
+  ]);
 
   // Handle option selection for MCQ/TRUE_FALSE
   const handleSingleSelect = (optionId) => {
-    console.log("Single select clicked:", optionId, "Submitted:", quizSubmitted);
+    console.log(
+      "Single select clicked:",
+      optionId,
+      "Submitted:",
+      quizSubmitted,
+    );
     console.log("Current question ID:", currentQuestion?._id);
     console.log("Current quizAnswers before update:", quizAnswers);
     if (quizSubmitted) return;
@@ -185,7 +226,7 @@ const ParticipantLiveQuiz = () => {
   // Count answered questions
   const answeredCount = useMemo(() => {
     return Object.keys(quizAnswers).filter(
-      (qId) => quizAnswers[qId] && quizAnswers[qId].length > 0
+      (qId) => quizAnswers[qId] && quizAnswers[qId].length > 0,
     ).length;
   }, [quizAnswers]);
 
@@ -197,11 +238,13 @@ const ParticipantLiveQuiz = () => {
 
     try {
       // Format answers for submission
-      const formattedAnswers = Object.entries(quizAnswers).map(([questionId, selectedOptions]) => ({
-        questionId,
-        selectedOptions,
-        answeredAt: new Date(),
-      }));
+      const formattedAnswers = Object.entries(quizAnswers).map(
+        ([questionId, selectedOptions]) => ({
+          questionId,
+          selectedOptions,
+          answeredAt: new Date(),
+        }),
+      );
 
       const socket = socketRef.current;
       if (socket) {
@@ -237,15 +280,16 @@ const ParticipantLiveQuiz = () => {
   };
 
   // ========== HOST_CONTROLLED MODE RENDERING ==========
-  
+
   // HC: Final Results Screen
   if (isHostControlled && hcFinalResults) {
     const myResult = hcFinalResults.participants?.find(
-      p => p.participantId === socketRef.current?.id
+      (p) => p.participantId === socketRef.current?.id,
     );
-    const myRank = hcFinalResults.leaderboard?.findIndex(
-      l => l.participantId === socketRef.current?.id
-    ) + 1;
+    const myRank =
+      hcFinalResults.leaderboard?.findIndex(
+        (l) => l.participantId === socketRef.current?.id,
+      ) + 1;
 
     return (
       <div className="max-w-lg mx-auto px-4 py-8">
@@ -289,12 +333,17 @@ const ParticipantLiveQuiz = () => {
                   }`}
                 >
                   <div className="flex items-center gap-3">
-                    <span className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${
-                      idx === 0 ? "bg-yellow-400 text-yellow-900" :
-                      idx === 1 ? "bg-slate-300 text-slate-700" :
-                      idx === 2 ? "bg-orange-400 text-orange-900" :
-                      "bg-slate-200 dark:bg-slate-600 text-slate-600 dark:text-slate-300"
-                    }`}>
+                    <span
+                      className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${
+                        idx === 0
+                          ? "bg-yellow-400 text-yellow-900"
+                          : idx === 1
+                            ? "bg-slate-300 text-slate-700"
+                            : idx === 2
+                              ? "bg-orange-400 text-orange-900"
+                              : "bg-slate-200 dark:bg-slate-600 text-slate-600 dark:text-slate-300"
+                      }`}
+                    >
                       {idx + 1}
                     </span>
                     <span className="font-medium text-slate-900 dark:text-white">
@@ -361,12 +410,17 @@ const ParticipantLiveQuiz = () => {
                     }`}
                   >
                     <div className="flex items-center gap-3">
-                      <span className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${
-                        idx === 0 ? "bg-yellow-400 text-yellow-900" :
-                        idx === 1 ? "bg-slate-300 text-slate-700" :
-                        idx === 2 ? "bg-orange-400 text-orange-900" :
-                        "bg-slate-200 dark:bg-slate-600 text-slate-600 dark:text-slate-300"
-                      }`}>
+                      <span
+                        className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${
+                          idx === 0
+                            ? "bg-yellow-400 text-yellow-900"
+                            : idx === 1
+                              ? "bg-slate-300 text-slate-700"
+                              : idx === 2
+                                ? "bg-orange-400 text-orange-900"
+                                : "bg-slate-200 dark:bg-slate-600 text-slate-600 dark:text-slate-300"
+                        }`}
+                      >
                         {idx + 1}
                       </span>
                       <span className="font-medium text-slate-900 dark:text-white">
@@ -399,11 +453,13 @@ const ParticipantLiveQuiz = () => {
     return (
       <div className="max-w-2xl mx-auto px-4 py-6">
         {/* Timer Header */}
-        <div className={`rounded-2xl p-4 mb-4 ${
-          isLowTime 
-            ? "bg-gradient-to-r from-red-500 to-orange-500" 
-            : "bg-gradient-to-r from-blue-600 to-indigo-600"
-        } text-white`}>
+        <div
+          className={`rounded-2xl p-4 mb-4 ${
+            isLowTime
+              ? "bg-gradient-to-r from-red-500 to-orange-500"
+              : "bg-gradient-to-r from-blue-600 to-indigo-600"
+          } text-white`}
+        >
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
               <Zap className="w-5 h-5" />
@@ -413,14 +469,16 @@ const ParticipantLiveQuiz = () => {
             </div>
             <div className="flex items-center gap-2">
               <Clock className="w-5 h-5" />
-              <span className={`text-2xl font-bold ${isLowTime ? "animate-pulse" : ""}`}>
+              <span
+                className={`text-2xl font-bold ${isLowTime ? "animate-pulse" : ""}`}
+              >
                 {hcTimeRemaining}s
               </span>
             </div>
           </div>
           {/* Timer bar */}
           <div className="h-2 bg-white/30 rounded-full overflow-hidden">
-            <div 
+            <div
               className="h-full bg-white transition-all duration-1000"
               style={{ width: `${timePercentage}%` }}
             />
@@ -461,7 +519,9 @@ const ParticipantLiveQuiz = () => {
               return (
                 <button
                   key={option._id || index}
-                  onClick={() => !hcAnswerSubmitted && setHcSelectedOption(option._id)}
+                  onClick={() =>
+                    !hcAnswerSubmitted && setHcSelectedOption(option._id)
+                  }
                   disabled={hcAnswerSubmitted || hcTimeRemaining === 0}
                   className={`w-full p-4 rounded-xl border-2 text-left transition-all flex items-center gap-4 ${
                     isSelected
@@ -469,21 +529,25 @@ const ParticipantLiveQuiz = () => {
                       : "border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 bg-white dark:bg-slate-800"
                   } ${hcAnswerSubmitted || hcTimeRemaining === 0 ? "opacity-60 cursor-not-allowed" : "cursor-pointer"}`}
                 >
-                  <span className={`flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center font-bold text-lg ${
-                    isSelected
-                      ? "bg-white/20 text-white"
-                      : "bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400"
-                  }`}>
+                  <span
+                    className={`flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center font-bold text-lg ${
+                      isSelected
+                        ? "bg-white/20 text-white"
+                        : "bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400"
+                    }`}
+                  >
                     {String.fromCharCode(65 + index)}
                   </span>
-                  <span className={`flex-1 font-medium text-lg ${
-                    isSelected ? "text-white" : "text-slate-700 dark:text-slate-300"
-                  }`}>
+                  <span
+                    className={`flex-1 font-medium text-lg ${
+                      isSelected
+                        ? "text-white"
+                        : "text-slate-700 dark:text-slate-300"
+                    }`}
+                  >
                     {option.text || option.optionText}
                   </span>
-                  {isSelected && (
-                    <CheckCircle className="w-6 h-6 text-white" />
-                  )}
+                  {isSelected && <CheckCircle className="w-6 h-6 text-white" />}
                 </button>
               );
             })}
@@ -559,7 +623,8 @@ const ParticipantLiveQuiz = () => {
               Waiting for the host to start...
             </p>
             <p className="text-sm text-slate-500 dark:text-slate-400 mt-2">
-              Questions will appear one at a time. Answer quickly for bonus points!
+              Questions will appear one at a time. Answer quickly for bonus
+              points!
             </p>
           </div>
         </div>
@@ -576,17 +641,19 @@ const ParticipantLiveQuiz = () => {
 
     return (
       <div className="max-w-lg mx-auto px-4 py-8">
-        <div className={`rounded-3xl p-8 text-center ${
-          isPassing 
-            ? "bg-gradient-to-br from-green-50 to-emerald-100 dark:from-green-900/30 dark:to-emerald-900/20" 
-            : "bg-gradient-to-br from-orange-50 to-amber-100 dark:from-orange-900/30 dark:to-amber-900/20"
-        }`}>
+        <div
+          className={`rounded-3xl p-8 text-center ${
+            isPassing
+              ? "bg-gradient-to-br from-green-50 to-emerald-100 dark:from-green-900/30 dark:to-emerald-900/20"
+              : "bg-gradient-to-br from-orange-50 to-amber-100 dark:from-orange-900/30 dark:to-amber-900/20"
+          }`}
+        >
           {/* Trophy/Icon */}
-          <div className={`w-24 h-24 mx-auto rounded-full flex items-center justify-center mb-6 ${
-            isPassing 
-              ? "bg-green-500 text-white" 
-              : "bg-orange-500 text-white"
-          }`}>
+          <div
+            className={`w-24 h-24 mx-auto rounded-full flex items-center justify-center mb-6 ${
+              isPassing ? "bg-green-500 text-white" : "bg-orange-500 text-white"
+            }`}
+          >
             {isPassing ? (
               <Trophy className="w-12 h-12" />
             ) : (
@@ -603,9 +670,13 @@ const ParticipantLiveQuiz = () => {
           </p>
 
           {/* Score */}
-          <div className={`text-6xl font-bold mb-2 ${
-            isPassing ? "text-green-600 dark:text-green-400" : "text-orange-600 dark:text-orange-400"
-          }`}>
+          <div
+            className={`text-6xl font-bold mb-2 ${
+              isPassing
+                ? "text-green-600 dark:text-green-400"
+                : "text-orange-600 dark:text-orange-400"
+            }`}
+          >
             {percentage}%
           </div>
           <p className="text-lg text-slate-700 dark:text-slate-300 mb-6">
@@ -633,11 +704,13 @@ const ParticipantLiveQuiz = () => {
           </div>
 
           {/* Message */}
-          <div className={`rounded-xl p-4 ${
-            isPassing 
-              ? "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300" 
-              : "bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-300"
-          }`}>
+          <div
+            className={`rounded-xl p-4 ${
+              isPassing
+                ? "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300"
+                : "bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-300"
+            }`}
+          >
             {isPassing ? (
               <p className="flex items-center justify-center gap-2">
                 <CheckCircle className="w-5 h-5" />
@@ -691,7 +764,9 @@ const ParticipantLiveQuiz = () => {
         <div className="mt-4 h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
           <div
             className="h-full bg-blue-600 transition-all duration-300"
-            style={{ width: `${((currentQuestionIndex + 1) / questions.length) * 100}%` }}
+            style={{
+              width: `${((currentQuestionIndex + 1) / questions.length) * 100}%`,
+            }}
           />
         </div>
       </div>
@@ -711,10 +786,13 @@ const ParticipantLiveQuiz = () => {
                 </p>
                 <div className="flex items-center gap-3 mt-2">
                   <span className="text-xs px-2 py-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-full">
-                    {currentQuestion.type === "MULTI_SELECT" ? "Select multiple" : "Select one"}
+                    {currentQuestion.type === "MULTI_SELECT"
+                      ? "Select multiple"
+                      : "Select one"}
                   </span>
                   <span className="text-xs text-slate-500 dark:text-slate-400">
-                    {currentQuestion.points} point{currentQuestion.points !== 1 ? "s" : ""}
+                    {currentQuestion.points} point
+                    {currentQuestion.points !== 1 ? "s" : ""}
                   </span>
                 </div>
               </div>
@@ -726,7 +804,7 @@ const ParticipantLiveQuiz = () => {
             {currentQuestion.options.map((option, index) => {
               const isSelected = isOptionSelected(option._id);
               const isMulti = currentQuestion.type === "MULTI_SELECT";
-              
+
               // Debug logging
               if (index === 0) {
                 console.log("First option:", option, "Has _id:", !!option._id);
@@ -807,7 +885,8 @@ const ParticipantLiveQuiz = () => {
             {/* Question dots */}
             <div className="flex items-center gap-1.5 overflow-x-auto max-w-[200px] px-2">
               {questions.map((q, idx) => {
-                const isAnswered = quizAnswers[q._id] && quizAnswers[q._id].length > 0;
+                const isAnswered =
+                  quizAnswers[q._id] && quizAnswers[q._id].length > 0;
                 const isCurrent = idx === currentQuestionIndex;
 
                 return (
@@ -818,8 +897,8 @@ const ParticipantLiveQuiz = () => {
                       isCurrent
                         ? "w-6 bg-blue-600"
                         : isAnswered
-                        ? "bg-green-500"
-                        : "bg-slate-300 dark:bg-slate-600"
+                          ? "bg-green-500"
+                          : "bg-slate-300 dark:bg-slate-600"
                     }`}
                   />
                 );

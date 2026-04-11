@@ -5,7 +5,7 @@ const QuizSubmission = require("../models/QuizSubmission");
 const evaluateQuizSubmission = async (submission) => {
   try {
     const quiz = await LiveQuiz.findById(submission.liveQuizId);
-    
+
     if (!quiz) {
       throw new Error("Quiz not found");
     }
@@ -15,9 +15,9 @@ const evaluateQuizSubmission = async (submission) => {
 
     for (const question of quiz.questions) {
       maxScore += question.points || 1;
-      
+
       const userAnswer = submission.answers.find(
-        (a) => a.questionId.toString() === question._id.toString()
+        (a) => a.questionId.toString() === question._id.toString(),
       );
 
       if (!userAnswer || !userAnswer.selectedOptions) {
@@ -48,9 +48,9 @@ const evaluateQuizSubmission = async (submission) => {
     submission.maxScore = maxScore;
     submission.percentage = maxScore > 0 ? (score / maxScore) * 100 : 0;
     submission.evaluated = true;
-    
+
     await submission.save();
-    
+
     return submission;
   } catch (err) {
     console.error("Error evaluating quiz submission:", err);

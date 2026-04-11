@@ -4,7 +4,7 @@ const LiveOptionSchema = new mongoose.Schema(
   {
     text: String,
   },
-  { _id: true }  // This allows _id to be set explicitly or auto-generated
+  { _id: true }, // This allows _id to be set explicitly or auto-generated
 );
 
 const LiveQuestionSchema = new mongoose.Schema(
@@ -16,7 +16,7 @@ const LiveQuestionSchema = new mongoose.Schema(
     points: Number,
     negativePoints: Number,
   },
-  { _id: true }
+  { _id: true },
 );
 
 // Leaderboard entry schema for HOST_CONTROLLED mode
@@ -30,7 +30,7 @@ const LeaderboardEntrySchema = new mongoose.Schema(
     participantName: { type: String, required: true },
     totalScore: { type: Number, default: 0 },
   },
-  { _id: false }
+  { _id: false },
 );
 
 const LiveQuizSchema = new mongoose.Schema(
@@ -88,7 +88,7 @@ const LiveQuizSchema = new mongoose.Schema(
     closedAt: Date,
     allowLateSubmission: { type: Boolean, default: false },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 module.exports = mongoose.model("LiveQuiz", LiveQuizSchema);

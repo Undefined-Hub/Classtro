@@ -2,12 +2,12 @@ import React from "react";
 import { User, LogOut } from "lucide-react";
 import ProfileImageOrInitials from "../ProfileImageOrInitials";
 
-const ParticipantProfileSidebar = ({ 
-  user, 
-  activeTab, 
-  setActiveTab, 
+const ParticipantProfileSidebar = ({
+  user,
+  activeTab,
+  setActiveTab,
   onLogout,
-  getInitials 
+  getInitials,
 }) => {
   return (
     <div className="w-full lg:w-80">

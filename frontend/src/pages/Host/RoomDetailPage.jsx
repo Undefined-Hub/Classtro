@@ -145,18 +145,18 @@ function RoomDetailPage() {
   const handleUpdateSession = async (sessionId, updateData) => {
     try {
       const res = await api.patch(`/api/sessions/id/${sessionId}`, updateData);
-      
+
       if (res.status !== 200) {
         throw new Error("Failed to update session");
       }
 
       const updatedSession = res.data;
-      
+
       // Update the session in the sessions list
-      setSessions(prevSessions => 
-        prevSessions.map(session => 
-          session._id === sessionId ? updatedSession : session
-        )
+      setSessions((prevSessions) =>
+        prevSessions.map((session) =>
+          session._id === sessionId ? updatedSession : session,
+        ),
       );
 
       // Show success toast
@@ -164,8 +164,20 @@ function RoomDetailPage() {
 
       return updatedSession;
     } catch (error) {
-      throw new Error(error.response?.data?.message || error.message || "Failed to update session");
+      throw new Error(
+        error.response?.data?.message ||
+          error.message ||
+          "Failed to update session",
+      );
     }
+  };
+
+  const handleDeleteSession = (deletedSessionId) => {
+    // Remove the deleted session from the sessions list
+    setSessions((prevSessions) =>
+      prevSessions.filter((session) => session._id !== deletedSessionId),
+    );
+    toast.success("Session deleted successfully!");
   };
 
   if (!selectedRoom) {
@@ -218,6 +230,7 @@ function RoomDetailPage() {
         onCreateSession={() => setShowCreateSessionModal(true)}
         onSessionClick={handleSessionClick}
         onManageSession={handleManageSession}
+        onDeleteSession={handleDeleteSession}
         sessions={sessions}
         setSessions={setSessions}
         loading={sessionsLoading}

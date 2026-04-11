@@ -52,7 +52,7 @@ export function AuthProvider({ children }) {
               {},
               {
                 withCredentials: true, // Include HTTP-only cookie
-              }
+              },
             );
 
             const { accessToken } = refreshResponse.data;

@@ -9,14 +9,14 @@ const ProfileDetailsSection = ({
   profileForm,
   setProfileForm,
   onProfileUpdate,
-  userType = "host" // "host" or "participant"
+  userType = "host", // "host" or "participant"
 }) => {
   const handleCancelEdit = () => {
     setIsEditingProfile(false);
     setProfileForm({
       name: user?.name || "",
       username: user?.username || "",
-      profilePicture: user?.profilePicture || ""
+      profilePicture: user?.profilePicture || "",
     });
   };
 
@@ -25,12 +25,14 @@ const ProfileDetailsSection = ({
     if (userType === "participant") {
       return {
         label: "STUDENT",
-        colorClass: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300"
+        colorClass:
+          "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300",
       };
     }
     return {
       label: user?.role || "USER",
-      colorClass: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300"
+      colorClass:
+        "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300",
     };
   };
 
@@ -54,7 +56,7 @@ const ProfileDetailsSection = ({
           )}
         </div>
       </div>
-      
+
       <div className="p-3 sm:p-4 lg:p-6 flex-1">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 h-full">
           {/* Left Column - Profile Image */}
@@ -83,7 +85,8 @@ const ProfileDetailsSection = ({
             {isEditingProfile && user?.authProvider === "GOOGLE" && (
               <div className="mt-2 sm:mt-3 p-2 sm:p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg max-w-xs">
                 <p className="text-xs text-blue-800 dark:text-blue-300 text-center">
-                  Profile picture is managed by your Google account. To change it, please update your Google account profile picture.
+                  Profile picture is managed by your Google account. To change
+                  it, please update your Google account profile picture.
                 </p>
               </div>
             )}
@@ -92,7 +95,10 @@ const ProfileDetailsSection = ({
           {/* Right Column - Profile Information */}
           <div className="space-y-4 sm:space-y-6">
             {isEditingProfile ? (
-              <form onSubmit={onProfileUpdate} className="space-y-3 sm:space-y-4">
+              <form
+                onSubmit={onProfileUpdate}
+                className="space-y-3 sm:space-y-4"
+              >
                 <div>
                   <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Full Name
@@ -100,7 +106,9 @@ const ProfileDetailsSection = ({
                   <input
                     type="text"
                     value={profileForm.name}
-                    onChange={(e) => setProfileForm({ ...profileForm, name: e.target.value })}
+                    onChange={(e) =>
+                      setProfileForm({ ...profileForm, name: e.target.value })
+                    }
                     className="w-full px-2.5 sm:px-3 py-1.5 sm:py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
                     placeholder="Enter your full name"
                   />
@@ -112,7 +120,12 @@ const ProfileDetailsSection = ({
                   <input
                     type="text"
                     value={profileForm.username}
-                    onChange={(e) => setProfileForm({ ...profileForm, username: e.target.value })}
+                    onChange={(e) =>
+                      setProfileForm({
+                        ...profileForm,
+                        username: e.target.value,
+                      })
+                    }
                     className="w-full px-2.5 sm:px-3 py-1.5 sm:py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
                     placeholder="Enter your username"
                   />
@@ -138,29 +151,45 @@ const ProfileDetailsSection = ({
                 <div className="flex items-start sm:items-center">
                   <User className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 mr-2 sm:mr-3 flex-shrink-0 mt-0.5 sm:mt-0" />
                   <div className="min-w-0">
-                    <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">Full Name</p>
-                    <p className="text-sm sm:text-base text-gray-900 dark:text-white font-medium truncate">{user?.name}</p>
+                    <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
+                      Full Name
+                    </p>
+                    <p className="text-sm sm:text-base text-gray-900 dark:text-white font-medium truncate">
+                      {user?.name}
+                    </p>
                   </div>
                 </div>
                 <div className="flex items-start sm:items-center">
                   <Mail className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 mr-2 sm:mr-3 flex-shrink-0 mt-0.5 sm:mt-0" />
                   <div className="min-w-0 flex-1">
-                    <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">Email Address</p>
-                    <p className="text-sm sm:text-base text-gray-900 dark:text-white font-medium break-all">{user?.email}</p>
+                    <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
+                      Email Address
+                    </p>
+                    <p className="text-sm sm:text-base text-gray-900 dark:text-white font-medium break-all">
+                      {user?.email}
+                    </p>
                   </div>
                 </div>
                 <div className="flex items-start sm:items-center">
                   <User className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 mr-2 sm:mr-3 flex-shrink-0 mt-0.5 sm:mt-0" />
                   <div className="min-w-0">
-                    <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">Username</p>
-                    <p className="text-sm sm:text-base text-gray-900 dark:text-white font-medium truncate">{user?.username || "Not set"}</p>
+                    <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
+                      Username
+                    </p>
+                    <p className="text-sm sm:text-base text-gray-900 dark:text-white font-medium truncate">
+                      {user?.username || "Not set"}
+                    </p>
                   </div>
                 </div>
                 <div className="flex items-start sm:items-center">
                   <Shield className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 mr-2 sm:mr-3 flex-shrink-0 mt-0.5 sm:mt-0" />
                   <div>
-                    <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">Role</p>
-                    <span className={`inline-flex items-center px-2 sm:px-2.5 py-0.5 rounded-full text-xs font-medium ${roleConfig.colorClass}`}>
+                    <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
+                      Role
+                    </p>
+                    <span
+                      className={`inline-flex items-center px-2 sm:px-2.5 py-0.5 rounded-full text-xs font-medium ${roleConfig.colorClass}`}
+                    >
                       {roleConfig.label}
                     </span>
                   </div>
@@ -168,12 +197,14 @@ const ProfileDetailsSection = ({
                 <div className="flex items-start sm:items-center">
                   <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 mr-2 sm:mr-3 flex-shrink-0 mt-0.5 sm:mt-0" />
                   <div className="min-w-0">
-                    <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">Member Since</p>
+                    <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
+                      Member Since
+                    </p>
                     <p className="text-sm sm:text-base text-gray-900 dark:text-white font-medium">
                       {new Date(user?.createdAt).toLocaleDateString("en-US", {
                         year: "numeric",
                         month: "long",
-                        day: "numeric"
+                        day: "numeric",
                       })}
                     </p>
                   </div>

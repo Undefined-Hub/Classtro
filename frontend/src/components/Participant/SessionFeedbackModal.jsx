@@ -42,9 +42,11 @@ const SessionFeedbackModal = ({
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    
+
     if (rating === 0) {
-      toast.error("Please select a rating before submitting", { duration: 3000 });
+      toast.error("Please select a rating before submitting", {
+        duration: 3000,
+      });
       return;
     }
 
@@ -69,7 +71,9 @@ const SessionFeedbackModal = ({
             <div className="p-1.5 sm:p-2 rounded-lg sm:rounded-xl bg-gradient-to-br from-blue-500 to-blue-600">
               <Heart size={20} className="sm:w-6 sm:h-6 text-white" />
             </div>
-            <span className="leading-tight">Session Ended - Share Your Feedback</span>
+            <span className="leading-tight">
+              Session Ended - Share Your Feedback
+            </span>
           </h3>
         </div>
 
@@ -78,15 +82,25 @@ const SessionFeedbackModal = ({
           <div className="bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 rounded-lg px-3 sm:px-4 py-2.5 sm:py-3 border border-blue-200 dark:border-blue-700">
             <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-3 text-sm sm:text-base">
               <div className="flex items-center gap-1.5 sm:gap-2">
-                <span className="text-blue-600 dark:text-blue-400 font-bold text-xs sm:text-sm">Session:</span>
-                <span className="font-bold text-gray-900 dark:text-white text-sm sm:text-base">{sessionTitle || "Untitled Session"}</span>
+                <span className="text-blue-600 dark:text-blue-400 font-bold text-xs sm:text-sm">
+                  Session:
+                </span>
+                <span className="font-bold text-gray-900 dark:text-white text-sm sm:text-base">
+                  {sessionTitle || "Untitled Session"}
+                </span>
               </div>
               {roomName && (
                 <>
-                  <span className="hidden sm:inline text-gray-400 font-bold">•</span>
+                  <span className="hidden sm:inline text-gray-400 font-bold">
+                    •
+                  </span>
                   <div className="flex items-center gap-1.5 sm:gap-2">
-                    <span className="text-blue-600 dark:text-blue-400 font-bold text-xs sm:text-sm">Room:</span>
-                    <span className="font-bold text-gray-900 dark:text-white text-sm sm:text-base">{roomName}</span>
+                    <span className="text-blue-600 dark:text-blue-400 font-bold text-xs sm:text-sm">
+                      Room:
+                    </span>
+                    <span className="font-bold text-gray-900 dark:text-white text-sm sm:text-base">
+                      {roomName}
+                    </span>
                   </div>
                 </>
               )}

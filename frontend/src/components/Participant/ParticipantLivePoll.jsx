@@ -29,7 +29,6 @@ const ParticipantLivePoll = () => {
   }, [activePoll, sessionData?.participantId]);
 
   if (!activePoll) {
-    alert("active poll yet nahi");
     return null;
   }
 

@@ -2,10 +2,10 @@
   "feature": "sessions",
   "title": "Live Interactive Sessions",
   "description": "Real-time classroom sessions where teachers and students interact through polls, Q&A, and feedback",
-  
+
   "teacher": {
     "overview": "Sessions are live interactive classes where you engage students with polls, Q&A, and real-time feedback. Each session is conducted within a room.",
-    
+
     "howTo": {
       "start": [
         "Open the room where you want to conduct session",
@@ -29,7 +29,7 @@
         "Session data is saved to room history"
       ]
     },
-    
+
     "tips": [
       "Start session 5 minutes before class for students to join",
       "Use polls every 10-15 minutes to maintain engagement",
@@ -37,7 +37,7 @@
       "End session properly to save all data",
       "Review session analytics after class to improve teaching"
     ],
-    
+
     "canDo": [
       "Start unlimited sessions in your rooms",
       "See all joined students in real-time",
@@ -47,14 +47,14 @@
       "View detailed session analytics after session ends",
       "Download session reports as PDF/CSV"
     ],
-    
+
     "cannotDo": [
       "Run multiple sessions simultaneously in the same room",
       "Edit session data after it ends",
       "Restart a session after ending it",
       "Force students to stay in session"
     ],
-    
+
     "bestPractices": [
       "Share session code before class starts",
       "Keep sessions under 90 minutes for best engagement",
@@ -62,7 +62,7 @@
       "Monitor student count to ensure everyone joined",
       "Always end session properly to save data"
     ],
-    
+
     "analytics": {
       "available": [
         "Total students joined",
@@ -81,10 +81,10 @@
       ]
     }
   },
-  
+
   "student": {
     "overview": "Sessions are live classes where you participate in polls, ask questions, and give feedback. Join using the session code from your teacher.",
-    
+
     "howTo": {
       "join": [
         "Get session code from teacher",
@@ -107,7 +107,7 @@
         "Your participation data is saved even if you leave early"
       ]
     },
-    
+
     "tips": [
       "Join sessions on time to not miss important content",
       "Keep internet connection stable throughout session",
@@ -115,7 +115,7 @@
       "Ask questions when you don't understand",
       "Provide honest feedback to help teacher improve"
     ],
-    
+
     "canDo": [
       "Join multiple sessions",
       "Participate in all polls and Q&A",
@@ -124,14 +124,14 @@
       "View your response history after session",
       "Access session recordings if teacher shares them"
     ],
-    
+
     "cannotDo": [
       "Join session without valid code",
       "See other students' poll answers in real-time",
       "Delete your responses after submission",
       "Join sessions from rooms you haven't joined"
     ],
-    
+
     "commonIssues": [
       {
         "problem": "Session code not working",
@@ -151,6 +151,6 @@
       }
     ]
   },
-  
+
   "relatedFeatures": ["rooms", "polls", "qna", "feedback"]
 }

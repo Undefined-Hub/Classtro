@@ -1,5 +1,16 @@
 import React, { useState, useEffect } from "react";
-import { BarChart3, ChartNoAxesColumn, HelpCircle, MessageCircleQuestionMark, Maximize, Minimize, Expand, Shrink, QrCode, ClipboardCheck } from "lucide-react";
+import {
+  BarChart3,
+  ChartNoAxesColumn,
+  HelpCircle,
+  MessageCircleQuestionMark,
+  Maximize,
+  Minimize,
+  Expand,
+  Shrink,
+  QrCode,
+  ClipboardCheck,
+} from "lucide-react";
 
 const QuickActions = ({ questions, onSetActiveView, activeView }) => {
   const unansweredQuestions = questions.filter((q) => !q.answered).length;
@@ -14,8 +25,9 @@ const QuickActions = ({ questions, onSetActiveView, activeView }) => {
       setIsFullscreen(!!document.fullscreenElement);
     };
 
-    document.addEventListener('fullscreenchange', handleFullscreenChange);
-    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    return () =>
+      document.removeEventListener("fullscreenchange", handleFullscreenChange);
   }, []);
 
   // Initial reveal and hide animation
@@ -38,18 +50,17 @@ const QuickActions = ({ questions, onSetActiveView, activeView }) => {
 
     const handleMouseMove = (e) => {
       setMousePosition({ x: e.clientX, y: e.clientY });
-      
+
       // Expanded trigger zone - bigger area for easier discovery
       const triggerZone = {
         bottom: window.innerHeight - 200, // Increased from 150px
         left: 300, // Increased from 200px
         top: window.innerHeight - 120, // Larger zone
-        right: 0
+        right: 0,
       };
 
-      const inTriggerZone = 
-        e.clientX <= triggerZone.left && 
-        e.clientY >= triggerZone.bottom;
+      const inTriggerZone =
+        e.clientX <= triggerZone.left && e.clientY >= triggerZone.bottom;
 
       if (inTriggerZone) {
         setIsDockVisible(true);
@@ -70,12 +81,12 @@ const QuickActions = ({ questions, onSetActiveView, activeView }) => {
       }, 1000);
     };
 
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseleave', handleMouseLeave);
+    document.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mouseleave", handleMouseLeave);
 
     return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseleave', handleMouseLeave);
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseleave", handleMouseLeave);
       clearTimeout(hideTimeout);
     };
   }, [hasInitiallyShown]);
@@ -109,18 +120,20 @@ const QuickActions = ({ questions, onSetActiveView, activeView }) => {
   return (
     <>
       {/* Invisible trigger zone indicator (only visible in development) */}
-      {import.meta.env.VITE_SHOW_DEBUG === 'true' && hasInitiallyShown && (
+      {import.meta.env.VITE_SHOW_DEBUG === "true" && hasInitiallyShown && (
         <div className="fixed bottom-0 left-0 w-96 h-48 bg-blue-500/10 border border-blue-500/20 pointer-events-none z-20">
-          <div className="text-xs text-blue-600 p-1">Expanded Dock Trigger Zone</div>
+          <div className="text-xs text-blue-600 p-1">
+            Expanded Dock Trigger Zone
+          </div>
         </div>
       )}
 
       {/* Auto-hiding Dock Strip */}
-      <div 
+      <div
         className={`fixed bottom-3 left-3 z-50 transition-all duration-300 ease-in-out ${
-          isDockVisible 
-            ? 'translate-y-0 opacity-100' 
-            : 'translate-y-6 opacity-0 pointer-events-none'
+          isDockVisible
+            ? "translate-y-0 opacity-100"
+            : "translate-y-6 opacity-0 pointer-events-none"
         }`}
         onMouseEnter={() => setIsDockVisible(true)}
         onMouseLeave={() => {
@@ -133,15 +146,14 @@ const QuickActions = ({ questions, onSetActiveView, activeView }) => {
         {/* Dock Container */}
         <div className="bg-gray-800/90 dark:bg-white/10 backdrop-blur-md rounded-full px-3 py-2 shadow-xl border border-gray-700/50 dark:border-white/20">
           <div className="flex items-center space-x-2">
-            
             {/* Polls Button */}
             <div className="relative group">
               <button
                 onClick={() => handleToggle("polls")}
                 className={`w-9 h-9 rounded-full shadow-md flex items-center justify-center transition-all duration-200 hover:scale-105 ${
-                  activeView === "polls" 
-                    ? 'bg-blue-600 text-white' 
-                    : 'bg-gray-600/50 dark:bg-white/10 hover:bg-gray-500/60 dark:hover:bg-white/20 text-white'
+                  activeView === "polls"
+                    ? "bg-blue-600 text-white"
+                    : "bg-gray-600/50 dark:bg-white/10 hover:bg-gray-500/60 dark:hover:bg-white/20 text-white"
                 }`}
                 aria-pressed={activeView === "polls"}
               >
@@ -157,9 +169,9 @@ const QuickActions = ({ questions, onSetActiveView, activeView }) => {
               <button
                 onClick={() => handleToggle("quiz")}
                 className={`w-9 h-9 rounded-full shadow-md flex items-center justify-center transition-all duration-200 hover:scale-105 ${
-                  activeView === "quiz" 
-                    ? 'bg-purple-600 text-white' 
-                    : 'bg-gray-600/50 dark:bg-white/10 hover:bg-gray-500/60 dark:hover:bg-white/20 text-white'
+                  activeView === "quiz"
+                    ? "bg-purple-600 text-white"
+                    : "bg-gray-600/50 dark:bg-white/10 hover:bg-gray-500/60 dark:hover:bg-white/20 text-white"
                 }`}
                 aria-pressed={activeView === "quiz"}
               >
@@ -175,16 +187,16 @@ const QuickActions = ({ questions, onSetActiveView, activeView }) => {
               <button
                 onClick={() => handleToggle("qa")}
                 className={`w-9 h-9 rounded-full shadow-md flex items-center justify-center transition-all duration-200 hover:scale-105 ${
-                  activeView === "qa" 
-                    ? 'bg-blue-600 text-white' 
-                    : 'bg-gray-600/50 dark:bg-white/10 hover:bg-gray-500/60 dark:hover:bg-white/20 text-white'
+                  activeView === "qa"
+                    ? "bg-blue-600 text-white"
+                    : "bg-gray-600/50 dark:bg-white/10 hover:bg-gray-500/60 dark:hover:bg-white/20 text-white"
                 }`}
                 aria-pressed={activeView === "qa"}
               >
                 <MessageCircleQuestionMark className="w-4 h-4" />
                 {unansweredQuestions > 0 && (
                   <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-medium">
-                    {unansweredQuestions > 9 ? '9+' : unansweredQuestions}
+                    {unansweredQuestions > 9 ? "9+" : unansweredQuestions}
                   </span>
                 )}
               </button>
@@ -209,7 +221,7 @@ const QuickActions = ({ questions, onSetActiveView, activeView }) => {
                 )}
               </button>
               <div className="absolute bottom-10 left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-black/80 text-white text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap pointer-events-none">
-                {isFullscreen ? 'Exit Full Screen' : 'Full Screen'}
+                {isFullscreen ? "Exit Full Screen" : "Full Screen"}
               </div>
             </div>
 
@@ -218,9 +230,9 @@ const QuickActions = ({ questions, onSetActiveView, activeView }) => {
               <button
                 onClick={handleQRCode}
                 className={`w-9 h-9 rounded-full shadow-md flex items-center justify-center transition-all duration-200 hover:scale-105 ${
-                  activeView === "qr" 
-                    ? 'bg-blue-600 text-white' 
-                    : 'bg-blue-600/90 dark:bg-blue-600/80 hover:bg-blue-600 text-white'
+                  activeView === "qr"
+                    ? "bg-blue-600 text-white"
+                    : "bg-blue-600/90 dark:bg-blue-600/80 hover:bg-blue-600 text-white"
                 }`}
               >
                 <QrCode className="w-4 h-4" />
@@ -229,7 +241,6 @@ const QuickActions = ({ questions, onSetActiveView, activeView }) => {
                 QR Code
               </div>
             </div>
-            
           </div>
         </div>
 

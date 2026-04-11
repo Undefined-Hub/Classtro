@@ -6,7 +6,13 @@ import ReactionTrigger from "../shared/ReactionTrigger";
 import { renderMarkdownJSX } from "../../utils/markdownUtils.jsx";
 import api from "../../utils/api.js";
 
-const BroadcastFeed = ({ broadcasts = [], onClose, sessionId, userId, userName }) => {
+const BroadcastFeed = ({
+  broadcasts = [],
+  onClose,
+  sessionId,
+  userId,
+  userName,
+}) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const [seenBroadcastIds, setSeenBroadcastIds] = useState(new Set());
@@ -16,21 +22,21 @@ const BroadcastFeed = ({ broadcasts = [], onClose, sessionId, userId, userName }
   // Format timestamp to readable format
   const formatTimestamp = (timestamp) => {
     if (!timestamp) return "just now";
-    
+
     const date = new Date(timestamp);
     const now = new Date();
     const diff = now - date; // difference in milliseconds
-    
+
     const seconds = Math.floor(diff / 1000);
     const minutes = Math.floor(seconds / 60);
     const hours = Math.floor(minutes / 60);
     const days = Math.floor(hours / 24);
-    
+
     if (seconds < 60) return "just now";
     if (minutes < 60) return `${minutes}m ago`;
     if (hours < 24) return `${hours}h ago`;
     if (days < 7) return `${days}d ago`;
-    
+
     return date.toLocaleDateString();
   };
 
@@ -76,17 +82,13 @@ const BroadcastFeed = ({ broadcasts = [], onClose, sessionId, userId, userName }
     }
 
     // If markdown returned JSX array, handle URLs separately
-    return (
-      <span>
-        {markdownFormatted}
-      </span>
-    );
+    return <span>{markdownFormatted}</span>;
   };
 
   // Mark initial broadcasts as seen (history loaded on join)
   useEffect(() => {
     if (!initialLoadComplete && broadcasts.length > 0) {
-      const initialIds = new Set(broadcasts.map(b => b._id));
+      const initialIds = new Set(broadcasts.map((b) => b._id));
       setSeenBroadcastIds(initialIds);
       setInitialLoadComplete(true);
     }
@@ -96,7 +98,9 @@ const BroadcastFeed = ({ broadcasts = [], onClose, sessionId, userId, userName }
   useEffect(() => {
     if (!initialLoadComplete) return;
 
-    const newBroadcasts = broadcasts.filter(b => !seenBroadcastIds.has(b._id));
+    const newBroadcasts = broadcasts.filter(
+      (b) => !seenBroadcastIds.has(b._id),
+    );
     setUnreadCount(newBroadcasts.length);
   }, [broadcasts, seenBroadcastIds, initialLoadComplete]);
 
@@ -110,7 +114,11 @@ const BroadcastFeed = ({ broadcasts = [], onClose, sessionId, userId, userName }
     setPendingReactions((prev) => {
       const updated = { ...prev };
       broadcasts.forEach((broadcast) => {
-        if (updated[broadcast._id] && broadcast.reactions && broadcast.reactions.length > 0) {
+        if (
+          updated[broadcast._id] &&
+          broadcast.reactions &&
+          broadcast.reactions.length > 0
+        ) {
           // Broadcast was updated via socket, clear pending reactions for it
           delete updated[broadcast._id];
         }
@@ -122,7 +130,7 @@ const BroadcastFeed = ({ broadcasts = [], onClose, sessionId, userId, userName }
   const handleExpand = () => {
     setIsExpanded(true);
     // Mark all current broadcasts as seen
-    const allIds = new Set(broadcasts.map(b => b._id));
+    const allIds = new Set(broadcasts.map((b) => b._id));
     setSeenBroadcastIds(allIds);
     setUnreadCount(0);
   };
@@ -140,18 +148,19 @@ const BroadcastFeed = ({ broadcasts = [], onClose, sessionId, userId, userName }
       }
 
       // Find the broadcast to check if user has already reacted
-      const broadcast = broadcasts.find(b => b._id === broadcastId);
-      const userAlreadyReacted = broadcast?.reactions?.some(
-        (r) => r.userId === userId && r.emoji === emoji
-      ) || false;
+      const broadcast = broadcasts.find((b) => b._id === broadcastId);
+      const userAlreadyReacted =
+        broadcast?.reactions?.some(
+          (r) => r.userId === userId && r.emoji === emoji,
+        ) || false;
 
-      console.log("[REACTION] Clicked reaction:", { 
-        broadcastId, 
-        emoji, 
-        userId, 
+      console.log("[REACTION] Clicked reaction:", {
+        broadcastId,
+        emoji,
+        userId,
         userName,
         userAlreadyReacted,
-        currentReactions: broadcast?.reactions || []
+        currentReactions: broadcast?.reactions || [],
       });
 
       // Track optimistic update based on whether user has already reacted
@@ -165,8 +174,14 @@ const BroadcastFeed = ({ broadcasts = [], onClose, sessionId, userId, userName }
 
       // Send request to backend (socket will confirm)
       try {
-        await api.post(`/api/sessions/${sessionId}/broadcasts/${broadcastId}/react`, { emoji });
-        console.log("[REACTION] API call successful for:", { broadcastId, emoji });
+        await api.post(
+          `/api/sessions/${sessionId}/broadcasts/${broadcastId}/react`,
+          { emoji },
+        );
+        console.log("[REACTION] API call successful for:", {
+          broadcastId,
+          emoji,
+        });
         // Note: Don't clear pending reactions here - let socket event confirm it
         // The socket listener (onReactionUpdate in ParticipantSession) will update broadcasts state
         // Then we'll use useEffect to clear pendingReactions once it's reflected in broadcasts
@@ -194,24 +209,26 @@ const BroadcastFeed = ({ broadcasts = [], onClose, sessionId, userId, userName }
     let reactions = broadcast.reactions ? [...broadcast.reactions] : [];
 
     // Apply pending reactions
-    Object.entries(pendingReactions[broadcast._id]).forEach(([emoji, shouldBeAdded]) => {
-      const existingIndex = reactions.findIndex(
-        (r) => r.userId === userId && r.emoji === emoji
-      );
+    Object.entries(pendingReactions[broadcast._id]).forEach(
+      ([emoji, shouldBeAdded]) => {
+        const existingIndex = reactions.findIndex(
+          (r) => r.userId === userId && r.emoji === emoji,
+        );
 
-      if (shouldBeAdded && existingIndex === -1) {
-        // Add optimistic reaction (user is adding new reaction)
-        reactions.push({
-          emoji,
-          userId,
-          userName,
-          timestamp: new Date(),
-        });
-      } else if (!shouldBeAdded && existingIndex !== -1) {
-        // Remove optimistic reaction (user is removing existing reaction)
-        reactions.splice(existingIndex, 1);
-      }
-    });
+        if (shouldBeAdded && existingIndex === -1) {
+          // Add optimistic reaction (user is adding new reaction)
+          reactions.push({
+            emoji,
+            userId,
+            userName,
+            timestamp: new Date(),
+          });
+        } else if (!shouldBeAdded && existingIndex !== -1) {
+          // Remove optimistic reaction (user is removing existing reaction)
+          reactions.splice(existingIndex, 1);
+        }
+      },
+    );
 
     return {
       ...broadcast,
@@ -315,7 +332,8 @@ const BroadcastFeed = ({ broadcasts = [], onClose, sessionId, userId, userName }
                 <div className="flex items-start justify-between mb-2">
                   <div className="flex items-center space-x-2">
                     {(() => {
-                      const hasUrls = broadcast.urls && broadcast.urls.length > 0;
+                      const hasUrls =
+                        broadcast.urls && broadcast.urls.length > 0;
                       return (
                         <>
                           <div
@@ -359,7 +377,8 @@ const BroadcastFeed = ({ broadcasts = [], onClose, sessionId, userId, userName }
                             From Host
                             {hasUrls && (
                               <span className="ml-1 text-blue-600 dark:text-blue-400">
-                                • {broadcast.urls.length} {broadcast.urls.length === 1 ? "link" : "links"}
+                                • {broadcast.urls.length}{" "}
+                                {broadcast.urls.length === 1 ? "link" : "links"}
                               </span>
                             )}
                           </span>
@@ -370,37 +389,46 @@ const BroadcastFeed = ({ broadcasts = [], onClose, sessionId, userId, userName }
                   <div className="flex items-center space-x-1.5">
                     {broadcast._id && (
                       <ReactionTrigger
-                        onReact={(emoji) => handleReaction(broadcast._id, emoji)}
+                        onReact={(emoji) =>
+                          handleReaction(broadcast._id, emoji)
+                        }
                       />
                     )}
                     <span className="text-xs text-gray-400 dark:text-gray-500">
-                      {formatTimestamp(broadcast.timestamp || broadcast.createdAt)}
+                      {formatTimestamp(
+                        broadcast.timestamp || broadcast.createdAt,
+                      )}
                     </span>
                   </div>
                 </div>
                 <div className="text-sm text-gray-900 dark:text-white whitespace-pre-wrap mb-3">
                   {renderMessageWithLinks(broadcast.message)}
                 </div>
-                
+
                 {/* Rich URL Preview Cards */}
-                {broadcast.urlMetadata && broadcast.urls && broadcast.urls.length > 0 && (
-                  <div className="space-y-2 mt-3">
-                    {broadcast.urls.map((url, idx) => (
-                      <URLPreviewCard
-                        key={idx}
-                        url={url}
-                        metadata={broadcast.urlMetadata[url]}
-                        compact={broadcast.urls.length > 2}
-                      />
-                    ))}
-                  </div>
-                )}
+                {broadcast.urlMetadata &&
+                  broadcast.urls &&
+                  broadcast.urls.length > 0 && (
+                    <div className="space-y-2 mt-3">
+                      {broadcast.urls.map((url, idx) => (
+                        <URLPreviewCard
+                          key={idx}
+                          url={url}
+                          metadata={broadcast.urlMetadata[url]}
+                          compact={broadcast.urls.length > 2}
+                        />
+                      ))}
+                    </div>
+                  )}
 
                 {/* File Attachments */}
                 {broadcast.files && broadcast.files.length > 0 && (
                   <div className="mt-3">
                     <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">
-                      📎 {broadcast.files.length} {broadcast.files.length === 1 ? "Attachment" : "Attachments"}
+                      📎 {broadcast.files.length}{" "}
+                      {broadcast.files.length === 1
+                        ? "Attachment"
+                        : "Attachments"}
                     </p>
                     <div className="grid grid-cols-1 gap-2">
                       {broadcast.files.map((file, idx) => (

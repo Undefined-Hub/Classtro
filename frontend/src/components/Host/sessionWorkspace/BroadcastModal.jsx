@@ -25,7 +25,10 @@ const BroadcastModal = ({
   // Close attachment menu when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (attachmentMenuRef.current && !attachmentMenuRef.current.contains(event.target)) {
+      if (
+        attachmentMenuRef.current &&
+        !attachmentMenuRef.current.contains(event.target)
+      ) {
         setShowAttachmentMenu(false);
       }
     };
@@ -65,7 +68,7 @@ const BroadcastModal = ({
   // Handle file selection
   const handleFileSelect = (e) => {
     const files = Array.from(e.target.files);
-    
+
     // Validate file count
     if (selectedFiles.length + files.length > 3) {
       alert("Maximum 3 files allowed per broadcast");
@@ -93,7 +96,9 @@ const BroadcastModal = ({
       ];
 
       if (!allowedTypes.includes(file.type)) {
-        alert(`${file.name} has invalid type. Only PDF, PPT, PPTX, and images are allowed.`);
+        alert(
+          `${file.name} has invalid type. Only PDF, PPT, PPTX, and images are allowed.`,
+        );
         return false;
       }
 
@@ -120,7 +125,11 @@ const BroadcastModal = ({
     if (file.mimetype) return file.type; // For history files
     if (file.type === "application/pdf") return "pdf";
     if (file.type === "application/vnd.ms-powerpoint") return "ppt";
-    if (file.type === "application/vnd.openxmlformats-officedocument.presentationml.presentation") return "pptx";
+    if (
+      file.type ===
+      "application/vnd.openxmlformats-officedocument.presentationml.presentation"
+    )
+      return "pptx";
     if (file.type.startsWith("image/")) return "image";
     return "unknown";
   };
@@ -137,7 +146,7 @@ const BroadcastModal = ({
   const renderMessageWithLinks = (text) => {
     const urlRegex = /(https?:\/\/[^\s]+)/g;
     const parts = text.split(urlRegex);
-    
+
     return parts.map((part, index) => {
       if (part.match(urlRegex)) {
         return (
@@ -164,10 +173,10 @@ const BroadcastModal = ({
 
     if (diffMins < 1) return "Just now";
     if (diffMins < 60) return `${diffMins}m ago`;
-    
+
     const diffHours = Math.floor(diffMins / 60);
     if (diffHours < 24) return `${diffHours}h ago`;
-    
+
     return date.toLocaleString([], {
       month: "short",
       day: "numeric",
@@ -293,13 +302,29 @@ const BroadcastModal = ({
                       <div className="relative" ref={attachmentMenuRef}>
                         <button
                           type="button"
-                          onClick={() => setShowAttachmentMenu(!showAttachmentMenu)}
+                          onClick={() =>
+                            setShowAttachmentMenu(!showAttachmentMenu)
+                          }
                           disabled={selectedFiles.length >= 3}
                           className="p-2 text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                          title={selectedFiles.length >= 3 ? "Maximum files reached" : "Attach files"}
+                          title={
+                            selectedFiles.length >= 3
+                              ? "Maximum files reached"
+                              : "Attach files"
+                          }
                         >
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+                          <svg
+                            className="w-5 h-5"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"
+                            />
                           </svg>
                         </button>
 
@@ -314,8 +339,18 @@ const BroadcastModal = ({
                               }}
                               className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center space-x-2"
                             >
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                              <svg
+                                className="w-4 h-4"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                                />
                               </svg>
                               <span>Upload Images</span>
                             </button>
@@ -327,8 +362,18 @@ const BroadcastModal = ({
                               }}
                               className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center space-x-2"
                             >
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                              <svg
+                                className="w-4 h-4"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"
+                                />
                               </svg>
                               <span>Upload Files (PDF, PPT)</span>
                             </button>
@@ -339,7 +384,7 @@ const BroadcastModal = ({
                   />
                 </div>
               </div>
-              
+
               {/* Selected Files Preview - Compact */}
               {selectedFiles.length > 0 && (
                 <div className="space-y-2">
@@ -354,7 +399,10 @@ const BroadcastModal = ({
                           originalName: file.name,
                           type: getFileType(file),
                           size: file.size,
-                          url: file instanceof File ? URL.createObjectURL(file) : file.url,
+                          url:
+                            file instanceof File
+                              ? URL.createObjectURL(file)
+                              : file.url,
                         }}
                         onRemove={() => handleRemoveFile(idx)}
                         compact={true}
@@ -383,11 +431,15 @@ const BroadcastModal = ({
                     </svg>
                     <div className="flex-1">
                       <p className="text-sm font-medium text-blue-900 dark:text-blue-300 mb-2">
-                        {detectedUrls.length} {detectedUrls.length === 1 ? "Link" : "Links"} Detected
+                        {detectedUrls.length}{" "}
+                        {detectedUrls.length === 1 ? "Link" : "Links"} Detected
                       </p>
                       <div className="space-y-1">
                         {detectedUrls.map((url, idx) => (
-                          <p key={idx} className="text-xs text-blue-700 dark:text-blue-400 break-all font-mono">
+                          <p
+                            key={idx}
+                            className="text-xs text-blue-700 dark:text-blue-400 break-all font-mono"
+                          >
                             {url}
                           </p>
                         ))}
@@ -527,11 +579,15 @@ const BroadcastModal = ({
                               </svg>
                             </div>
                             <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
-                              {hasUrls ? `Message (${broadcast.urls.length} link${broadcast.urls.length > 1 ? "s" : ""})` : "Message"}
+                              {hasUrls
+                                ? `Message (${broadcast.urls.length} link${broadcast.urls.length > 1 ? "s" : ""})`
+                                : "Message"}
                             </span>
                           </div>
                           <span className="text-xs text-gray-400 dark:text-gray-500">
-                            {formatTimestamp(broadcast.timestamp || broadcast.createdAt)}
+                            {formatTimestamp(
+                              broadcast.timestamp || broadcast.createdAt,
+                            )}
                           </span>
                         </div>
                         <div className="text-sm text-gray-900 dark:text-white whitespace-pre-wrap mb-3">
@@ -539,24 +595,29 @@ const BroadcastModal = ({
                         </div>
 
                         {/* Rich URL Preview Cards */}
-                        {broadcast.urlMetadata && broadcast.urls && broadcast.urls.length > 0 && (
-                          <div className="space-y-2 mt-3">
-                            {broadcast.urls.map((url, idx) => (
-                              <URLPreviewCard
-                                key={idx}
-                                url={url}
-                                metadata={broadcast.urlMetadata[url]}
-                                compact={broadcast.urls.length > 2}
-                              />
-                            ))}
-                          </div>
-                        )}
+                        {broadcast.urlMetadata &&
+                          broadcast.urls &&
+                          broadcast.urls.length > 0 && (
+                            <div className="space-y-2 mt-3">
+                              {broadcast.urls.map((url, idx) => (
+                                <URLPreviewCard
+                                  key={idx}
+                                  url={url}
+                                  metadata={broadcast.urlMetadata[url]}
+                                  compact={broadcast.urls.length > 2}
+                                />
+                              ))}
+                            </div>
+                          )}
 
                         {/* File Attachments */}
                         {broadcast.files && broadcast.files.length > 0 && (
                           <div className="mt-3">
                             <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">
-                              📎 {broadcast.files.length} {broadcast.files.length === 1 ? "Attachment" : "Attachments"}
+                              📎 {broadcast.files.length}{" "}
+                              {broadcast.files.length === 1
+                                ? "Attachment"
+                                : "Attachments"}
                             </p>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                               {broadcast.files.map((file, idx) => (

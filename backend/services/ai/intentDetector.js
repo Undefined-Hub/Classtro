@@ -3,7 +3,7 @@
  * Determines if user question is Classtro-related or general educational
  */
 function detectIntent(message) {
-  if (!message || typeof message !== 'string') {
+  if (!message || typeof message !== "string") {
     return "GENERAL";
   }
 
@@ -39,11 +39,13 @@ function detectIntent(message) {
     "quiz",
     "survey",
     "rating",
-    "emoji feedback"
+    "emoji feedback",
   ];
 
   // Check if any Classtro keyword exists
-  const isClasstro = classtroKeywords.some(keyword => lower.includes(keyword));
+  const isClasstro = classtroKeywords.some((keyword) =>
+    lower.includes(keyword),
+  );
 
   return isClasstro ? "CLASSTRO" : "GENERAL";
 }

@@ -338,7 +338,7 @@ export const AnalyticsProvider = ({ children }) => {
 
         // Get session ID from location state
         const sessionId = location.state?.sessionId;
-        
+
         if (!sessionId) {
           setError("No session ID provided");
           setLoading(false);
@@ -348,9 +348,7 @@ export const AnalyticsProvider = ({ children }) => {
         console.log("📊 Fetching analytics for session:", sessionId);
 
         // Fetch analytics from backend
-        const response = await api.get(
-          `/api/analytics/frontend/${sessionId}`,
-        );
+        const response = await api.get(`/api/analytics/frontend/${sessionId}`);
 
         console.log("Analytics API response:", response.data);
 
@@ -363,9 +361,11 @@ export const AnalyticsProvider = ({ children }) => {
           } else {
             // Analytics not generated yet
             setIsGenerated(false);
-            setError(response.data.message || "Analytics have not been generated yet");
+            setError(
+              response.data.message || "Analytics have not been generated yet",
+            );
             console.log("⚠️ Analytics not generated yet");
-            
+
             // Use mock data as fallback for UI preview
             const sessionData = location.state?.sessionData;
             const mockData = generateMockData(sessionData);
@@ -376,8 +376,10 @@ export const AnalyticsProvider = ({ children }) => {
         }
       } catch (err) {
         console.error("❌ Failed to load analytics:", err);
-        setError(err.response?.data?.message || "Failed to load analytics data");
-        
+        setError(
+          err.response?.data?.message || "Failed to load analytics data",
+        );
+
         // Use mock data as fallback
         const sessionData = location.state?.sessionData;
         const mockData = generateMockData(sessionData);

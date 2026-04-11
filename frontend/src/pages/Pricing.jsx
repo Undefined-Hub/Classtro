@@ -20,12 +20,13 @@ const Pricing = () => {
         "Session feedback",
         "Up to 50 participants",
         "5 rooms per account",
-        "Community support"
+        "Community support",
       ],
       cta: "Get started for free",
       ctaLink: "/register",
       popular: false,
-      buttonStyle: "border-2 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-800"
+      buttonStyle:
+        "border-2 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-800",
     },
     {
       name: "Pro",
@@ -39,12 +40,12 @@ const Pricing = () => {
         "Custom branding",
         "Unlimited rooms",
         "Export session data",
-        "Attendance reports"
+        "Attendance reports",
       ],
       cta: "Get started with Pro",
       ctaLink: "/register",
       popular: true,
-      buttonStyle: "bg-blue-700 text-white hover:bg-blue-800"
+      buttonStyle: "bg-blue-700 text-white hover:bg-blue-800",
     },
     {
       name: "Enterprise",
@@ -58,38 +59,43 @@ const Pricing = () => {
         "API access",
         "Custom integrations",
         "SLA & 24/7 support",
-        "On-premise deployment"
+        "On-premise deployment",
       ],
       cta: "Contact sales",
       ctaLink: "/contact",
       popular: false,
       buttonStyle: "bg-white text-gray-900 hover:bg-gray-100",
-      isDark: true
-    }
+      isDark: true,
+    },
   ];
 
   const getPrice = (plan) => {
     if (plan.price.monthly === "Custom") return "Custom";
-    const price = billingCycle === "monthly" ? plan.price.monthly : plan.price.annual;
+    const price =
+      billingCycle === "monthly" ? plan.price.monthly : plan.price.annual;
     return `₹${price}`;
   };
 
   const getPriceSubtext = (plan) => {
-    if (plan.price.monthly === "Custom") return "Per organization, billed annually";
-    return billingCycle === "monthly" ? "Per month, billed monthly" : "Per year, billed annually";
+    if (plan.price.monthly === "Custom")
+      return "Per organization, billed annually";
+    return billingCycle === "monthly"
+      ? "Per month, billed monthly"
+      : "Per year, billed annually";
   };
 
   return (
     <div className="min-h-screen bg-white dark:bg-gray-900">
       <Navbar />
-      
+
       <section className="pt-24 pb-16 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto text-center mb-12">
           <h1 className="text-4xl sm:text-5xl font-extrabold text-gray-900 dark:text-white mb-4">
             Plans and Pricing
           </h1>
           <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto mb-8">
-            Receive unlimited credits when you pay yearly, and save on your plan.
+            Receive unlimited credits when you pay yearly, and save on your
+            plan.
           </p>
 
           {/* Billing Toggle */}
@@ -141,30 +147,44 @@ const Pricing = () => {
               )}
 
               <div className="mb-6">
-                <h3 className={`text-xl font-bold mb-2 ${plan.isDark ? "text-white" : "text-gray-900 dark:text-white"}`}>
+                <h3
+                  className={`text-xl font-bold mb-2 ${plan.isDark ? "text-white" : "text-gray-900 dark:text-white"}`}
+                >
                   {plan.name}
                 </h3>
                 <div className="mb-2">
-                  <span className={`text-4xl font-bold ${plan.isDark ? "text-white" : "text-gray-900 dark:text-white"}`}>
+                  <span
+                    className={`text-4xl font-bold ${plan.isDark ? "text-white" : "text-gray-900 dark:text-white"}`}
+                  >
                     {getPrice(plan)}
                   </span>
                 </div>
-                <p className={`text-sm ${plan.isDark ? "text-gray-400" : "text-gray-600 dark:text-gray-400"}`}>
+                <p
+                  className={`text-sm ${plan.isDark ? "text-gray-400" : "text-gray-600 dark:text-gray-400"}`}
+                >
                   {getPriceSubtext(plan)}
                 </p>
               </div>
 
-              <p className={`mb-6 text-sm ${plan.isDark ? "text-gray-300" : "text-gray-700 dark:text-gray-300"}`}>
+              <p
+                className={`mb-6 text-sm ${plan.isDark ? "text-gray-300" : "text-gray-700 dark:text-gray-300"}`}
+              >
                 {plan.description}
               </p>
 
               <ul className="space-y-3 mb-8">
                 {plan.features.map((feature, featureIndex) => (
                   <li key={featureIndex} className="flex items-start gap-3">
-                    <Check className={`w-5 h-5 flex-shrink-0 mt-0.5 ${
-                      plan.isDark ? "text-white" : "text-gray-700 dark:text-gray-300"
-                    }`} />
-                    <span className={`text-sm ${plan.isDark ? "text-gray-300" : "text-gray-700 dark:text-gray-300"}`}>
+                    <Check
+                      className={`w-5 h-5 flex-shrink-0 mt-0.5 ${
+                        plan.isDark
+                          ? "text-white"
+                          : "text-gray-700 dark:text-gray-300"
+                      }`}
+                    />
+                    <span
+                      className={`text-sm ${plan.isDark ? "text-gray-300" : "text-gray-700 dark:text-gray-300"}`}
+                    >
                       {feature}
                     </span>
                   </li>

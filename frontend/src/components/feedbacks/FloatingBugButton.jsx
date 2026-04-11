@@ -21,7 +21,7 @@ const BUG_MODULES = [
   "User Profile",
   "Notifications",
   "File Upload",
-  "Other"
+  "Other",
 ];
 
 const FloatingBugButton = () => {
@@ -142,28 +142,33 @@ const FloatingBugButton = () => {
       const BACKEND_BASE_URL =
         import.meta.env.VITE_BACKEND_BASE_URL || "http://localhost:5000";
       const endpoint = reportType === "bug" ? "systemBug" : "systemFeedback";
-      const response = await fetch(`${BACKEND_BASE_URL}/api/feedback/${endpoint}`, {
-        method: "POST",
-        body: formDataToSend,
-      });
+      const response = await fetch(
+        `${BACKEND_BASE_URL}/api/feedback/${endpoint}`,
+        {
+          method: "POST",
+          body: formDataToSend,
+        },
+      );
 
       if (response.ok) {
         const result = await response.json();
         toast.success(
           `${reportType === "bug" ? "Bug report" : "Feedback"} submitted successfully! Report #${result.reportNumber || result.id}`,
-          { duration: 4000 }
+          { duration: 4000 },
         );
         handleCloseModal();
       } else {
         const errorData = await response
           .json()
           .catch(() => ({ error: "Unknown error occurred" }));
-        
+
         let errorMessage = "";
-        
+
         // Handle validation errors from backend
         if (errorData.details && Array.isArray(errorData.details)) {
-          errorMessage = errorData.details.map((d) => d.msg || d.message).join(", ");
+          errorMessage = errorData.details
+            .map((d) => d.msg || d.message)
+            .join(", ");
         } else if (errorData.error) {
           errorMessage = errorData.error;
         } else if (errorData.message) {
@@ -171,14 +176,17 @@ const FloatingBugButton = () => {
         } else {
           errorMessage = "Failed to submit report. Please try again.";
         }
-        
+
         toast.error(errorMessage, { duration: 5000 });
       }
     } catch (error) {
       console.error("Error submitting report:", error);
-      toast.error("Network error. Please check your connection and try again.", {
-        duration: 5000
-      });
+      toast.error(
+        "Network error. Please check your connection and try again.",
+        {
+          duration: 5000,
+        },
+      );
     } finally {
       setIsSubmitting(false);
     }

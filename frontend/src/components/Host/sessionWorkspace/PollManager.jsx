@@ -10,38 +10,58 @@ const POLL_TEMPLATES = [
   {
     id: 1,
     question: "How well do you understand today's topic?",
-    options: ["Very well", "Somewhat", "Need more explanation", "Confused"]
+    options: ["Very well", "Somewhat", "Need more explanation", "Confused"],
   },
   {
     id: 7,
     question: "Did you understand todays lecture?",
-    options: ["Yes", "Partially", "No"]
+    options: ["Yes", "Partially", "No"],
   },
   {
     id: 2,
     question: "What's your preferred learning pace?",
-    options: ["Slower, more examples", "Current pace is good", "Faster, less detail", "Mix of both"]
+    options: [
+      "Slower, more examples",
+      "Current pace is good",
+      "Faster, less detail",
+      "Mix of both",
+    ],
   },
   {
     id: 3,
     question: "Which topic should we cover next?",
-    options: ["Topic A", "Topic B", "Topic C", "Topic D"]
+    options: ["Topic A", "Topic B", "Topic C", "Topic D"],
   },
   {
     id: 4,
     question: "Are you able to follow along?",
-    options: ["Yes, perfectly", "Mostly yes", "Having some difficulty", "Need help"]
+    options: [
+      "Yes, perfectly",
+      "Mostly yes",
+      "Having some difficulty",
+      "Need help",
+    ],
   },
   {
     id: 5,
     question: "Should we do more practice problems?",
-    options: ["Yes, many more", "A few more", "Current amount is good", "Less practice, more theory"]
+    options: [
+      "Yes, many more",
+      "A few more",
+      "Current amount is good",
+      "Less practice, more theory",
+    ],
   },
   {
     id: 6,
     question: "What's your confidence level on this topic?",
-    options: ["Very confident", "Confident", "Somewhat confident", "Not confident"]
-  }
+    options: [
+      "Very confident",
+      "Confident",
+      "Somewhat confident",
+      "Not confident",
+    ],
+  },
 ];
 
 const PollManager = ({ isParticipantListOpen = true }) => {
@@ -330,126 +350,126 @@ const PollManager = ({ isParticipantListOpen = true }) => {
   return (
     <>
       <div className="p-3 h-full overflow-y-auto no-scrollbar">
-        <div className={`mx-auto transition-all duration-300 ${
-          isParticipantListOpen 
-            ? 'max-w-5xl' 
-            : 'max-w-4xl'
-        }`}>
+        <div
+          className={`mx-auto transition-all duration-300 ${
+            isParticipantListOpen ? "max-w-5xl" : "max-w-4xl"
+          }`}
+        >
           <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-bold text-gray-900 dark:text-white">
-            Live Polls
-          </h2>
-          <div className="flex space-x-2">
-            <button
-              onClick={() => setActiveView("main")}
-              className="inline-flex items-center px-2 py-1 bg-gray-200 text-gray-700 rounded-lg text-xs hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
-            >
-              <svg
-                className="w-3 h-3 mr-1"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
+            <h2 className="text-lg font-bold text-gray-900 dark:text-white">
+              Live Polls
+            </h2>
+            <div className="flex space-x-2">
+              <button
+                onClick={() => setActiveView("main")}
+                className="inline-flex items-center px-2 py-1 bg-gray-200 text-gray-700 rounded-lg text-xs hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M10 19l-7-7m0 0l7-7m-7 7h18"
-                />
-              </svg>
-              Back
-            </button>
-            <button
-              onClick={() => {
-                if (activePoll) {
-                  alert(
-                    "A poll is already active. Please end the current poll before creating a new one.",
-                  );
-                  return;
-                }
-                setShowPollForm(true);
-              }}
-              className="inline-flex items-center px-2 py-1 bg-blue-600 text-white rounded-lg text-xs hover:bg-blue-700 focus:ring-2 focus:ring-blue-500"
-            >
-              <svg
-                className="w-3 h-3 mr-1"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
+                <svg
+                  className="w-3 h-3 mr-1"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M10 19l-7-7m0 0l7-7m-7 7h18"
+                  />
+                </svg>
+                Back
+              </button>
+              <button
+                onClick={() => {
+                  if (activePoll) {
+                    alert(
+                      "A poll is already active. Please end the current poll before creating a new one.",
+                    );
+                    return;
+                  }
+                  setShowPollForm(true);
+                }}
+                className="inline-flex items-center px-2 py-1 bg-blue-600 text-white rounded-lg text-xs hover:bg-blue-700 focus:ring-2 focus:ring-blue-500"
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                />
-              </svg>
-              New Poll
-            </button>
-          </div>
-        </div>
-
-        {/* Active Poll Display */}
-        {activePoll ? (
-          <LivePoll onPollSubmit={handleEndPoll} />
-        ) : pastPolls.length > 0 ? (
-          <div className="flex flex-col items-center justify-center py-12">
-            <ChartNoAxesColumn className="w-12 h-12 text-gray-300 dark:text-gray-600 mb-4" />
-            <span className="text-gray-400 dark:text-gray-500 text-lg font-medium text-center">
-              No live polls yet
-            </span>
-          </div>
-        ) : null}
-
-        {/* Past Polls */}
-        {pastPolls.length > 0 && <PastPolls />}
-
-        {/* Empty State */}
-        {!activePoll && pastPolls.length === 0 && !showPollForm && (
-          <div className="bg-white dark:bg-gray-700 rounded-lg shadow-md p-8 text-center">
-            <div className="mx-auto flex items-center justify-center w-16 h-16 bg-blue-100 dark:bg-blue-900/30 rounded-full mb-4">
-              <svg
-                className="w-8 h-8 text-blue-600 dark:text-blue-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
-                />
-              </svg>
+                <svg
+                  className="w-3 h-3 mr-1"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                  />
+                </svg>
+                New Poll
+              </button>
             </div>
-            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-              No Polls Created Yet
-            </h3>
-            <p className="text-gray-500 dark:text-gray-400 mb-4">
-              Create your first poll to check student understanding or gather
-              opinions.
-            </p>
-            <button
-              onClick={() => setShowPollForm(true)}
-              className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 focus:ring-2 focus:ring-blue-500"
-            >
-              <svg
-                className="w-5 h-5 mr-2"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                />
-              </svg>
-              Create Your First Poll
-            </button>
           </div>
-        )}
+
+          {/* Active Poll Display */}
+          {activePoll ? (
+            <LivePoll onPollSubmit={handleEndPoll} />
+          ) : pastPolls.length > 0 ? (
+            <div className="flex flex-col items-center justify-center py-12">
+              <ChartNoAxesColumn className="w-12 h-12 text-gray-300 dark:text-gray-600 mb-4" />
+              <span className="text-gray-400 dark:text-gray-500 text-lg font-medium text-center">
+                No live polls yet
+              </span>
+            </div>
+          ) : null}
+
+          {/* Past Polls */}
+          {pastPolls.length > 0 && <PastPolls />}
+
+          {/* Empty State */}
+          {!activePoll && pastPolls.length === 0 && !showPollForm && (
+            <div className="bg-white dark:bg-gray-700 rounded-lg shadow-md p-8 text-center">
+              <div className="mx-auto flex items-center justify-center w-16 h-16 bg-blue-100 dark:bg-blue-900/30 rounded-full mb-4">
+                <svg
+                  className="w-8 h-8 text-blue-600 dark:text-blue-400"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                  />
+                </svg>
+              </div>
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+                No Polls Created Yet
+              </h3>
+              <p className="text-gray-500 dark:text-gray-400 mb-4">
+                Create your first poll to check student understanding or gather
+                opinions.
+              </p>
+              <button
+                onClick={() => setShowPollForm(true)}
+                className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 focus:ring-2 focus:ring-blue-500"
+              >
+                <svg
+                  className="w-5 h-5 mr-2"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                  />
+                </svg>
+                Create Your First Poll
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
@@ -494,21 +514,33 @@ const PollManager = ({ isParticipantListOpen = true }) => {
                 <div className="p-4">
                   <div className="flex items-center justify-between mb-3">
                     <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center">
-                      <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                      <svg
+                        className="w-4 h-4 mr-1.5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M13 10V3L4 14h7v7l9-11h-7z"
+                        />
                       </svg>
                       Quick Templates
                     </h4>
                   </div>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">Click to launch or edit</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
+                    Click to launch or edit
+                  </p>
                   <div className="space-y-2">
                     {POLL_TEMPLATES.map((template) => (
                       <div
                         key={template.id}
                         className={`p-3 rounded-lg border-2 transition-all cursor-pointer ${
                           selectedTemplate === template.id
-                            ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                            : 'border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-500'
+                            ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
+                            : "border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-500"
                         }`}
                       >
                         <p className="text-sm font-medium text-gray-800 dark:text-gray-200 mb-2">
@@ -520,7 +552,9 @@ const PollManager = ({ isParticipantListOpen = true }) => {
                               key={idx}
                               className="text-xs px-2 py-0.5 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 rounded"
                             >
-                              {opt.length > 12 ? opt.substring(0, 12) + '...' : opt}
+                              {opt.length > 12
+                                ? opt.substring(0, 12) + "..."
+                                : opt}
                             </span>
                           ))}
                           {template.options.length > 2 && (
@@ -555,11 +589,16 @@ const PollManager = ({ isParticipantListOpen = true }) => {
 
               {/* Right Column - Custom Poll Form */}
               <div className="w-2/3 flex flex-col">
-                <form onSubmit={handleCreatePoll} className="flex-1 flex flex-col overflow-hidden">
+                <form
+                  onSubmit={handleCreatePoll}
+                  className="flex-1 flex flex-col overflow-hidden"
+                >
                   <div className="flex-1 overflow-y-auto custom-scrollbar px-6 py-4">
                     <div className="flex items-center justify-between mb-3">
                       <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-                        {selectedTemplate ? 'Edit Template Poll' : 'Custom Poll'}
+                        {selectedTemplate
+                          ? "Edit Template Poll"
+                          : "Custom Poll"}
                       </h4>
                       {selectedTemplate && (
                         <button

@@ -38,7 +38,11 @@ const SessionSchema = new mongoose.Schema(
           {
             filename: { type: String, required: true }, // Stored filename
             originalName: { type: String, required: true }, // Original filename
-            type: { type: String, enum: ["pdf", "ppt", "pptx", "image"], required: true },
+            type: {
+              type: String,
+              enum: ["pdf", "ppt", "pptx", "image"],
+              required: true,
+            },
             mimeType: { type: String, required: true },
             size: { type: Number, required: true }, // Size in bytes
             url: { type: String, required: true }, // Access URL
@@ -48,7 +52,11 @@ const SessionSchema = new mongoose.Schema(
         reactions: [
           {
             emoji: { type: String, required: true }, // 👍, ❤️, 🎉, ✅
-            userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+            userId: {
+              type: mongoose.Schema.Types.ObjectId,
+              ref: "User",
+              required: true,
+            },
             userName: { type: String, required: true },
             timestamp: { type: Date, default: Date.now },
           },
