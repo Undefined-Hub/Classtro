@@ -100,17 +100,21 @@ function SessionsPage() {
     if (!quizToDelete) return;
 
     try {
-      // Delete from API
-      await api.delete(`/api/quiz-templates/${quizToDelete._id}`);
-      
+      console.log('Attempting to delete quiz:', quizToDelete._id);
+      const response = await api.delete(`/api/quiz-templates/${quizToDelete._id}`);
+      console.log('Delete response:', response);
       
       // Update local state
       setQuizzes(quizzes.filter(q => q._id !== quizToDelete._id));
       setShowDeleteConfirm(false);
       setQuizToDelete(null);
+      
+      // Show success message
+      alert('Quiz deleted successfully!');
     } catch (err) {
       console.error('Error deleting quiz:', err);
-      alert('Failed to delete quiz. Please try again.');
+      const errorMessage = err.response?.data?.error || err.message || 'Failed to delete quiz';
+      alert(`Error: ${errorMessage}`);
     }
   };
 
@@ -237,10 +241,14 @@ function SessionsPage() {
                         </div>
                         <button
                           onClick={(e) => {
+                            console.log('Delete button clicked for quiz:', quiz._id);
+                            e.preventDefault();
                             e.stopPropagation();
                             handleDeleteQuiz(quiz);
                           }}
-                          className="p-2 text-slate-400 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all opacity-0 group-hover:opacity-100"
+                          className="flex-shrink-0 p-2 text-slate-400 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all pointer-events-auto z-10 relative "
+                          title="Delete this quiz"
+                          type="button"
                         >
                           <Trash2 size={16} />
                         </button>
@@ -372,13 +380,13 @@ function SessionsPage() {
                   setShowDeleteConfirm(false);
                   setQuizToDelete(null);
                 }}
-                className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
+                className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 hover:cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 onClick={confirmDeleteQuiz}
-                className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+                className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 hover:cursor-pointer"
               >
                 Delete Quiz
               </button>
