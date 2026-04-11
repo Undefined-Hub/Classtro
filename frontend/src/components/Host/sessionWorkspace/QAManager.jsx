@@ -2,7 +2,7 @@ import React from "react";
 
 const QAManager = ({
   questions,
-  onUpvoteQuestion,
+  // onUpvoteQuestion,
   onMarkAnswered,
   activeView,
   setActiveView,
@@ -66,7 +66,7 @@ const QAManager = ({
                   {/* Upvote section */}
                   <div className="flex flex-col items-center space-y-1 select-none flex-shrink-0">
                     <button 
-                      onClick={() => onUpvoteQuestion && onUpvoteQuestion(question.id)}
+                      // onClick={() => onUpvoteQuestion && onUpvoteQuestion(question.id)}
                       className={`p-1.5 rounded-lg transition-all duration-200 ${
                         question.upvotes > 0 
                           ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' 
