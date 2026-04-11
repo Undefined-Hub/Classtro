@@ -68,7 +68,7 @@ const buildAnalytics = async (sessionId, sections) => {
 // Frontend-compatible analytics structure
 const buildFrontendAnalytics = async (sessionId) => {
   try {
-    const session = await Session.findById(sessionId).populate('roomId');
+    const session = await Session.findById(sessionId).populate("roomId");
     if (!session) {
       throw new Error("Session not found");
     }
@@ -91,7 +91,7 @@ const buildFrontendAnalytics = async (sessionId) => {
     // Calculate participant stats
     const participantStats = await generateParticipantStats(sessionId);
     const timeline = await generateTimeline(sessionId);
-    
+
     // Build frontend-compatible structure
     const aiInsights = await generateAiInsights({
       sessionId,
@@ -126,7 +126,11 @@ const buildFrontendAnalytics = async (sessionId) => {
         pollsConducted: polls.length,
         questionsAsked: questions.length,
       },
-      participants: formatParticipantsForFrontend(participants, activities, session),
+      participants: formatParticipantsForFrontend(
+        participants,
+        activities,
+        session,
+      ),
       participantsTimeline: formatTimelineForFrontend(timeline),
       polls: formatPollsForFrontend(polls),
       questions: formatQuestionsForFrontend(questions),
@@ -141,13 +145,17 @@ const buildFrontendAnalytics = async (sessionId) => {
 
 // Helper functions to format data for frontend
 const formatParticipantsForFrontend = (participants, activities, session) => {
-  const participantDurations = calculateParticipantDurations(participants, activities, session);
-  
+  const participantDurations = calculateParticipantDurations(
+    participants,
+    activities,
+    session,
+  );
+
   return participants.map((participant, index) => {
-    const durationData = participantDurations.find(p => 
-      p.participantId.toString() === participant._id.toString()
+    const durationData = participantDurations.find(
+      (p) => p.participantId.toString() === participant._id.toString(),
     ) || { totalDuration: 0 };
-    
+
     return {
       id: participant._id,
       name: participant.userId?.name || participant.name || "Anonymous",
@@ -159,35 +167,39 @@ const formatParticipantsForFrontend = (participants, activities, session) => {
 };
 
 const formatTimelineForFrontend = (timeline) => {
-  return timeline.map(point => ({
-    time: new Date(point.timestamp).toLocaleTimeString('en-US', { 
-      hour: '2-digit', 
-      minute: '2-digit' 
+  return timeline.map((point) => ({
+    time: new Date(point.timestamp).toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
     }),
     activeCount: point.activeParticipants,
   }));
 };
 
 const formatPollsForFrontend = (polls) => {
-  return polls.map(poll => {
-    const totalResponses = poll.options?.reduce((sum, option) => sum + (option.votes || 0), 0) || 0;
-    
+  return polls.map((poll) => {
+    const totalResponses =
+      poll.options?.reduce((sum, option) => sum + (option.votes || 0), 0) || 0;
+
     return {
       id: poll._id,
       question: poll.question,
-      options: poll.options?.map(option => ({
-        text: option.text,
-        votes: option.votes || 0,
-      })) || [],
+      options:
+        poll.options?.map((option) => ({
+          text: option.text,
+          votes: option.votes || 0,
+        })) || [],
       totalResponses,
     };
   });
 };
 
 const formatQuestionsForFrontend = (questions) => {
-  return questions.map(question => ({
+  return questions.map((question) => ({
     id: question._id,
-    author: question.isAnonymous ? "Anonymous" : (question.authorId?.name || "Anonymous"),
+    author: question.isAnonymous
+      ? "Anonymous"
+      : question.authorId?.name || "Anonymous",
     text: question.text,
     upvotes: question.upvotes || 0,
     answered: question.isAnswered || false,
@@ -197,16 +209,52 @@ const formatQuestionsForFrontend = (questions) => {
 
 const computeBaseWordCloud = (comments = [], limit = 20) => {
   const stopWords = new Set([
-    "the", "and", "for", "with", "that", "this", "was", "were", "are", "very",
-    "have", "from", "your", "about", "just", "really", "more", "would", "could",
-    "should", "class", "session", "teacher", "lecture", "today", "still", "also",
-    "because", "into", "actually", "something", "things", "thing", "happened", "happen",
+    "the",
+    "and",
+    "for",
+    "with",
+    "that",
+    "this",
+    "was",
+    "were",
+    "are",
+    "very",
+    "have",
+    "from",
+    "your",
+    "about",
+    "just",
+    "really",
+    "more",
+    "would",
+    "could",
+    "should",
+    "class",
+    "session",
+    "teacher",
+    "lecture",
+    "today",
+    "still",
+    "also",
+    "because",
+    "into",
+    "actually",
+    "something",
+    "things",
+    "thing",
+    "happened",
+    "happen",
   ]);
 
   const themeRules = [
     {
       label: "teaching quality",
-      patterns: [/teach(er|ing)?/i, /must teach/i, /didn'?t teach/i, /not taught/i],
+      patterns: [
+        /teach(er|ing)?/i,
+        /must teach/i,
+        /didn'?t teach/i,
+        /not taught/i,
+      ],
     },
     {
       label: "engagement",
@@ -222,7 +270,13 @@ const computeBaseWordCloud = (comments = [], limit = 20) => {
     },
     {
       label: "examples",
-      patterns: [/example/i, /demo/i, /practical/i, /real world/i, /application/i],
+      patterns: [
+        /example/i,
+        /demo/i,
+        /practical/i,
+        /real world/i,
+        /application/i,
+      ],
     },
     {
       label: "doubt support",
@@ -235,11 +289,30 @@ const computeBaseWordCloud = (comments = [], limit = 20) => {
   ];
 
   const positiveWords = new Set([
-    "great", "good", "nice", "excellent", "amazing", "helpful", "clear", "interesting",
+    "great",
+    "good",
+    "nice",
+    "excellent",
+    "amazing",
+    "helpful",
+    "clear",
+    "interesting",
   ]);
   const negativeWords = new Set([
-    "not", "dont", "don't", "didnt", "didn't", "nothing", "boring", "unclear", "confusing",
-    "bad", "worse", "poor", "hard", "difficult",
+    "not",
+    "dont",
+    "don't",
+    "didnt",
+    "didn't",
+    "nothing",
+    "boring",
+    "unclear",
+    "confusing",
+    "bad",
+    "worse",
+    "poor",
+    "hard",
+    "difficult",
   ]);
 
   const frequencies = new Map();
@@ -402,12 +475,15 @@ const formatFeedbackForFrontend = async (feedbacks) => {
     };
   }
 
-  const totalRating = feedbacks.reduce((sum, feedback) => sum + (feedback.rating || 0), 0);
+  const totalRating = feedbacks.reduce(
+    (sum, feedback) => sum + (feedback.rating || 0),
+    0,
+  );
   const averageRating = totalRating / feedbacks.length;
-  
+
   const comments = feedbacks
-    .filter(feedback => feedback.description && feedback.description.trim())
-    .map(feedback => feedback.description);
+    .filter((feedback) => feedback.description && feedback.description.trim())
+    .map((feedback) => feedback.description);
   const wordCloud = await generateWordCloudFromComments(comments);
 
   // Simple sentiment analysis based on rating
@@ -436,20 +512,31 @@ const generateParticipantStats = async (sessionId) => {
       .lean();
 
     const totalParticipants = participants.length;
-    
+
     // Get session activities for duration tracking
     const activities = await SessionActivity.find({ sessionId })
       .sort({ timestamp: 1 })
       .lean();
 
     // Calculate peak concurrent users using join/leave events
-    const concurrentStats = calculatePeakConcurrency(participants, activities, session);
-    
+    const concurrentStats = calculatePeakConcurrency(
+      participants,
+      activities,
+      session,
+    );
+
     // Calculate individual participant durations
-    const participantDurations = calculateParticipantDurations(participants, activities, session);
-    
+    const participantDurations = calculateParticipantDurations(
+      participants,
+      activities,
+      session,
+    );
+
     // Calculate engagement metrics
-    const engagementStats = calculateEngagementMetrics(participantDurations, session);
+    const engagementStats = calculateEngagementMetrics(
+      participantDurations,
+      session,
+    );
 
     return {
       totalParticipants,
@@ -459,16 +546,15 @@ const generateParticipantStats = async (sessionId) => {
       totalSessionTime: engagementStats.totalTime,
       engagementRate: engagementStats.engagementRate,
       participantBreakdown: {
-        activeParticipants: participants.filter(p => p.isActive).length,
-        leftParticipants: participants.filter(p => p.leftAt).length,
-        kickedParticipants: participants.filter(p => p.kicked).length,
+        activeParticipants: participants.filter((p) => p.isActive).length,
+        leftParticipants: participants.filter((p) => p.leftAt).length,
+        kickedParticipants: participants.filter((p) => p.kicked).length,
       },
       durationDistribution: engagementStats.durationDistribution,
       topParticipantsByDuration: participantDurations
         .sort((a, b) => b.totalDuration - a.totalDuration)
         .slice(0, 10),
     };
-
   } catch (error) {
     console.error("Error generating participant stats:", error);
     return {
@@ -492,41 +578,47 @@ const generateParticipantStats = async (sessionId) => {
 // Helper function to calculate peak concurrency
 const calculatePeakConcurrency = (participants, activities, session) => {
   const events = [];
-  
+
   // Prefer activity-based tracking if available
   if (activities.length > 0) {
-    activities.forEach(activity => {
-      const change = activity.activityType === 'join' || activity.activityType === 'reconnect' ? 1 : -1;
+    activities.forEach((activity) => {
+      const change =
+        activity.activityType === "join" ||
+        activity.activityType === "reconnect"
+          ? 1
+          : -1;
       events.push({
         time: activity.timestamp,
         change,
         type: activity.activityType,
-        participantId: activity.participantId
+        participantId: activity.participantId,
       });
     });
   } else {
     // Fallback: Create join/leave events from participant data
-    participants.forEach(participant => {
+    participants.forEach((participant) => {
       events.push({
         time: participant.joinedAt,
         change: 1,
-        type: 'join',
-        participantId: participant._id
+        type: "join",
+        participantId: participant._id,
       });
-      
+
       if (participant.leftAt) {
         events.push({
           time: participant.leftAt,
           change: -1,
-          type: 'leave',
-          participantId: participant._id
+          type: "leave",
+          participantId: participant._id,
         });
       }
     });
   }
 
   // Sort events by time using getTime() for proper comparison
-  events.sort((a, b) => new Date(a.time).getTime() - new Date(b.time).getTime());
+  events.sort(
+    (a, b) => new Date(a.time).getTime() - new Date(b.time).getTime(),
+  );
 
   let currentCount = 0;
   let peakCount = 0;
@@ -534,12 +626,12 @@ const calculatePeakConcurrency = (participants, activities, session) => {
   let weightedSum = 0;
   let lastTime = new Date(session.startAt).getTime();
 
-  events.forEach(event => {
+  events.forEach((event) => {
     const eventTime = new Date(event.time).getTime();
     const timeDiff = Math.max(0, eventTime - lastTime);
     weightedSum += currentCount * timeDiff;
     totalTime += timeDiff;
-    
+
     currentCount = Math.max(0, currentCount + event.change);
     peakCount = Math.max(peakCount, currentCount);
     lastTime = eventTime;
@@ -560,7 +652,7 @@ const calculatePeakConcurrency = (participants, activities, session) => {
 
   return {
     peak: peakCount,
-    average: Math.round(averageConcurrent * 100) / 100
+    average: Math.round(averageConcurrent * 100) / 100,
   };
 };
 
@@ -568,7 +660,7 @@ const calculatePeakConcurrency = (participants, activities, session) => {
 const calculateParticipantDurations = (participants, activities, session) => {
   const participantMap = new Map();
 
-  participants.forEach(participant => {
+  participants.forEach((participant) => {
     participantMap.set(participant._id.toString(), {
       participantId: participant._id,
       name: participant.name,
@@ -583,18 +675,24 @@ const calculateParticipantDurations = (participants, activities, session) => {
   if (activities.length > 0) {
     const userSessions = new Map();
 
-    activities.forEach(activity => {
+    activities.forEach((activity) => {
       const participantId = activity.participantId.toString();
-      
+
       if (!userSessions.has(participantId)) {
         userSessions.set(participantId, []);
       }
 
       const sessions = userSessions.get(participantId);
-      
-      if (activity.activityType === 'join' || activity.activityType === 'reconnect') {
+
+      if (
+        activity.activityType === "join" ||
+        activity.activityType === "reconnect"
+      ) {
         sessions.push({ joinTime: activity.timestamp, leaveTime: null });
-      } else if (activity.activityType === 'leave' || activity.activityType === 'kicked') {
+      } else if (
+        activity.activityType === "leave" ||
+        activity.activityType === "kicked"
+      ) {
         const lastSession = sessions[sessions.length - 1];
         if (lastSession && !lastSession.leaveTime) {
           lastSession.leaveTime = activity.timestamp;
@@ -608,8 +706,8 @@ const calculateParticipantDurations = (participants, activities, session) => {
       if (!participant) return;
 
       let totalDuration = 0;
-      sessions.forEach(session => {
-        const leaveTime = session.leaveTime || (session.endAt || new Date());
+      sessions.forEach((session) => {
+        const leaveTime = session.leaveTime || session.endAt || new Date();
         const duration = new Date(leaveTime) - new Date(session.joinTime);
         totalDuration += Math.max(0, duration);
       });
@@ -620,13 +718,13 @@ const calculateParticipantDurations = (participants, activities, session) => {
     });
   } else {
     // Fallback to participant join/leave times
-    participants.forEach(participant => {
+    participants.forEach((participant) => {
       const participantData = participantMap.get(participant._id.toString());
       if (!participantData) return;
 
       const leaveTime = participant.leftAt || session.endAt || new Date();
       const duration = new Date(leaveTime) - new Date(participant.joinedAt);
-      
+
       participantData.totalDuration = Math.max(0, duration);
       participantData.joinCount = 1;
     });
@@ -642,41 +740,45 @@ const calculateEngagementMetrics = (participantDurations, session) => {
       averageDuration: 0,
       totalTime: 0,
       engagementRate: 0,
-      durationDistribution: {}
+      durationDistribution: {},
     };
   }
 
-  const sessionDuration = session.endAt ? 
-    new Date(session.endAt) - new Date(session.startAt) : 
-    new Date() - new Date(session.startAt);
+  const sessionDuration = session.endAt
+    ? new Date(session.endAt) - new Date(session.startAt)
+    : new Date() - new Date(session.startAt);
 
-  const totalParticipantTime = participantDurations.reduce((sum, p) => sum + p.totalDuration, 0);
+  const totalParticipantTime = participantDurations.reduce(
+    (sum, p) => sum + p.totalDuration,
+    0,
+  );
   const averageDuration = totalParticipantTime / participantDurations.length;
-  const engagementRate = sessionDuration > 0 ? (averageDuration / sessionDuration) * 100 : 0;
+  const engagementRate =
+    sessionDuration > 0 ? (averageDuration / sessionDuration) * 100 : 0;
 
   // Duration distribution (in minutes)
   const durationDistribution = {
-    '0-5min': 0,
-    '5-15min': 0,
-    '15-30min': 0,
-    '30-60min': 0,
-    '60min+': 0
+    "0-5min": 0,
+    "5-15min": 0,
+    "15-30min": 0,
+    "30-60min": 0,
+    "60min+": 0,
   };
 
-  participantDurations.forEach(p => {
+  participantDurations.forEach((p) => {
     const minutes = p.totalDuration / (1000 * 60);
-    if (minutes <= 5) durationDistribution['0-5min']++;
-    else if (minutes <= 15) durationDistribution['5-15min']++;
-    else if (minutes <= 30) durationDistribution['15-30min']++;
-    else if (minutes <= 60) durationDistribution['30-60min']++;
-    else durationDistribution['60min+']++;
+    if (minutes <= 5) durationDistribution["0-5min"]++;
+    else if (minutes <= 15) durationDistribution["5-15min"]++;
+    else if (minutes <= 30) durationDistribution["15-30min"]++;
+    else if (minutes <= 60) durationDistribution["30-60min"]++;
+    else durationDistribution["60min+"]++;
   });
 
   return {
-    averageDuration: Math.round(averageDuration / 1000 / 60 * 100) / 100, // minutes
+    averageDuration: Math.round((averageDuration / 1000 / 60) * 100) / 100, // minutes
     totalTime: Math.round(totalParticipantTime / 1000 / 60), // total minutes
     engagementRate: Math.round(engagementRate * 100) / 100,
-    durationDistribution
+    durationDistribution,
   };
 };
 
@@ -694,58 +796,64 @@ const generateTimeline = async (sessionId) => {
 
     const sessionStart = new Date(session.startAt);
     const sessionEnd = session.endAt ? new Date(session.endAt) : new Date();
-    
+
     // Generate timeline with 5-minute intervals
     const timeline = [];
     const intervalMinutes = 5; // 5-minute intervals
     const maxPoints = 100;
-    
+
     let currentTime = new Date(sessionStart);
     let pointCount = 0;
-    
+
     // Always add start point
     const startActiveCount = calculateActiveParticipantsAtTime(
-      currentTime, 
-      participants, 
-      activities
+      currentTime,
+      participants,
+      activities,
     );
-    
+
     timeline.push({
       timestamp: new Date(currentTime),
       activeParticipants: startActiveCount,
       minute: 0,
     });
     pointCount++;
-    
+
     // Generate intermediate points up to max limit
     currentTime = new Date(currentTime.getTime() + intervalMinutes * 60 * 1000);
-    
+
     while (currentTime < sessionEnd && pointCount < maxPoints - 1) {
       const activeCount = calculateActiveParticipantsAtTime(
-        currentTime, 
-        participants, 
-        activities
+        currentTime,
+        participants,
+        activities,
       );
-      
+
       timeline.push({
         timestamp: new Date(currentTime),
         activeParticipants: activeCount,
         minute: Math.floor((currentTime - sessionStart) / (1000 * 60)),
       });
       pointCount++;
-      
+
       // Move to next interval
-      currentTime = new Date(currentTime.getTime() + intervalMinutes * 60 * 1000);
-    }
-    
-    // Always add end point if not already added and not at limit
-    if (pointCount < maxPoints && (timeline.length === 0 || Math.abs(timeline[timeline.length - 1].timestamp - sessionEnd) > 1000)) {
-      const endActiveCount = calculateActiveParticipantsAtTime(
-        sessionEnd, 
-        participants, 
-        activities
+      currentTime = new Date(
+        currentTime.getTime() + intervalMinutes * 60 * 1000,
       );
-      
+    }
+
+    // Always add end point if not already added and not at limit
+    if (
+      pointCount < maxPoints &&
+      (timeline.length === 0 ||
+        Math.abs(timeline[timeline.length - 1].timestamp - sessionEnd) > 1000)
+    ) {
+      const endActiveCount = calculateActiveParticipantsAtTime(
+        sessionEnd,
+        participants,
+        activities,
+      );
+
       timeline.push({
         timestamp: new Date(sessionEnd),
         activeParticipants: endActiveCount,
@@ -754,7 +862,6 @@ const generateTimeline = async (sessionId) => {
     }
 
     return timeline;
-    
   } catch (error) {
     console.error("Error generating timeline:", error);
     return [];
@@ -762,66 +869,83 @@ const generateTimeline = async (sessionId) => {
 };
 
 // Helper function to calculate active participants at specific time
-const calculateActiveParticipantsAtTime = (targetTime, participants, activities) => {
+const calculateActiveParticipantsAtTime = (
+  targetTime,
+  participants,
+  activities,
+) => {
   let activeCount = 0;
-  
+
   // If we have activity tracking, use it for more accurate counts
   if (activities.length > 0) {
     const participantStates = new Map();
-    
+
     // Initialize all participants as inactive
-    participants.forEach(p => {
+    participants.forEach((p) => {
       participantStates.set(p._id.toString(), false);
     });
-    
+
     // Process activities up to target time
-    activities.forEach(activity => {
+    activities.forEach((activity) => {
       if (activity.timestamp <= targetTime) {
         const participantId = activity.participantId.toString();
-        
-        if (activity.activityType === 'join' || activity.activityType === 'reconnect') {
+
+        if (
+          activity.activityType === "join" ||
+          activity.activityType === "reconnect"
+        ) {
           participantStates.set(participantId, true);
-        } else if (activity.activityType === 'leave' || activity.activityType === 'kicked') {
+        } else if (
+          activity.activityType === "leave" ||
+          activity.activityType === "kicked"
+        ) {
           participantStates.set(participantId, false);
         }
       }
     });
-    
+
     // Count active participants
-    participantStates.forEach(isActive => {
+    participantStates.forEach((isActive) => {
       if (isActive) activeCount++;
     });
-    
   } else {
     // Fallback to participant join/leave times
-    participants.forEach(participant => {
+    participants.forEach((participant) => {
       const joinTime = new Date(participant.joinedAt);
-      const leaveTime = participant.leftAt ? new Date(participant.leftAt) : new Date();
-      
+      const leaveTime = participant.leftAt
+        ? new Date(participant.leftAt)
+        : new Date();
+
       if (joinTime <= targetTime && targetTime <= leaveTime) {
         activeCount++;
       }
     });
   }
-  
+
   return activeCount;
 };
 
 const generatePollStats = async (sessionId) => {
   try {
     const polls = await Poll.find({ sessionId }).lean();
-    
-    return polls.map(poll => {
-      const totalResponses = poll.options?.reduce((sum, option) => sum + (option.votes || 0), 0) || 0;
-      
+
+    return polls.map((poll) => {
+      const totalResponses =
+        poll.options?.reduce((sum, option) => sum + (option.votes || 0), 0) ||
+        0;
+
       return {
         pollId: poll._id,
         question: poll.question,
-        options: poll.options?.map(option => ({
-          text: option.text,
-          votes: option.votes || 0,
-          percentage: totalResponses > 0 ? Math.round((option.votes || 0) / totalResponses * 100) : 0,
-        })) || [],
+        options:
+          poll.options?.map((option) => ({
+            text: option.text,
+            votes: option.votes || 0,
+            percentage:
+              totalResponses > 0
+                ? Math.round(((option.votes || 0) / totalResponses) * 100)
+                : 0,
+          })) || [],
         totalResponses,
         createdAt: poll.createdAt,
       };
@@ -838,23 +962,32 @@ const generateQnaStats = async (sessionId) => {
       .populate("authorId", "name")
       .sort({ createdAt: -1 })
       .lean();
-    
+
     const totalQuestions = questions.length;
-    const answeredQuestions = questions.filter(q => q.isAnswered).length;
-    const totalUpvotes = questions.reduce((sum, q) => sum + (q.upvotes || 0), 0);
-    const answerRate = totalQuestions > 0 ? Math.round((answeredQuestions / totalQuestions) * 100) : 0;
-    
+    const answeredQuestions = questions.filter((q) => q.isAnswered).length;
+    const totalUpvotes = questions.reduce(
+      (sum, q) => sum + (q.upvotes || 0),
+      0,
+    );
+    const answerRate =
+      totalQuestions > 0
+        ? Math.round((answeredQuestions / totalQuestions) * 100)
+        : 0;
+
     return {
       totalQuestions,
       answeredQuestions,
       unansweredQuestions: totalQuestions - answeredQuestions,
       answerRate,
       totalUpvotes,
-      averageUpvotes: totalQuestions > 0 ? Math.round((totalUpvotes / totalQuestions) * 10) / 10 : 0,
-      questions: questions.map(q => ({
+      averageUpvotes:
+        totalQuestions > 0
+          ? Math.round((totalUpvotes / totalQuestions) * 10) / 10
+          : 0,
+      questions: questions.map((q) => ({
         questionId: q._id,
         text: q.text,
-        author: q.isAnonymous ? "Anonymous" : (q.authorId?.name || "Anonymous"),
+        author: q.isAnonymous ? "Anonymous" : q.authorId?.name || "Anonymous",
         upvotes: q.upvotes || 0,
         answered: q.isAnswered || false,
         createdAt: q.createdAt,
@@ -880,43 +1013,48 @@ const generateAttendance = async (sessionId) => {
       .populate("userId", "name email")
       .sort({ joinedAt: 1 })
       .lean();
-    
+
     const session = await Session.findById(sessionId).lean();
     if (!session) {
       return [];
     }
-    
+
     // Calculate session duration using milliseconds for accuracy
     const sessionStart = new Date(session.startAt);
     const sessionEnd = session.endAt ? new Date(session.endAt) : new Date();
     const sessionDurationMs = sessionEnd - sessionStart;
-    
-    return participants.map(participant => {
+
+    return participants.map((participant) => {
       const joinTime = new Date(participant.joinedAt);
-      const leaveTime = participant.leftAt ? new Date(participant.leftAt) : sessionEnd;
-      
+      const leaveTime = participant.leftAt
+        ? new Date(participant.leftAt)
+        : sessionEnd;
+
       // Calculate actual milliseconds attended (for percentage calculation)
       const durationMs = leaveTime - joinTime;
-      
+
       // Display duration in minutes (rounded)
       const duration = Math.round(durationMs / (1000 * 60));
-      
+
       // Determine attendance status based on ACTUAL percentage (not rounded)
       // Calculate percentage using raw milliseconds for accuracy
-      console.log(`Calculating attendance for participant ${participant._id}: durationMs=${durationMs}, sessionDurationMs=${sessionDurationMs}`);
+      console.log(
+        `Calculating attendance for participant ${participant._id}: durationMs=${durationMs}, sessionDurationMs=${sessionDurationMs}`,
+      );
       const attendancePercentage = (durationMs / sessionDurationMs) * 100;
-      
+
       // Fair logic:
       // Full: attended >= 75% of session OR (joined at start AND stayed to end)
       // Partial: attended < 75% of session
       const minutesAfterStart = (joinTime - sessionStart) / (1000 * 60);
       const minutesBeforeEnd = (sessionEnd - leaveTime) / (1000 * 60);
-      
-      const attendanceStatus = 
-        (attendancePercentage >= 75) || (minutesAfterStart <= 1 && minutesBeforeEnd <= 1)
-          ? "full" 
+
+      const attendanceStatus =
+        attendancePercentage >= 75 ||
+        (minutesAfterStart <= 1 && minutesBeforeEnd <= 1)
+          ? "full"
           : "partial";
-      
+
       // Determine status: kicked, left, or active
       let status;
       if (participant.kicked) {
@@ -926,7 +1064,7 @@ const generateAttendance = async (sessionId) => {
       } else {
         status = "active";
       }
-      
+
       return {
         participantId: participant._id,
         name: participant.userId?.name || participant.name || "Anonymous",
@@ -951,9 +1089,9 @@ const generateFeedbackStats = async (sessionId) => {
       .populate("userId", "name")
       .sort({ submittedAt: -1 })
       .lean();
-    
+
     const totalFeedbacks = feedbacks.length;
-    
+
     if (totalFeedbacks === 0) {
       return {
         totalFeedbacks: 0,
@@ -964,35 +1102,35 @@ const generateFeedbackStats = async (sessionId) => {
         wordCloud: [],
       };
     }
-    
+
     const totalRating = feedbacks.reduce((sum, f) => sum + (f.rating || 0), 0);
     const averageRating = totalRating / totalFeedbacks;
-    
+
     // Rating distribution
     const ratingDistribution = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
-    feedbacks.forEach(f => {
+    feedbacks.forEach((f) => {
       if (f.rating >= 1 && f.rating <= 5) {
         ratingDistribution[f.rating]++;
       }
     });
-    
+
     // Simple sentiment analysis
     let sentiment = "neutral";
     if (averageRating >= 4) sentiment = "positive";
     else if (averageRating <= 2) sentiment = "negative";
 
     const comments = feedbacks
-      .filter(f => f.description && f.description.trim())
-      .map(f => f.description);
+      .filter((f) => f.description && f.description.trim())
+      .map((f) => f.description);
     const wordCloud = await generateWordCloudFromComments(comments);
-    
+
     return {
       totalFeedbacks,
       averageRating: Math.round(averageRating * 10) / 10,
       ratingDistribution,
       sentiment,
       wordCloud,
-      feedbacks: feedbacks.map(f => ({
+      feedbacks: feedbacks.map((f) => ({
         feedbackId: f._id,
         userName: f.userId?.name || "Anonymous",
         rating: f.rating,
@@ -1024,9 +1162,9 @@ const buildAiFacts = ({ session, builtSections }) => {
   const durationMinutes = Math.max(
     1,
     Math.round(
-      ((new Date(session.endAt || new Date()) - new Date(session.startAt)) /
+      (new Date(session.endAt || new Date()) - new Date(session.startAt)) /
         1000 /
-        60) || 1,
+        60 || 1,
     ),
   );
 
@@ -1136,13 +1274,21 @@ const computeSessionScore = (facts) => {
       key: "engagement",
       weight: 0.32,
       available: participantCount > 0,
-      score: clampNumber(Number(facts.participants.engagementRate || 0), 0, 100),
+      score: clampNumber(
+        Number(facts.participants.engagementRate || 0),
+        0,
+        100,
+      ),
     },
     {
       key: "attendance",
       weight: 0.18,
       available: participantCount > 0,
-      score: clampNumber(Number(facts.participants.attendanceRate || 0), 0, 100),
+      score: clampNumber(
+        Number(facts.participants.attendanceRate || 0),
+        0,
+        100,
+      ),
     },
     {
       key: "qna",
@@ -1154,22 +1300,32 @@ const computeSessionScore = (facts) => {
       key: "feedback",
       weight: 0.2,
       available: feedbackCount >= 3,
-      score: clampNumber(Number(facts.feedback.averageRating || 0) * 20, 0, 100),
+      score: clampNumber(
+        Number(facts.feedback.averageRating || 0) * 20,
+        0,
+        100,
+      ),
     },
     {
       key: "polls",
       weight: 0.1,
       available: pollCount > 0,
       score: clampNumber(
-        pollCount * 18 + Math.min(40, Number(facts.polls.avgResponsesPerPoll || 0) * 2),
+        pollCount * 18 +
+          Math.min(40, Number(facts.polls.avgResponsesPerPoll || 0) * 2),
         0,
         100,
       ),
     },
   ];
 
-  const totalWeight = components.reduce((sum, component) => sum + component.weight, 0);
-  const availableComponents = components.filter((component) => component.available);
+  const totalWeight = components.reduce(
+    (sum, component) => sum + component.weight,
+    0,
+  );
+  const availableComponents = components.filter(
+    (component) => component.available,
+  );
   const availableWeight = availableComponents.reduce(
     (sum, component) => sum + component.weight,
     0,
@@ -1190,7 +1346,8 @@ const computeSessionScore = (facts) => {
         showScore: false,
         isReliable: false,
         reason: "insufficient-signals",
-        message: "Not enough activity data to compute a reliable session score.",
+        message:
+          "Not enough activity data to compute a reliable session score.",
         availableSignals: 0,
         totalSignals: components.length,
         coveragePercent: 0,
@@ -1219,9 +1376,33 @@ const computeSessionScore = (facts) => {
     overallScore: reliabilityThresholdMet ? adjustedOverall : null,
     scoreBreakdown: {
       overall: reliabilityThresholdMet ? adjustedOverall : null,
-      engagement: participantCount > 0 ? clampNumber(Math.round(facts.participants.engagementRate || 0), 0, 100) : null,
-      participation: participantCount > 0 ? clampNumber(Math.round((facts.participants.attendanceRate || 0) * 0.7 + (facts.participants.peakConcurrent || 0) * 0.3), 0, 100) : null,
-      clarity: feedbackCount > 0 ? clampNumber(Math.round((facts.feedback.averageRating || 0) * 20), 0, 100) : null,
+      engagement:
+        participantCount > 0
+          ? clampNumber(
+              Math.round(facts.participants.engagementRate || 0),
+              0,
+              100,
+            )
+          : null,
+      participation:
+        participantCount > 0
+          ? clampNumber(
+              Math.round(
+                (facts.participants.attendanceRate || 0) * 0.7 +
+                  (facts.participants.peakConcurrent || 0) * 0.3,
+              ),
+              0,
+              100,
+            )
+          : null,
+      clarity:
+        feedbackCount > 0
+          ? clampNumber(
+              Math.round((facts.feedback.averageRating || 0) * 20),
+              0,
+              100,
+            )
+          : null,
     },
     scoreMeta: {
       showScore: reliabilityThresholdMet,
@@ -1246,8 +1427,11 @@ const getAiInsightsFallback = (facts, reason = "AI unavailable") => {
     (facts.qna.totalQuestions || 0) > 0 ||
     (facts.polls.totalPolls || 0) > 0 ||
     (facts.feedback.totalFeedbacks || 0) > 0;
-  const { overallScore, scoreBreakdown, scoreMeta } = computeSessionScore(facts);
-  const effectiveOverallScore = Number.isFinite(overallScore) ? overallScore : 0;
+  const { overallScore, scoreBreakdown, scoreMeta } =
+    computeSessionScore(facts);
+  const effectiveOverallScore = Number.isFinite(overallScore)
+    ? overallScore
+    : 0;
 
   return {
     available: true,
@@ -1270,7 +1454,7 @@ const getAiInsightsFallback = (facts, reason = "AI unavailable") => {
         : "The session maintained at least one interactive mechanism for participant response.",
       facts.participants.attendanceRate >= 70
         ? "Attendance retention was strong enough to indicate the content stayed relevant for many participants."
-        : "A meaningful subset of learners stayed engaged long enough to provide behavior data."
+        : "A meaningful subset of learners stayed engaged long enough to provide behavior data.",
     ],
     risks: [
       answerRate < 70
@@ -1281,7 +1465,7 @@ const getAiInsightsFallback = (facts, reason = "AI unavailable") => {
         : "No major attendance collapse was visible, but peak activity still needs reinforcement through structured interaction.",
       facts.feedback.averageRating < 4
         ? "Feedback is not yet strong enough to assume the current pace and format are ideal."
-        : "High satisfaction is a strength, but it can hide weak spots if the session remains mostly presenter-driven."
+        : "High satisfaction is a strength, but it can hide weak spots if the session remains mostly presenter-driven.",
     ],
     recommendations: [
       answerRate < 70
@@ -1311,7 +1495,10 @@ const getAiInsightsFallback = (facts, reason = "AI unavailable") => {
       },
       {
         label: "Tighten pacing around drop-off points",
-        priority: facts.interactionPatterns.lowParticipantsAtMinute > 0 ? "medium" : "low",
+        priority:
+          facts.interactionPatterns.lowParticipantsAtMinute > 0
+            ? "medium"
+            : "low",
         why: `Participation dipped around minute ${facts.interactionPatterns.lowMinute}, suggesting a good spot to insert a recap or poll.`,
       },
     ],
@@ -1341,15 +1528,16 @@ const parseAiInsightsJson = (rawText) => {
 
 const generateAiInsights = async ({ sessionId, session, builtSections }) => {
   try {
-    const safeSession =
-      session || (await Session.findById(sessionId).lean()) || { title: "Session" };
+    const safeSession = session ||
+      (await Session.findById(sessionId).lean()) || { title: "Session" };
 
     const facts = buildAiFacts({
       session: safeSession,
       builtSections,
     });
 
-    const prompt = `You are an analytics assistant for teaching sessions.\n` +
+    const prompt =
+      `You are an analytics assistant for teaching sessions.\n` +
       `Generate concise, action-focused coaching insights for a host from structured session metrics.\n` +
       `Return ONLY JSON with this exact schema:\n` +
       `{\n` +
@@ -1381,7 +1569,10 @@ const generateAiInsights = async ({ sessionId, session, builtSections }) => {
 
     const parsed = parseAiInsightsJson(raw);
     const recommendations = Array.isArray(parsed.recommendations)
-      ? parsed.recommendations.filter(Boolean).map((r) => String(r).trim()).slice(0, 6)
+      ? parsed.recommendations
+          .filter(Boolean)
+          .map((r) => String(r).trim())
+          .slice(0, 6)
       : [];
 
     if (
@@ -1394,20 +1585,29 @@ const generateAiInsights = async ({ sessionId, session, builtSections }) => {
       throw new Error("AI response did not match expected insights schema");
     }
 
-    const { overallScore, scoreBreakdown, scoreMeta } = computeSessionScore(facts);
+    const { overallScore, scoreBreakdown, scoreMeta } =
+      computeSessionScore(facts);
 
     const strengths = Array.isArray(parsed.strengths)
-      ? parsed.strengths.filter(Boolean).map((item) => String(item).trim()).slice(0, 4)
+      ? parsed.strengths
+          .filter(Boolean)
+          .map((item) => String(item).trim())
+          .slice(0, 4)
       : [];
     const risks = Array.isArray(parsed.risks)
-      ? parsed.risks.filter(Boolean).map((item) => String(item).trim()).slice(0, 4)
+      ? parsed.risks
+          .filter(Boolean)
+          .map((item) => String(item).trim())
+          .slice(0, 4)
       : [];
     const priorityActions = Array.isArray(parsed.priorityActions)
       ? parsed.priorityActions
           .filter(Boolean)
           .map((item) => ({
             label: String(item.label || item.title || "Action").trim(),
-            priority: ["high", "medium", "low"].includes(String(item.priority).toLowerCase())
+            priority: ["high", "medium", "low"].includes(
+              String(item.priority).toLowerCase(),
+            )
               ? String(item.priority).toLowerCase()
               : "medium",
             why: String(item.why || item.reason || "").trim(),
@@ -1422,24 +1622,35 @@ const generateAiInsights = async ({ sessionId, session, builtSections }) => {
       model: "gemini-2.5-flash-lite",
       overallScore,
       scoreMeta,
-      executiveSummary: String(parsed.executiveSummary || parsed.overview).trim(),
+      executiveSummary: String(
+        parsed.executiveSummary || parsed.overview,
+      ).trim(),
       overview: String(parsed.overview).trim(),
       engagementAnalysis: String(parsed.engagementAnalysis).trim(),
       interactionPatterns: String(parsed.interactionPatterns).trim(),
       recommendations,
-      strengths: strengths.length ? strengths : getAiInsightsFallback(facts).strengths,
+      strengths: strengths.length
+        ? strengths
+        : getAiInsightsFallback(facts).strengths,
       risks: risks.length ? risks : getAiInsightsFallback(facts).risks,
       priorityActions: priorityActions.length
         ? priorityActions
         : getAiInsightsFallback(facts).priorityActions,
-      scoreBreakdown: scoreBreakdown || parsed.scoreBreakdown || getAiInsightsFallback(facts).scoreBreakdown,
+      scoreBreakdown:
+        scoreBreakdown ||
+        parsed.scoreBreakdown ||
+        getAiInsightsFallback(facts).scoreBreakdown,
       metrics: facts,
     };
   } catch (error) {
     console.error("Error generating AI insights:", error);
 
     const fallbackFacts = buildAiFacts({
-      session: session || { title: "Session", startAt: new Date(), endAt: new Date() },
+      session: session || {
+        title: "Session",
+        startAt: new Date(),
+        endAt: new Date(),
+      },
       builtSections: builtSections || {},
     });
 
@@ -1454,13 +1665,13 @@ const generateAiInsights = async ({ sessionId, session, builtSections }) => {
 const formatStoredAnalytics = async (storedAnalytics) => {
   try {
     const session = await Session.findById(storedAnalytics.sessionId)
-      .populate('roomId')
+      .populate("roomId")
       .lean();
-    
+
     if (!session) {
       throw new Error("Session not found");
     }
-    
+
     const sections = storedAnalytics.sections || {};
     const participantStats = sections.participants || {};
     const includedSections = {
@@ -1486,7 +1697,7 @@ const formatStoredAnalytics = async (storedAnalytics) => {
         storedAnalytics.includedSections?.ai ??
         (sections.ai !== null && sections.ai !== undefined),
     };
-    
+
     // Build frontend structure from cached sections
     return {
       includedSections,
@@ -1500,22 +1711,30 @@ const formatStoredAnalytics = async (storedAnalytics) => {
         pollsConducted: sections.polls?.length || 0,
         questionsAsked: sections.qna?.totalQuestions || 0,
       },
-      participants: await formatStoredParticipants(storedAnalytics.sessionId, sections.attendance),
+      participants: await formatStoredParticipants(
+        storedAnalytics.sessionId,
+        sections.attendance,
+      ),
       participantsTimeline: formatStoredTimeline(sections.timeline),
       polls: sections.polls || [],
       questions: sections.qna?.questions || [],
       ai: sections.ai || null,
-      feedback: sections.feedback ? {
-        averageRating: sections.feedback.averageRating || 0,
-        comments: sections.feedback.feedbacks?.map(f => f.description).filter(Boolean) || [],
-        sentiment: sections.feedback.sentiment || "neutral",
-        wordCloud: sections.feedback.wordCloud || [],
-      } : {
-        averageRating: 0,
-        comments: [],
-        sentiment: "neutral",
-        wordCloud: [],
-      },
+      feedback: sections.feedback
+        ? {
+            averageRating: sections.feedback.averageRating || 0,
+            comments:
+              sections.feedback.feedbacks
+                ?.map((f) => f.description)
+                .filter(Boolean) || [],
+            sentiment: sections.feedback.sentiment || "neutral",
+            wordCloud: sections.feedback.wordCloud || [],
+          }
+        : {
+            averageRating: 0,
+            comments: [],
+            sentiment: "neutral",
+            wordCloud: [],
+          },
     };
   } catch (error) {
     console.error("Error formatting stored analytics:", error);
@@ -1527,47 +1746,49 @@ const formatStoredAnalytics = async (storedAnalytics) => {
 const formatStoredParticipants = async (sessionId, attendance) => {
   // Get session info for calculating attendance status
   const session = await Session.findById(sessionId).lean();
-  
+
   if (!attendance || attendance.length === 0) {
     // Fallback to fetching participants
     const participants = await Participant.find({ sessionId })
       .populate("userId", "name")
       .lean();
-    
-    return participants.map(p => ({
+
+    return participants.map((p) => ({
       id: p._id,
       name: p.userId?.name || p.name || "Anonymous",
       joinAt: p.joinedAt,
       leaveAt: p.leftAt,
-      duration: p.leftAt ? 
-        Math.round((new Date(p.leftAt) - new Date(p.joinedAt)) / (1000 * 60)) : 0,
+      duration: p.leftAt
+        ? Math.round((new Date(p.leftAt) - new Date(p.joinedAt)) / (1000 * 60))
+        : 0,
       attendanceStatus: "partial", // fallback when no attendance data
     }));
   }
-  
-  return attendance.map(a => {
+
+  return attendance.map((a) => {
     let attendanceStatus = a.attendanceStatus;
-    
+
     // Calculate attendanceStatus on-the-fly for old cached data (backward compatibility)
     if (!attendanceStatus && session) {
       const sessionStart = new Date(session.startAt);
       const sessionEnd = session.endAt ? new Date(session.endAt) : new Date();
       const sessionDurationMs = sessionEnd - sessionStart;
-      
+
       const joinTime = new Date(a.joinedAt);
       const leaveTime = a.leftAt ? new Date(a.leftAt) : sessionEnd;
       const durationMs = leaveTime - joinTime;
-      
+
       const attendancePercentage = (durationMs / sessionDurationMs) * 100;
       const minutesAfterStart = (joinTime - sessionStart) / (1000 * 60);
       const minutesBeforeEnd = (sessionEnd - leaveTime) / (1000 * 60);
-      
-      attendanceStatus = 
-        (attendancePercentage >= 75) || (minutesAfterStart <= 1 && minutesBeforeEnd <= 1)
-          ? "full" 
+
+      attendanceStatus =
+        attendancePercentage >= 75 ||
+        (minutesAfterStart <= 1 && minutesBeforeEnd <= 1)
+          ? "full"
           : "partial";
     }
-    
+
     return {
       id: a.participantId,
       name: a.name,
@@ -1585,11 +1806,11 @@ const formatStoredTimeline = (timeline) => {
   if (!timeline || timeline.length === 0) {
     return [];
   }
-  
-  return timeline.map(point => ({
-    time: new Date(point.timestamp).toLocaleTimeString('en-US', { 
-      hour: '2-digit', 
-      minute: '2-digit' 
+
+  return timeline.map((point) => ({
+    time: new Date(point.timestamp).toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
     }),
     activeCount: point.activeParticipants,
   }));

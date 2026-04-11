@@ -1,11 +1,20 @@
 // LivePoll.jsx
 import React, { use, useState } from "react";
 import { useHostSession } from "../../../context/HostSessionContext";
-import { X, BarChart3, Users, Zap, PieChart, BarChart2, TrendingUp, Layers } from "lucide-react";
+import {
+  X,
+  BarChart3,
+  Users,
+  Zap,
+  PieChart,
+  BarChart2,
+  TrendingUp,
+  Layers,
+} from "lucide-react";
 const LivePoll = ({ onPollSubmit }) => {
   const { activePoll } = useHostSession();
-  const [chartType, setChartType] = useState('horizontal'); // horizontal, vertical, pie, donut
-  
+  const [chartType, setChartType] = useState("horizontal"); // horizontal, vertical, pie, donut
+
   if (!activePoll) return null;
   const totalVotes = activePoll.options.reduce(
     (sum, opt) => sum + opt.votes,
@@ -14,41 +23,41 @@ const LivePoll = ({ onPollSubmit }) => {
 
   // Chart type options
   const chartTypes = [
-    { id: 'horizontal', name: 'Horizontal Bars', icon: BarChart3 },
-    { id: 'vertical', name: 'Vertical Bars', icon: BarChart2 },
-    { id: 'pie', name: 'Pie Chart', icon: PieChart },
-    { id: 'donut', name: 'Donut Chart', icon: Layers },
+    { id: "horizontal", name: "Horizontal Bars", icon: BarChart3 },
+    { id: "vertical", name: "Vertical Bars", icon: BarChart2 },
+    { id: "pie", name: "Pie Chart", icon: PieChart },
+    { id: "donut", name: "Donut Chart", icon: Layers },
   ];
 
   // Color scheme for different options - softer, muted colors
   const colors = [
-    'bg-blue-400/70 dark:bg-blue-500',
-    'bg-emerald-400/70 dark:bg-emerald-500', 
-    'bg-violet-400/70 dark:bg-violet-500',
-    'bg-amber-400/70 dark:bg-amber-500',
-    'bg-rose-400/70 dark:bg-rose-500',
-    'bg-teal-400/70 dark:bg-teal-500'
+    "bg-blue-400/70 dark:bg-blue-500",
+    "bg-emerald-400/70 dark:bg-emerald-500",
+    "bg-violet-400/70 dark:bg-violet-500",
+    "bg-amber-400/70 dark:bg-amber-500",
+    "bg-rose-400/70 dark:bg-rose-500",
+    "bg-teal-400/70 dark:bg-teal-500",
   ];
 
   const colorClasses = [
-    'text-blue-500',
-    'text-emerald-500',
-    'text-violet-500',
-    'text-amber-500',
-    'text-rose-500',
-    'text-teal-500'
+    "text-blue-500",
+    "text-emerald-500",
+    "text-violet-500",
+    "text-amber-500",
+    "text-rose-500",
+    "text-teal-500",
   ];
 
   // Render different chart types
   const renderChart = () => {
     switch (chartType) {
-      case 'horizontal':
+      case "horizontal":
         return renderHorizontalBars();
-      case 'vertical':
+      case "vertical":
         return renderVerticalBars();
-      case 'pie':
+      case "pie":
         return renderPieChart();
-      case 'donut':
+      case "donut":
         return renderDonutChart();
       default:
         return renderHorizontalBars();
@@ -58,8 +67,9 @@ const LivePoll = ({ onPollSubmit }) => {
   const renderHorizontalBars = () => (
     <div className="space-y-4">
       {activePoll.options.map((option, index) => {
-        const percentage = totalVotes > 0 ? Math.round((option.votes / totalVotes) * 100) : 0;
-        
+        const percentage =
+          totalVotes > 0 ? Math.round((option.votes / totalVotes) * 100) : 0;
+
         return (
           <div key={option._id} className="relative">
             <div className="relative bg-gray-100 dark:bg-gray-600 rounded-xl overflow-hidden min-h-[60px] flex items-center">
@@ -67,7 +77,7 @@ const LivePoll = ({ onPollSubmit }) => {
                 className={`absolute left-0 top-0 h-full transition-all duration-500 ease-out rounded-xl ${colors[index % colors.length]}`}
                 style={{ width: `${percentage}%` }}
               />
-              
+
               <div className="relative z-10 flex justify-between items-center w-full px-4 py-3">
                 <div className="flex-1">
                   <div className="flex items-center space-x-3">
@@ -79,13 +89,13 @@ const LivePoll = ({ onPollSubmit }) => {
                     </span>
                   </div>
                 </div>
-                
+
                 <div className="text-right">
                   <div className="font-bold text-gray-900 dark:text-white text-sm md:text-base">
                     {percentage}%
                   </div>
                   <div className="text-xs text-gray-600 dark:text-gray-300">
-                    {option.votes} {option.votes === 1 ? 'vote' : 'votes'}
+                    {option.votes} {option.votes === 1 ? "vote" : "votes"}
                   </div>
                 </div>
               </div>
@@ -99,11 +109,15 @@ const LivePoll = ({ onPollSubmit }) => {
   const renderVerticalBars = () => (
     <div className="flex items-end justify-center space-x-4 h-64 p-4">
       {activePoll.options.map((option, index) => {
-        const percentage = totalVotes > 0 ? (option.votes / totalVotes) * 100 : 0;
+        const percentage =
+          totalVotes > 0 ? (option.votes / totalVotes) * 100 : 0;
         const height = Math.max(percentage * 2, 8); // Min 8px height
-        
+
         return (
-          <div key={option._id} className="flex flex-col items-center space-y-2 flex-1 max-w-20">
+          <div
+            key={option._id}
+            className="flex flex-col items-center space-y-2 flex-1 max-w-20"
+          >
             <div className="text-center">
               <div className="font-bold text-sm text-gray-900 dark:text-white">
                 {Math.round(percentage)}%
@@ -121,7 +135,9 @@ const LivePoll = ({ onPollSubmit }) => {
                 {String.fromCharCode(65 + index)}
               </div>
               <div className="text-xs text-gray-700 dark:text-gray-300 font-medium truncate">
-                {option.text.length > 8 ? option.text.slice(0, 8) + '...' : option.text}
+                {option.text.length > 8
+                  ? option.text.slice(0, 8) + "..."
+                  : option.text}
               </div>
             </div>
           </div>
@@ -134,12 +150,12 @@ const LivePoll = ({ onPollSubmit }) => {
     const centerX = 100;
     const centerY = 100;
     const radius = 80;
-    
+
     // Show pie chart structure even with 0 votes
     if (totalVotes === 0) {
       // Equal segments for all options when no votes
       const equalAngle = 360 / activePoll.options.length;
-      
+
       return (
         <div className="flex items-center justify-center p-8">
           <div className="relative">
@@ -147,26 +163,26 @@ const LivePoll = ({ onPollSubmit }) => {
               {activePoll.options.map((option, index) => {
                 const startAngle = index * equalAngle;
                 const endAngle = (index + 1) * equalAngle;
-                
+
                 // Convert angles to radians
                 const startAngleRad = (startAngle - 90) * (Math.PI / 180);
                 const endAngleRad = (endAngle - 90) * (Math.PI / 180);
-                
+
                 // Calculate path coordinates
                 const x1 = centerX + radius * Math.cos(startAngleRad);
                 const y1 = centerY + radius * Math.sin(startAngleRad);
                 const x2 = centerX + radius * Math.cos(endAngleRad);
                 const y2 = centerY + radius * Math.sin(endAngleRad);
-                
+
                 const largeArcFlag = equalAngle > 180 ? 1 : 0;
-                
+
                 const pathData = [
                   `M ${centerX} ${centerY}`,
                   `L ${x1} ${y1}`,
                   `A ${radius} ${radius} 0 ${largeArcFlag} 1 ${x2} ${y2}`,
-                  'Z'
-                ].join(' ');
-                
+                  "Z",
+                ].join(" ");
+
                 return (
                   <path
                     key={option._id}
@@ -188,9 +204,11 @@ const LivePoll = ({ onPollSubmit }) => {
           <div className="ml-8 space-y-2">
             {activePoll.options.map((option, index) => (
               <div key={option._id} className="flex items-center space-x-2">
-                <div 
+                <div
                   className="w-4 h-4 rounded-full"
-                  style={{ backgroundColor: `hsl(${200 + index * 40}, 30%, 80%)` }}
+                  style={{
+                    backgroundColor: `hsl(${200 + index * 40}, 30%, 80%)`,
+                  }}
                 />
                 <div className="text-sm">
                   <span className="font-medium text-gray-900 dark:text-white">
@@ -208,23 +226,23 @@ const LivePoll = ({ onPollSubmit }) => {
     }
 
     let cumulativeAngle = 0;
-    
+
     return (
       <div className="flex items-center justify-center p-8">
         <div className="relative">
           <svg width="200" height="200">
             {activePoll.options.map((option, index) => {
               const percentage = (option.votes / totalVotes) * 100;
-              
+
               // Skip rendering if percentage is 0
               if (percentage === 0) return null;
-              
+
               const angle = (percentage / 100) * 360;
               const startAngle = cumulativeAngle;
               const endAngle = cumulativeAngle + angle;
-              
+
               cumulativeAngle += angle;
-              
+
               // Handle 100% case - render as full circle
               if (percentage >= 100) {
                 return (
@@ -238,26 +256,26 @@ const LivePoll = ({ onPollSubmit }) => {
                   />
                 );
               }
-              
+
               // Convert angles to radians
               const startAngleRad = (startAngle - 90) * (Math.PI / 180);
               const endAngleRad = (endAngle - 90) * (Math.PI / 180);
-              
+
               // Calculate path coordinates
               const x1 = centerX + radius * Math.cos(startAngleRad);
               const y1 = centerY + radius * Math.sin(startAngleRad);
               const x2 = centerX + radius * Math.cos(endAngleRad);
               const y2 = centerY + radius * Math.sin(endAngleRad);
-              
+
               const largeArcFlag = angle > 180 ? 1 : 0;
-              
+
               const pathData = [
                 `M ${centerX} ${centerY}`,
                 `L ${x1} ${y1}`,
                 `A ${radius} ${radius} 0 ${largeArcFlag} 1 ${x2} ${y2}`,
-                'Z'
-              ].join(' ');
-              
+                "Z",
+              ].join(" ");
+
               return (
                 <path
                   key={option._id}
@@ -269,15 +287,20 @@ const LivePoll = ({ onPollSubmit }) => {
             })}
           </svg>
         </div>
-        
+
         <div className="ml-8 space-y-2">
           {activePoll.options.map((option, index) => {
-            const percentage = totalVotes > 0 ? Math.round((option.votes / totalVotes) * 100) : 0;
+            const percentage =
+              totalVotes > 0
+                ? Math.round((option.votes / totalVotes) * 100)
+                : 0;
             return (
               <div key={option._id} className="flex items-center space-x-2">
-                <div 
+                <div
                   className="w-4 h-4 rounded-full"
-                  style={{ backgroundColor: `hsl(${200 + index * 40}, 60%, 60%)` }}
+                  style={{
+                    backgroundColor: `hsl(${200 + index * 40}, 60%, 60%)`,
+                  }}
                 />
                 <div className="text-sm">
                   <span className="font-medium text-gray-900 dark:text-white">
@@ -323,10 +346,13 @@ const LivePoll = ({ onPollSubmit }) => {
               </div>
             </div>
           </div>
-          
+
           <div className="ml-8 grid grid-cols-1 gap-2">
             {activePoll.options.map((option, index) => (
-              <div key={option._id} className="flex items-center space-x-3 p-2 bg-gray-50 dark:bg-gray-600/30 rounded-lg opacity-60">
+              <div
+                key={option._id}
+                className="flex items-center space-x-3 p-2 bg-gray-50 dark:bg-gray-600/30 rounded-lg opacity-60"
+              >
                 <div className="w-6 h-6 bg-gray-200 dark:bg-gray-600 rounded-full flex items-center justify-center text-gray-700 dark:text-gray-300 font-bold text-xs">
                   {String.fromCharCode(65 + index)}
                 </div>
@@ -338,9 +364,7 @@ const LivePoll = ({ onPollSubmit }) => {
                     0% • 0 votes
                   </div>
                 </div>
-                <div 
-                  className="w-3 h-3 rounded-full flex-shrink-0 bg-gray-300 dark:bg-gray-500"
-                />
+                <div className="w-3 h-3 rounded-full flex-shrink-0 bg-gray-300 dark:bg-gray-500" />
               </div>
             ))}
           </div>
@@ -349,7 +373,7 @@ const LivePoll = ({ onPollSubmit }) => {
     }
 
     let cumulativePercentage = 0;
-    
+
     return (
       <div className="flex items-center justify-center p-8">
         <div className="relative">
@@ -365,10 +389,10 @@ const LivePoll = ({ onPollSubmit }) => {
             />
             {activePoll.options.map((option, index) => {
               const percentage = (option.votes / totalVotes) * 100;
-              
+
               // Skip rendering if percentage is 0
               if (percentage === 0) return null;
-              
+
               // For 100% case, render full circle
               if (percentage >= 100) {
                 return (
@@ -384,11 +408,11 @@ const LivePoll = ({ onPollSubmit }) => {
                   />
                 );
               }
-              
+
               const strokeDasharray = `${percentage * 5.03} 502`;
               const strokeDashoffset = -cumulativePercentage * 5.03;
               cumulativePercentage += percentage;
-              
+
               return (
                 <circle
                   key={option._id}
@@ -405,7 +429,7 @@ const LivePoll = ({ onPollSubmit }) => {
               );
             })}
           </svg>
-          
+
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="text-center">
               <div className="text-xl font-bold text-gray-900 dark:text-white">
@@ -417,12 +441,18 @@ const LivePoll = ({ onPollSubmit }) => {
             </div>
           </div>
         </div>
-        
+
         <div className="ml-8 grid grid-cols-1 gap-2">
           {activePoll.options.map((option, index) => {
-            const percentage = totalVotes > 0 ? Math.round((option.votes / totalVotes) * 100) : 0;
+            const percentage =
+              totalVotes > 0
+                ? Math.round((option.votes / totalVotes) * 100)
+                : 0;
             return (
-              <div key={option._id} className="flex items-center space-x-3 p-2 bg-gray-50 dark:bg-gray-600/30 rounded-lg">
+              <div
+                key={option._id}
+                className="flex items-center space-x-3 p-2 bg-gray-50 dark:bg-gray-600/30 rounded-lg"
+              >
                 <div className="w-6 h-6 bg-gray-200 dark:bg-gray-600 rounded-full flex items-center justify-center text-gray-700 dark:text-gray-300 font-bold text-xs">
                   {String.fromCharCode(65 + index)}
                 </div>
@@ -434,9 +464,11 @@ const LivePoll = ({ onPollSubmit }) => {
                     {percentage}% • {option.votes} votes
                   </div>
                 </div>
-                <div 
+                <div
                   className="w-3 h-3 rounded-full flex-shrink-0"
-                  style={{ backgroundColor: `hsl(${200 + index * 40}, 60%, 60%)` }}
+                  style={{
+                    backgroundColor: `hsl(${200 + index * 40}, 60%, 60%)`,
+                  }}
                 />
               </div>
             );
@@ -475,7 +507,7 @@ const LivePoll = ({ onPollSubmit }) => {
           </button>
         </div>
       </div>
-      
+
       {/* Chart Type Selector Dock */}
       <div className="px-6 py-3 border-b border-gray-200 dark:border-gray-600 bg-gray-50/50 dark:bg-gray-600/20">
         <div className="flex items-center space-x-2">
@@ -492,8 +524,8 @@ const LivePoll = ({ onPollSubmit }) => {
                   onClick={() => setChartType(type.id)}
                   className={`inline-flex items-center px-3 py-2 text-xs font-medium rounded-md transition-all duration-200 ${
                     isActive
-                      ? 'bg-blue-100 text-blue-700 shadow-sm dark:bg-blue-900/30 dark:text-blue-300'
-                      : 'text-gray-600 hover:text-gray-800 hover:bg-gray-50 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-gray-600'
+                      ? "bg-blue-100 text-blue-700 shadow-sm dark:bg-blue-900/30 dark:text-blue-300"
+                      : "text-gray-600 hover:text-gray-800 hover:bg-gray-50 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-gray-600"
                   }`}
                   title={type.name}
                 >
@@ -505,7 +537,7 @@ const LivePoll = ({ onPollSubmit }) => {
           </div>
         </div>
       </div>
-      
+
       <div className="p-5">
         {renderChart()}
         <div className="mt-8 p-6 bg-gradient-to-r from-gray-50 to-blue-50/30 dark:from-gray-600/30 dark:to-gray-700/50 rounded-xl border border-gray-200 dark:border-gray-600">
@@ -524,7 +556,7 @@ const LivePoll = ({ onPollSubmit }) => {
                 </div>
               </div>
             </div>
-            
+
             {/* Live Status */}
             <div className="text-right">
               <div className="flex items-center justify-end space-x-2 mb-1">

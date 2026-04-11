@@ -1,7 +1,11 @@
 import React, { useEffect } from "react";
 import SessionStats from "./SessionStats";
 import { useHostSession } from "../../../context/HostSessionContext";
-import { ChartNoAxesColumn, MessageCircleQuestionMark, ClipboardCheck } from "lucide-react";
+import {
+  ChartNoAxesColumn,
+  MessageCircleQuestionMark,
+  ClipboardCheck,
+} from "lucide-react";
 
 const MainContent = ({ isParticipantListOpen = true }) => {
   // * Context
@@ -30,11 +34,11 @@ const MainContent = ({ isParticipantListOpen = true }) => {
 
   return (
     <div className="p-4 h-full flex flex-col items-center justify-center text-center">
-      <div className={`mx-auto transition-all duration-300 ${
-        isParticipantListOpen 
-          ? 'max-w-2xl' 
-          : 'max-w-3xl'
-      }`}>
+      <div
+        className={`mx-auto transition-all duration-300 ${
+          isParticipantListOpen ? "max-w-2xl" : "max-w-3xl"
+        }`}
+      >
         <div className="mb-6">
           <div className="mx-auto w-16 h-16 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center mb-3">
             <svg

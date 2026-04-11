@@ -2,12 +2,12 @@ import React from "react";
 import { User, Archive, LogOut } from "lucide-react";
 import ProfileImageOrInitials from "../ProfileImageOrInitials";
 
-const ProfileSidebar = ({ 
-  user, 
-  activeTab, 
-  setActiveTab, 
+const ProfileSidebar = ({
+  user,
+  activeTab,
+  setActiveTab,
   onLogout,
-  getInitials 
+  getInitials,
 }) => {
   return (
     <div className="w-full lg:w-80">
@@ -45,7 +45,7 @@ const ProfileSidebar = ({
             <User className="w-3 h-3 sm:w-4 sm:h-4 mr-2 sm:mr-3" />
             Profile
           </button>
-          
+
           {user?.role === "TEACHER" && (
             <button
               onClick={() => setActiveTab("archived")}

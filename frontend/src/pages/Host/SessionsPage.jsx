@@ -1,6 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { ClipboardCheck, Calendar, Target, Award, Plus, Trash2 } from "lucide-react";
+import {
+  ClipboardCheck,
+  Calendar,
+  Target,
+  Award,
+  Plus,
+  Trash2,
+} from "lucide-react";
 
 /* Components import  */
 import AllSessionsTable from "../../components/Host/dashboard/AllSessionsTable";
@@ -10,7 +17,6 @@ import QuizCreation from "../../components/Host/QuizCreation";
 import api from "../../utils/api";
 
 function SessionsPage() {
- 
   const navigate = useNavigate();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [quizName, setQuizName] = useState("");
@@ -28,13 +34,13 @@ function SessionsPage() {
     try {
       setIsLoading(true);
       setError(null);
-      const response = await api.get('/api/quiz-templates');
+      const response = await api.get("/api/quiz-templates");
       setQuizzes(response.data);
     } catch (err) {
-      console.error('Error loading quizzes:', err);
-      setError('Failed to load quizzes. Please try again.');
+      console.error("Error loading quizzes:", err);
+      setError("Failed to load quizzes. Please try again.");
       // Fallback to localStorage if API fails
-      setQuizzes(JSON.parse(localStorage.getItem('quizzes') || '[]'));
+      setQuizzes(JSON.parse(localStorage.getItem("quizzes") || "[]"));
     } finally {
       setIsLoading(false);
     }
@@ -79,15 +85,15 @@ function SessionsPage() {
       // Fetch full quiz details from API
       const response = await api.get(`/api/quiz-templates/${quiz._id}`);
       const fullQuiz = response.data;
-      
+
       setEditingQuiz(fullQuiz);
-          console.log("Updating existing quiz...",fullQuiz);
+      console.log("Updating existing quiz...", fullQuiz);
       setQuizName(fullQuiz.title);
       setQuizDescription(fullQuiz.description || "");
       setIsQuizCreated(true);
     } catch (err) {
-      console.error('Error loading quiz details:', err);
-      alert('Failed to load quiz details. Please try again.');
+      console.error("Error loading quiz details:", err);
+      alert("Failed to load quiz details. Please try again.");
     }
   };
 
@@ -100,20 +106,23 @@ function SessionsPage() {
     if (!quizToDelete) return;
 
     try {
-      console.log('Attempting to delete quiz:', quizToDelete._id);
-      const response = await api.delete(`/api/quiz-templates/${quizToDelete._id}`);
-      console.log('Delete response:', response);
-      
+      console.log("Attempting to delete quiz:", quizToDelete._id);
+      const response = await api.delete(
+        `/api/quiz-templates/${quizToDelete._id}`,
+      );
+      console.log("Delete response:", response);
+
       // Update local state
-      setQuizzes(quizzes.filter(q => q._id !== quizToDelete._id));
+      setQuizzes(quizzes.filter((q) => q._id !== quizToDelete._id));
       setShowDeleteConfirm(false);
       setQuizToDelete(null);
-      
+
       // Show success message
-      alert('Quiz deleted successfully!');
+      alert("Quiz deleted successfully!");
     } catch (err) {
-      console.error('Error deleting quiz:', err);
-      const errorMessage = err.response?.data?.error || err.message || 'Failed to delete quiz';
+      console.error("Error deleting quiz:", err);
+      const errorMessage =
+        err.response?.data?.error || err.message || "Failed to delete quiz";
       alert(`Error: ${errorMessage}`);
     }
   };
@@ -125,15 +134,14 @@ function SessionsPage() {
     setEditingQuiz(null);
     loadQuizzes(); // Reload quizzes from API after returning from creation/editing
   };
-  
+
   return (
     <>
       {isQuizCreated ? (
-
-        <QuizCreation 
-          quizName={quizName} 
-          quizDescription={quizDescription} 
-          onBack={handleBackToList} 
+        <QuizCreation
+          quizName={quizName}
+          quizDescription={quizDescription}
+          onBack={handleBackToList}
           existingQuiz={editingQuiz}
         />
       ) : (
@@ -141,18 +149,20 @@ function SessionsPage() {
           {/* <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6">
             Quizes
           </h2> */}
-          
+
           {/* Quizzes List */}
           <div className="mb-6">
             <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6">
               Your Quizzes
             </h2>
-            
+
             {/* Loading State */}
             {isLoading && (
               <div className="flex items-center justify-center py-12">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                <span className="ml-3 text-gray-600 dark:text-gray-400">Loading quizzes...</span>
+                <span className="ml-3 text-gray-600 dark:text-gray-400">
+                  Loading quizzes...
+                </span>
               </div>
             )}
 
@@ -160,12 +170,24 @@ function SessionsPage() {
             {error && !isLoading && (
               <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 mb-6">
                 <div className="flex items-center">
-                  <svg className="w-5 h-5 text-red-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.732 15.5C3.962 16.333 4.924 18 6.464 18z" />
+                  <svg
+                    className="w-5 h-5 text-red-500 mr-3"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.732 15.5C3.962 16.333 4.924 18 6.464 18z"
+                    />
                   </svg>
                   <div>
-                    <p className="text-red-700 dark:text-red-300 font-medium">{error}</p>
-                    <button 
+                    <p className="text-red-700 dark:text-red-300 font-medium">
+                      {error}
+                    </p>
+                    <button
                       onClick={loadQuizzes}
                       className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 text-sm underline mt-1"
                     >
@@ -195,109 +217,138 @@ function SessionsPage() {
                   </p>
                 </div>
               </div>
-            ) : !isLoading && !error && (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {/* Create Quiz Card */}
-                <div
-                  onClick={() => setIsModalOpen(true)}
-                  className="bg-gray-50 dark:bg-gray-800/50 border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg p-6 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors min-h-[280px]"
-                >
-                  <div className="w-16 h-16 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center mb-4">
-                    <Plus className="w-8 h-8 text-gray-600 dark:text-gray-400" />
-                  </div>
-                  <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">
-                    Create New Quiz
-                  </h3>
-                  <p className="text-gray-600 dark:text-gray-400 text-sm">
-                    Add another interactive assessment
-                  </p>
-                </div>
-
-                {/* Quiz Cards */}
-                {quizzes.map((quiz) => (
+            ) : (
+              !isLoading &&
+              !error && (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {/* Create Quiz Card */}
                   <div
-                    key={quiz._id}
-                    onClick={() => handleEditQuiz(quiz)}
-                    className="group relative bg-white dark:bg-slate-900 rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 border border-slate-200 dark:border-slate-700 cursor-pointer overflow-hidden hover:-translate-y-1"
+                    onClick={() => setIsModalOpen(true)}
+                    className="bg-gray-50 dark:bg-gray-800/50 border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg p-6 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors min-h-[280px]"
                   >
-                    {/* Gradient overlay on hover */}
-                    <div className="absolute inset-0 bg-gradient-to-br from-blue-50/50 to-purple-50/50 dark:from-blue-900/10 dark:to-purple-900/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                    
-                    {/* Header with icon */}
-                    <div className="relative p-6 pb-4">
-                      <div className="flex items-start justify-between mb-3">
-                        <div className="flex items-center gap-3">
-                          <div className="p-2 bg-blue-100 dark:bg-blue-900/40 rounded-lg group-hover:bg-blue-200 dark:group-hover:bg-blue-800/60 transition-colors">
-                            <ClipboardCheck className="text-blue-600 dark:text-blue-400" size={20} />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <h3 className="text-lg font-bold text-slate-900 dark:text-white truncate group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-                              {quiz.title}
-                            </h3>
-                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
-                              Quiz
-                            </span>
-                          </div>
-                        </div>
-                        <button
-                          onClick={(e) => {
-                            console.log('Delete button clicked for quiz:', quiz._id);
-                            e.preventDefault();
-                            e.stopPropagation();
-                            handleDeleteQuiz(quiz);
-                          }}
-                          className="flex-shrink-0 p-2 text-slate-400 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all pointer-events-auto z-10 relative "
-                          title="Delete this quiz"
-                          type="button"
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                      </div>
-                      
-                      {/* Description */}
-                      <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed line-clamp-2 mb-4">
-                        {quiz.description || "No description provided"}
-                      </p>
+                    <div className="w-16 h-16 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center mb-4">
+                      <Plus className="w-8 h-8 text-gray-600 dark:text-gray-400" />
                     </div>
-
-                    {/* Stats section */}
-                    <div className="relative px-6 pb-4">
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="flex items-center gap-2 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg group-hover:bg-slate-100 dark:group-hover:bg-slate-800 transition-colors">
-                          <Target className="text-slate-500 dark:text-slate-400 flex-shrink-0" size={16} />
-                          <div className="min-w-0">
-                            <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Questions</p>
-                            <p className="text-sm font-bold text-slate-900 dark:text-white">{quiz.questionsCount || 0}</p>
-                          </div>
-                        </div>
-                        
-                        <div className="flex items-center gap-2 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg group-hover:bg-slate-100 dark:group-hover:bg-slate-800 transition-colors">
-                          <Award className="text-slate-500 dark:text-slate-400 flex-shrink-0" size={16} />
-                          <div className="min-w-0">
-                            <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Points</p>
-                            <p className="text-sm font-bold text-slate-900 dark:text-white">{quiz.totalPoints}</p>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Footer with date */}
-                    <div className="relative px-6 pb-6">
-                      <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
-                        <Calendar size={14} />
-                        <span>Created {new Date(quiz.createdAt).toLocaleDateString('en-US', { 
-                          month: 'short', 
-                          day: 'numeric',
-                          year: 'numeric'
-                        })}</span>
-                      </div>
-                    </div>
-
-                    {/* Subtle border animation */}
-                    <div className="absolute inset-0 rounded-xl border-2 border-transparent group-hover:border-blue-200 dark:group-hover:border-blue-800 transition-colors duration-300"></div>
+                    <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">
+                      Create New Quiz
+                    </h3>
+                    <p className="text-gray-600 dark:text-gray-400 text-sm">
+                      Add another interactive assessment
+                    </p>
                   </div>
-                ))}
-              </div>
+
+                  {/* Quiz Cards */}
+                  {quizzes.map((quiz) => (
+                    <div
+                      key={quiz._id}
+                      onClick={() => handleEditQuiz(quiz)}
+                      className="group relative bg-white dark:bg-slate-900 rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 border border-slate-200 dark:border-slate-700 cursor-pointer overflow-hidden hover:-translate-y-1"
+                    >
+                      {/* Gradient overlay on hover */}
+                      <div className="absolute inset-0 bg-gradient-to-br from-blue-50/50 to-purple-50/50 dark:from-blue-900/10 dark:to-purple-900/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+
+                      {/* Header with icon */}
+                      <div className="relative p-6 pb-4">
+                        <div className="flex items-start justify-between mb-3">
+                          <div className="flex items-center gap-3">
+                            <div className="p-2 bg-blue-100 dark:bg-blue-900/40 rounded-lg group-hover:bg-blue-200 dark:group-hover:bg-blue-800/60 transition-colors">
+                              <ClipboardCheck
+                                className="text-blue-600 dark:text-blue-400"
+                                size={20}
+                              />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <h3 className="text-lg font-bold text-slate-900 dark:text-white truncate group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                                {quiz.title}
+                              </h3>
+                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                                Quiz
+                              </span>
+                            </div>
+                          </div>
+                          <button
+                            onClick={(e) => {
+                              console.log(
+                                "Delete button clicked for quiz:",
+                                quiz._id,
+                              );
+                              e.preventDefault();
+                              e.stopPropagation();
+                              handleDeleteQuiz(quiz);
+                            }}
+                            className="flex-shrink-0 p-2 text-slate-400 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all pointer-events-auto z-10 relative "
+                            title="Delete this quiz"
+                            type="button"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+
+                        {/* Description */}
+                        <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed line-clamp-2 mb-4">
+                          {quiz.description || "No description provided"}
+                        </p>
+                      </div>
+
+                      {/* Stats section */}
+                      <div className="relative px-6 pb-4">
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="flex items-center gap-2 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg group-hover:bg-slate-100 dark:group-hover:bg-slate-800 transition-colors">
+                            <Target
+                              className="text-slate-500 dark:text-slate-400 flex-shrink-0"
+                              size={16}
+                            />
+                            <div className="min-w-0">
+                              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                                Questions
+                              </p>
+                              <p className="text-sm font-bold text-slate-900 dark:text-white">
+                                {quiz.questionsCount || 0}
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-2 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg group-hover:bg-slate-100 dark:group-hover:bg-slate-800 transition-colors">
+                            <Award
+                              className="text-slate-500 dark:text-slate-400 flex-shrink-0"
+                              size={16}
+                            />
+                            <div className="min-w-0">
+                              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                                Points
+                              </p>
+                              <p className="text-sm font-bold text-slate-900 dark:text-white">
+                                {quiz.totalPoints}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Footer with date */}
+                      <div className="relative px-6 pb-6">
+                        <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+                          <Calendar size={14} />
+                          <span>
+                            Created{" "}
+                            {new Date(quiz.createdAt).toLocaleDateString(
+                              "en-US",
+                              {
+                                month: "short",
+                                day: "numeric",
+                                year: "numeric",
+                              },
+                            )}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Subtle border animation */}
+                      <div className="absolute inset-0 rounded-xl border-2 border-transparent group-hover:border-blue-200 dark:group-hover:border-blue-800 transition-colors duration-300"></div>
+                    </div>
+                  ))}
+                </div>
+              )
             )}
           </div>
         </>
@@ -361,15 +412,32 @@ function SessionsPage() {
             </h3>
             <div className="mb-4">
               <p className="text-gray-700 dark:text-gray-300 mb-3">
-                Are you sure you want to delete <span className="font-semibold text-gray-900 dark:text-white">"{quizToDelete?.title}"</span>?
+                Are you sure you want to delete{" "}
+                <span className="font-semibold text-gray-900 dark:text-white">
+                  "{quizToDelete?.title}"
+                </span>
+                ?
               </p>
               <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3">
                 <div className="flex items-start">
-                  <svg className="w-4 h-4 text-red-500 mt-0.5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.732 15.5C3.962 16.333 4.924 18 6.464 18z" />
+                  <svg
+                    className="w-4 h-4 text-red-500 mt-0.5 mr-2 flex-shrink-0"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.732 15.5C3.962 16.333 4.924 18 6.464 18z"
+                    />
                   </svg>
                   <div className="text-sm text-red-700 dark:text-red-300">
-                    <p className="font-normal">This action cannot be undone. The quiz and all its questions will be permanently deleted.</p>
+                    <p className="font-normal">
+                      This action cannot be undone. The quiz and all its
+                      questions will be permanently deleted.
+                    </p>
                   </div>
                 </div>
               </div>

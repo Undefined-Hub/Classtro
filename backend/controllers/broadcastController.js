@@ -19,7 +19,11 @@ const extractUrls = (text) => {
 const getFileType = (mimetype) => {
   if (mimetype === "application/pdf") return "pdf";
   if (mimetype === "application/vnd.ms-powerpoint") return "ppt";
-  if (mimetype === "application/vnd.openxmlformats-officedocument.presentationml.presentation") return "pptx";
+  if (
+    mimetype ===
+    "application/vnd.openxmlformats-officedocument.presentationml.presentation"
+  )
+    return "pptx";
   if (mimetype.startsWith("image/")) return "image";
   return "unknown";
 };
@@ -47,7 +51,9 @@ exports.addBroadcast = async (req, res, next) => {
 
     // Check if user is the session host
     if (session.teacherId.toString() !== req.user.id) {
-      return res.status(403).json({ message: "Only the session host can send broadcasts" });
+      return res
+        .status(403)
+        .json({ message: "Only the session host can send broadcasts" });
     }
 
     // Extract URLs from message
@@ -113,10 +119,12 @@ exports.getBroadcasts = async (req, res, next) => {
     }
 
     // Sort broadcasts by timestamp (newest first)
-    const broadcasts = session.broadcasts.sort((a, b) => b.timestamp - a.timestamp);
+    const broadcasts = session.broadcasts.sort(
+      (a, b) => b.timestamp - a.timestamp,
+    );
 
     res.json({
-      broadcasts, 
+      broadcasts,
       count: broadcasts.length,
     });
   } catch (error) {
@@ -139,12 +147,14 @@ exports.deleteBroadcast = async (req, res, next) => {
 
     // Check if user is the session host
     if (session.teacherId.toString() !== req.user.id) {
-      return res.status(403).json({ message: "Only the session host can delete broadcasts" });
+      return res
+        .status(403)
+        .json({ message: "Only the session host can delete broadcasts" });
     }
 
     // Find and remove the broadcast
     const broadcastIndex = session.broadcasts.findIndex(
-      (b) => b._id.toString() === broadcastId
+      (b) => b._id.toString() === broadcastId,
     );
 
     if (broadcastIndex === -1) {
@@ -177,7 +187,9 @@ exports.addReaction = async (req, res, next) => {
     // Validate emoji (only allow specific reactions)
     const allowedEmojis = ["👍", "❤️", "🎉", "✅"];
     if (!allowedEmojis.includes(emoji)) {
-      return res.status(400).json({ message: "Invalid emoji. Allowed: 👍, ❤️, 🎉, ✅" });
+      return res
+        .status(400)
+        .json({ message: "Invalid emoji. Allowed: 👍, ❤️, 🎉, ✅" });
     }
 
     const session = await Session.findById(sessionId);
@@ -198,7 +210,7 @@ exports.addReaction = async (req, res, next) => {
 
     // Check if user already reacted with this emoji
     const existingReactionIndex = broadcast.reactions.findIndex(
-      (r) => r.userId.toString() === req.user.id && r.emoji === emoji
+      (r) => r.userId.toString() === req.user.id && r.emoji === emoji,
     );
 
     let action = "added";
@@ -235,7 +247,8 @@ exports.addReaction = async (req, res, next) => {
 
       if (action === "added") {
         // Increment reaction count
-        analytics.reactionStats[emoji] = (analytics.reactionStats[emoji] || 0) + 1;
+        analytics.reactionStats[emoji] =
+          (analytics.reactionStats[emoji] || 0) + 1;
         analytics.reactionDetails.push({
           emoji,
           userId: req.user.id,
@@ -244,9 +257,12 @@ exports.addReaction = async (req, res, next) => {
         });
       } else if (action === "removed") {
         // Decrement reaction count
-        analytics.reactionStats[emoji] = Math.max(0, (analytics.reactionStats[emoji] || 0) - 1);
+        analytics.reactionStats[emoji] = Math.max(
+          0,
+          (analytics.reactionStats[emoji] || 0) - 1,
+        );
         analytics.reactionDetails = analytics.reactionDetails.filter(
-          (r) => !(r.userId.toString() === req.user.id && r.emoji === emoji)
+          (r) => !(r.userId.toString() === req.user.id && r.emoji === emoji),
         );
       }
 
@@ -265,18 +281,18 @@ exports.addReaction = async (req, res, next) => {
           console.error("[REACTION] Session not found for socket emit");
           return res.json({ message: "Reaction updated" });
         }
-        
+
         const roomName = `session:${session_data.code}`;
-        
+
         // Get room info for debugging
         const roomSockets = await sessionNamespace.in(roomName).fetchSockets();
         console.log("[REACTION] Room info:", {
           roomName,
           sessionCode: session_data.code,
           socketsInRoom: roomSockets.length,
-          socketIds: roomSockets.map(s => s.id),
+          socketIds: roomSockets.map((s) => s.id),
         });
-        
+
         const payload = {
           broadcastId,
           emoji,
@@ -285,12 +301,22 @@ exports.addReaction = async (req, res, next) => {
           action,
           reactions: broadcast.reactions, // Send full reactions array as backup
         };
-        
-        console.log("[REACTION] Emitting broadcast:reaction-update to room:", roomName, payload);
-        
-        sessionNamespace.to(roomName).emit("broadcast:reaction-update", payload);
-        
-        console.log("[REACTION] Event emitted successfully to", roomSockets.length, "participants");
+
+        console.log(
+          "[REACTION] Emitting broadcast:reaction-update to room:",
+          roomName,
+          payload,
+        );
+
+        sessionNamespace
+          .to(roomName)
+          .emit("broadcast:reaction-update", payload);
+
+        console.log(
+          "[REACTION] Event emitted successfully to",
+          roomSockets.length,
+          "participants",
+        );
       } else {
         console.error("[REACTION] Socket namespace not available");
       }
@@ -334,7 +360,7 @@ exports.trackView = async (req, res, next) => {
 
     // Check if user already viewed this broadcast
     const alreadyViewed = broadcast.views.some(
-      (v) => v.userId && v.userId.toString() === req.user.id
+      (v) => v.userId && v.userId.toString() === req.user.id,
     );
 
     if (!alreadyViewed) {

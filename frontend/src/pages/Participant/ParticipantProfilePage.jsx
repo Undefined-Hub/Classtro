@@ -16,25 +16,25 @@ const ParticipantProfilePage = () => {
   const [loading, setLoading] = useState(true);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [activeTab, setActiveTab] = useState("profile");
-  
+
   // Profile editing states
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [profileForm, setProfileForm] = useState({
     name: "",
     username: "",
-    profilePicture: ""
+    profilePicture: "",
   });
 
   // Password change states
   const [passwordForm, setPasswordForm] = useState({
     currentPassword: "",
     newPassword: "",
-    confirmPassword: ""
+    confirmPassword: "",
   });
   const [showPasswords, setShowPasswords] = useState({
     current: false,
     new: false,
-    confirm: false
+    confirm: false,
   });
   const [isChangingPassword, setIsChangingPassword] = useState(false);
 
@@ -60,7 +60,7 @@ const ParticipantProfilePage = () => {
         setProfileForm({
           name: response.data.data.name || "",
           username: response.data.data.username || "",
-          profilePicture: response.data.data.profilePicture || ""
+          profilePicture: response.data.data.profilePicture || "",
         });
       }
     } catch (error) {
@@ -73,32 +73,41 @@ const ParticipantProfilePage = () => {
 
   const handleProfileUpdate = async (updatedData) => {
     try {
-      if (!profileForm.name && !profileForm.username && !profileForm.profilePicture) {
+      if (
+        !profileForm.name &&
+        !profileForm.username &&
+        !profileForm.profilePicture
+      ) {
         toast.error("Please provide at least one field to update");
         return;
       }
 
       const updateData = {};
       if (profileForm.name.trim()) updateData.name = profileForm.name.trim();
-      if (profileForm.username.trim()) updateData.username = profileForm.username.trim();
-      if (profileForm.profilePicture.trim()) updateData.profilePicture = profileForm.profilePicture.trim();
+      if (profileForm.username.trim())
+        updateData.username = profileForm.username.trim();
+      if (profileForm.profilePicture.trim())
+        updateData.profilePicture = profileForm.profilePicture.trim();
 
-      const response = await api.put(`/api/users/profile/${currentUser.id}`, updateData);
-      
+      const response = await api.put(
+        `/api/users/profile/${currentUser.id}`,
+        updateData,
+      );
+
       if (response.data.success) {
         setUser(response.data.data);
         // Update localStorage
         const updatedUser = { ...currentUser, ...response.data.data };
         localStorage.setItem("user", JSON.stringify(updatedUser));
-        
+
         setIsEditingProfile(false);
         toast.success("Profile updated successfully!");
-        
+
         // Update the form with the latest data
         setProfileForm({
           name: response.data.data.name || "",
           username: response.data.data.username || "",
-          profilePicture: response.data.data.profilePicture || ""
+          profilePicture: response.data.data.profilePicture || "",
         });
       } else {
         toast.error(response.data.message || "Failed to update profile");
@@ -115,8 +124,12 @@ const ParticipantProfilePage = () => {
 
   const handlePasswordChange = async (e) => {
     e.preventDefault();
-    
-    if (!passwordForm.currentPassword || !passwordForm.newPassword || !passwordForm.confirmPassword) {
+
+    if (
+      !passwordForm.currentPassword ||
+      !passwordForm.newPassword ||
+      !passwordForm.confirmPassword
+    ) {
       toast.error("Please fill all password fields");
       return;
     }
@@ -134,13 +147,16 @@ const ParticipantProfilePage = () => {
     try {
       setIsChangingPassword(true);
 
-      const response = await api.put(`/api/users/password/${currentUser.id}`, passwordForm);
-      
+      const response = await api.put(
+        `/api/users/password/${currentUser.id}`,
+        passwordForm,
+      );
+
       if (response.data.success) {
         setPasswordForm({
           currentPassword: "",
           newPassword: "",
-          confirmPassword: ""
+          confirmPassword: "",
         });
         toast.success("Password changed successfully!");
       }
@@ -161,8 +177,6 @@ const ParticipantProfilePage = () => {
     setShowLogoutModal(false);
     navigate("/");
   };
-
-
 
   if (loading) {
     return (
@@ -256,11 +270,15 @@ const ParticipantProfilePage = () => {
                       <div className="p-4">
                         <div className="flex items-start space-x-3 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
                           <div className="flex-shrink-0">
-                            <svg className="w-6 h-6 text-blue-600 dark:text-blue-400" fill="currentColor" viewBox="0 0 24 24">
-                              <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                              <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                              <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                              <path d="M12 1C7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53 1.48 0 2.73.4 3.71 1.06L19.28 2.9C17.46 1.09 14.97.1 12 1z"/>
+                            <svg
+                              className="w-6 h-6 text-blue-600 dark:text-blue-400"
+                              fill="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                              <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                              <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
+                              <path d="M12 1C7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53 1.48 0 2.73.4 3.71 1.06L19.28 2.9C17.46 1.09 14.97.1 12 1z" />
                             </svg>
                           </div>
                           <div>
@@ -268,7 +286,9 @@ const ParticipantProfilePage = () => {
                               Google Account Authentication
                             </h4>
                             <p className="text-sm text-blue-700 dark:text-blue-400 mt-1">
-                              Your password is managed by your Google account. To change your password, please visit your Google Account settings.
+                              Your password is managed by your Google account.
+                              To change your password, please visit your Google
+                              Account settings.
                             </p>
                           </div>
                         </div>

@@ -1,15 +1,21 @@
-const { buildKnowledgeContext } = require('../knowledge');
-const { detectIntent } = require('../intentDetector');
-const { buildClasstroPrompt, buildGeneralPrompt } = require('../promptBuilder');
+const { buildKnowledgeContext } = require("../knowledge");
+const { detectIntent } = require("../intentDetector");
+const { buildClasstroPrompt, buildGeneralPrompt } = require("../promptBuilder");
 
 // Build chat prompt with Hybrid Mode - detects intent and returns { prompt, intent, maxTokens }
-function buildChatPrompt({ role, page, message, isAuthenticated = false, previousContext = null }) {
-  if (!message || typeof message !== 'string' || message.trim().length === 0) {
+function buildChatPrompt({
+  role,
+  page,
+  message,
+  isAuthenticated = false,
+  previousContext = null,
+}) {
+  if (!message || typeof message !== "string" || message.trim().length === 0) {
     throw new Error("Invalid message: must be a non-empty string");
   }
 
-  const normalizedRole = (isAuthenticated && role) ? role.toLowerCase() : 'guest';
-  const currentPage = page || 'general';
+  const normalizedRole = isAuthenticated && role ? role.toLowerCase() : "guest";
+  const currentPage = page || "general";
 
   const intent = detectIntent(message);
   console.log(`[HYBRID MODE] Intent detected: ${intent}`);
@@ -18,7 +24,11 @@ function buildChatPrompt({ role, page, message, isAuthenticated = false, previou
   let maxTokens;
 
   if (intent === "CLASSTRO") {
-    const knowledgeContext = buildKnowledgeContext(message, normalizedRole, currentPage);
+    const knowledgeContext = buildKnowledgeContext(
+      message,
+      normalizedRole,
+      currentPage,
+    );
     prompt = buildClasstroPrompt(knowledgeContext, message, normalizedRole);
     maxTokens = 180;
   } else {

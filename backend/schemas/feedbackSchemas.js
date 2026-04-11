@@ -38,26 +38,29 @@ const bugReportSchema = baseFeedbackSchema.extend({
     .min(5, "Steps to reproduce must be at least 5 characters long")
     .max(1000, "Steps to reproduce must not exceed 1000 characters")
     .trim(),
-  module: z.enum([
-    "Authentication",
-    "Room Management",
-    "Session Dashboard",
-    "QR Code Joining",
-    "Polls",
-    "Q&A",
-    "Live Chat",
-    "Attendance Tracking",
-    "Analytics",
-    "Session Feedback",
-    "System Feedback",
-    "User Profile",
-    "Notifications",
-    "File Upload",
-    "Other"
-  ], {
-    required_error: "Module is required for bug reports",
-    invalid_type_error: "Invalid module selected"
-  }),
+  module: z.enum(
+    [
+      "Authentication",
+      "Room Management",
+      "Session Dashboard",
+      "QR Code Joining",
+      "Polls",
+      "Q&A",
+      "Live Chat",
+      "Attendance Tracking",
+      "Analytics",
+      "Session Feedback",
+      "System Feedback",
+      "User Profile",
+      "Notifications",
+      "File Upload",
+      "Other",
+    ],
+    {
+      required_error: "Module is required for bug reports",
+      invalid_type_error: "Invalid module selected",
+    },
+  ),
   severity: z.enum(["low", "medium", "high", "critical"]).default("medium"),
   userEmail: z
     .string()

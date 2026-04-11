@@ -1,4 +1,4 @@
-  const validateInput = (schema, data) => {
+const validateInput = (schema, data) => {
   const result = schema.safeParse(data);
 
   if (!result.success) {

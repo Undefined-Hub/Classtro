@@ -105,7 +105,7 @@ const WelcomeContent = ({
                   {sessionData?.session?.title || "Session"}
                 </span>
               </div>
-              
+
               {/* Session Code */}
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
@@ -122,13 +122,15 @@ const WelcomeContent = ({
                       d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14"
                     />
                   </svg>
-                  <span className="text-sm text-gray-500 dark:text-gray-400">Session Code</span>
+                  <span className="text-sm text-gray-500 dark:text-gray-400">
+                    Session Code
+                  </span>
                 </div>
                 <span className="font-mono text-sm font-semibold text-gray-900 dark:text-white bg-gray-100 dark:bg-gray-700 px-3 py-1 rounded-md">
                   {sessionData?.joinCode || "N/A"}
                 </span>
               </div>
-              
+
               {/* Host Name */}
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
@@ -145,7 +147,9 @@ const WelcomeContent = ({
                       d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
                     />
                   </svg>
-                  <span className="text-sm text-gray-500 dark:text-gray-400">Hosted by</span>
+                  <span className="text-sm text-gray-500 dark:text-gray-400">
+                    Hosted by
+                  </span>
                 </div>
                 <span className="text-sm font-medium text-gray-900 dark:text-white truncate max-w-[160px]">
                   {sessionData?.session?.teacherId?.name || "Unknown"}
@@ -194,7 +198,9 @@ const WelcomeContent = ({
                         d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"
                       />
                     </svg>
-                    <span className="text-sm font-medium">New announcement available</span>
+                    <span className="text-sm font-medium">
+                      New announcement available
+                    </span>
                   </div>
                   <p className="text-xs text-blue-600 dark:text-blue-400 mt-2">
                     Check the notification bell in the bottom-right corner

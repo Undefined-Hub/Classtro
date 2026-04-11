@@ -91,7 +91,9 @@ describe("pollController", () => {
 
     await deletePoll(req, res);
 
-    expect(res.json).toHaveBeenCalledWith({ message: "Poll deleted successfully" });
+    expect(res.json).toHaveBeenCalledWith({
+      message: "Poll deleted successfully",
+    });
   });
 
   it("getPollResults returns 404 when poll not found", async () => {
@@ -116,6 +118,8 @@ describe("pollController", () => {
     await endPoll(req, res);
 
     expect(save).toHaveBeenCalled();
-    expect(res.json).toHaveBeenCalledWith({ message: "Poll ended successfully" });
+    expect(res.json).toHaveBeenCalledWith({
+      message: "Poll ended successfully",
+    });
   });
 });

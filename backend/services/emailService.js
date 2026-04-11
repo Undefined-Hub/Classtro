@@ -36,7 +36,7 @@ class EmailService {
             "Content-Type": "application/json",
           },
           timeout: this.timeout,
-        }
+        },
       );
 
       console.log("Email sent successfully:", response.data.messageId);
@@ -47,7 +47,10 @@ class EmailService {
         raw: response.data,
       };
     } catch (error) {
-      console.error("Error sending email:", error.response?.data || error.message);
+      console.error(
+        "Error sending email:",
+        error.response?.data || error.message,
+      );
       return {
         success: false,
         error: error.response?.data || error.message,
@@ -84,10 +87,16 @@ class EmailService {
         timeout: this.timeout,
       });
 
-      console.log("Brevo API connection verified:", response.data.organization_id); // removed whole object and logged just a id
+      console.log(
+        "Brevo API connection verified:",
+        response.data.organization_id,
+      ); // removed whole object and logged just a id
       return true;
     } catch (error) {
-      console.error("Brevo API connection failed:", error.response?.data || error.message);
+      console.error(
+        "Brevo API connection failed:",
+        error.response?.data || error.message,
+      );
       return false;
     }
   }
@@ -196,13 +205,13 @@ class EmailService {
 
 module.exports = new EmailService();
 
-
-
 (async () => {
   const emailService = new EmailService();
   const isEmailServiceReady = await emailService.verifyConnection();
   if (!isEmailServiceReady) {
-    console.error("Email service is not ready. Check your Brevo API key and configuration.");
+    console.error(
+      "Email service is not ready. Check your Brevo API key and configuration.",
+    );
     // process.exit(1); // Exit if email service is not ready
   }
 })();

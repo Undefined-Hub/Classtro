@@ -17,7 +17,7 @@ import {
   Heart,
   TrendingUp,
   Clock,
-  Shield
+  Shield,
 } from "lucide-react";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
@@ -27,48 +27,59 @@ const About = () => {
 
   const stats = [
     { icon: Users, value: "10K+", label: "Active Users", color: "blue" },
-    { icon: TrendingUp, value: "50K+", label: "Sessions Hosted", color: "green" },
+    {
+      icon: TrendingUp,
+      value: "50K+",
+      label: "Sessions Hosted",
+      color: "green",
+    },
     { icon: Clock, value: "99.9%", label: "Uptime", color: "purple" },
-    { icon: Heart, value: "4.8/5", label: "User Rating", color: "red" }
+    { icon: Heart, value: "4.8/5", label: "User Rating", color: "red" },
   ];
 
   const features = [
     {
       icon: QrCode,
       title: "QR Code Joining",
-      description: "Students can join sessions instantly by scanning QR codes - no more manual entry or confusion.",
-      color: "blue"
+      description:
+        "Students can join sessions instantly by scanning QR codes - no more manual entry or confusion.",
+      color: "blue",
     },
     {
       icon: MessageSquare,
       title: "Live Q&A",
-      description: "Real-time question submission and upvoting system to prioritize the most important queries.",
-      color: "green"
+      description:
+        "Real-time question submission and upvoting system to prioritize the most important queries.",
+      color: "green",
     },
     {
       icon: BarChart3,
       title: "Live Polls",
-      description: "Create interactive polls during sessions to gauge understanding and keep students engaged.",
-      color: "purple"
+      description:
+        "Create interactive polls during sessions to gauge understanding and keep students engaged.",
+      color: "purple",
     },
     {
       icon: Award,
       title: "Analytics Dashboard",
-      description: "Comprehensive insights into attendance, participation, and engagement metrics.",
-      color: "orange"
+      description:
+        "Comprehensive insights into attendance, participation, and engagement metrics.",
+      color: "orange",
     },
     {
       icon: Shield,
       title: "Session Feedback",
-      description: "Collect student feedback with ratings and comments to continuously improve teaching methods.",
-      color: "indigo"
+      description:
+        "Collect student feedback with ratings and comments to continuously improve teaching methods.",
+      color: "indigo",
     },
     {
       icon: Zap,
       title: "Real-time Updates",
-      description: "Socket-based live updates ensure everyone stays synchronized during active sessions.",
-      color: "yellow"
-    }
+      description:
+        "Socket-based live updates ensure everyone stays synchronized during active sessions.",
+      color: "yellow",
+    },
   ];
 
   const team = [
@@ -78,33 +89,36 @@ const About = () => {
       email: "official.team.undefined@gmail.com",
       bio: "Passionate developers building the future of classroom engagement",
       avatar: "U!",
-      color: "bg-gradient-to-br from-blue-600 to-blue-800"
-    }
+      color: "bg-gradient-to-br from-blue-600 to-blue-800",
+    },
   ];
 
   const values = [
     {
       icon: Target,
       title: "Our Mission",
-      description: "To revolutionize classroom engagement by providing educators with powerful, easy-to-use tools that foster real-time interaction and meaningful participation."
+      description:
+        "To revolutionize classroom engagement by providing educators with powerful, easy-to-use tools that foster real-time interaction and meaningful participation.",
     },
     {
       icon: Users,
       title: "Our Vision",
-      description: "A world where every classroom session is interactive, engaging, and data-driven, empowering both teachers and students to achieve their full potential."
+      description:
+        "A world where every classroom session is interactive, engaging, and data-driven, empowering both teachers and students to achieve their full potential.",
     },
     {
       icon: Zap,
       title: "Our Values",
-      description: "Innovation, accessibility, and user-centric design drive everything we do. We believe in building tools that make a real difference in education."
-    }
+      description:
+        "Innovation, accessibility, and user-centric design drive everything we do. We believe in building tools that make a real difference in education.",
+    },
   ];
 
   const milestones = [
     { year: "2024", event: "Classtro Platform Launched", icon: CheckCircle },
     { year: "2024", event: "Reached 1,000+ Users", icon: Users },
     { year: "2024", event: "Session Feedback System", icon: MessageSquare },
-    { year: "2025", event: "10K+ Active Users", icon: Award }
+    { year: "2025", event: "10K+ Active Users", icon: Award },
   ];
 
   const getColorClasses = (color) => {
@@ -115,7 +129,7 @@ const About = () => {
       orange: "from-orange-500 to-orange-600 hover:shadow-orange-500/50",
       indigo: "from-indigo-500 to-indigo-600 hover:shadow-indigo-500/50",
       yellow: "from-yellow-500 to-yellow-600 hover:shadow-yellow-500/50",
-      red: "from-red-500 to-red-600 hover:shadow-red-500/50"
+      red: "from-red-500 to-red-600 hover:shadow-red-500/50",
     };
     return colors[color] || colors.blue;
   };
@@ -135,7 +149,9 @@ const About = () => {
             </span>
           </h1>
           <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto leading-relaxed">
-            Empowering educators with real-time classroom engagement tools. Transform traditional sessions into interactive learning experiences.
+            Empowering educators with real-time classroom engagement tools.
+            Transform traditional sessions into interactive learning
+            experiences.
           </p>
         </div>
       </section>
@@ -151,7 +167,9 @@ const About = () => {
                   key={index}
                   className="text-center p-6 rounded-2xl bg-gray-50 dark:bg-gray-700 hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
                 >
-                  <div className={`inline-flex p-3 rounded-xl bg-gradient-to-r ${getColorClasses(stat.color)} mb-3`}>
+                  <div
+                    className={`inline-flex p-3 rounded-xl bg-gradient-to-r ${getColorClasses(stat.color)} mb-3`}
+                  >
                     <Icon className="w-6 h-6 text-white" />
                   </div>
                   <h3 className="text-3xl font-bold text-gray-900 dark:text-white mb-1">
@@ -226,9 +244,11 @@ const About = () => {
                     isHovered ? "shadow-2xl -translate-y-2" : "shadow-md"
                   }`}
                 >
-                  <div className={`inline-flex p-3 rounded-xl bg-gradient-to-r ${getColorClasses(feature.color)} mb-4 transition-transform duration-300 ${
-                    isHovered ? "scale-110" : ""
-                  }`}>
+                  <div
+                    className={`inline-flex p-3 rounded-xl bg-gradient-to-r ${getColorClasses(feature.color)} mb-4 transition-transform duration-300 ${
+                      isHovered ? "scale-110" : ""
+                    }`}
+                  >
                     <Icon className="w-6 h-6 text-white" />
                   </div>
                   <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">
@@ -299,7 +319,9 @@ const About = () => {
                 className="bg-gray-50 dark:bg-gray-700 rounded-2xl p-8 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 max-w-md"
               >
                 <div className="flex flex-col items-center text-center">
-                  <div className={`w-32 h-32 rounded-full ${member.color} flex items-center justify-center text-white text-4xl font-bold mb-6 shadow-lg`}>
+                  <div
+                    className={`w-32 h-32 rounded-full ${member.color} flex items-center justify-center text-white text-4xl font-bold mb-6 shadow-lg`}
+                  >
                     {member.avatar}
                   </div>
                   <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
@@ -332,7 +354,8 @@ const About = () => {
             Ready to Transform Your Classroom?
           </h2>
           <p className="text-xl text-blue-100 mb-8 leading-relaxed">
-            Join thousands of educators who are already using Classtro to create engaging learning experiences.
+            Join thousands of educators who are already using Classtro to create
+            engaging learning experiences.
           </p>
           <Link
             to="/register"

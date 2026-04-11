@@ -202,7 +202,9 @@ function Navbar() {
                       ? "text-white bg-blue-700 md:bg-transparent md:text-blue-700 md:dark:text-blue-500"
                       : "text-gray-900 hover:bg-gray-100 md:hover:bg-transparent md:hover:text-blue-700 md:dark:hover:text-blue-500 dark:text-white dark:hover:bg-gray-700 dark:hover:text-white md:dark:hover:bg-transparent dark:border-gray-700"
                   }`}
-                  aria-current={location.pathname === "/about" ? "page" : undefined}
+                  aria-current={
+                    location.pathname === "/about" ? "page" : undefined
+                  }
                 >
                   About
                 </Link>
@@ -218,7 +220,9 @@ function Navbar() {
                       ? "text-white bg-blue-700 md:bg-transparent md:text-blue-700 md:dark:text-blue-500"
                       : "text-gray-900 hover:bg-gray-100 md:hover:bg-transparent md:hover:text-blue-700 md:dark:hover:text-blue-500 dark:text-white dark:hover:bg-gray-700 dark:hover:text-white md:dark:hover:bg-transparent dark:border-gray-700"
                   }`}
-                  aria-current={location.pathname === "/pricing" ? "page" : undefined}
+                  aria-current={
+                    location.pathname === "/pricing" ? "page" : undefined
+                  }
                 >
                   Pricing
                 </Link>
@@ -231,7 +235,9 @@ function Navbar() {
                       ? "text-white bg-blue-700 md:bg-transparent md:text-blue-700 md:dark:text-blue-500"
                       : "text-gray-900 hover:bg-gray-100 md:hover:bg-transparent md:hover:text-blue-700 md:dark:hover:text-blue-500 dark:text-white dark:hover:bg-gray-700 dark:hover:text-white md:dark:hover:bg-transparent dark:border-gray-700"
                   }`}
-                  aria-current={location.pathname === "/contact" ? "page" : undefined}
+                  aria-current={
+                    location.pathname === "/contact" ? "page" : undefined
+                  }
                 >
                   Contact
                 </Link>

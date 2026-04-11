@@ -60,7 +60,8 @@ describe("userController", () => {
     expect(res.status).toHaveBeenCalledWith(400);
     expect(res.json).toHaveBeenCalledWith(
       expect.objectContaining({
-        message: "At least one field (name, username, or profilePicture) is required",
+        message:
+          "At least one field (name, username, or profilePicture) is required",
       }),
     );
   });
@@ -149,7 +150,10 @@ describe("userController", () => {
 
     expect(res.status).toHaveBeenCalledWith(500);
     expect(res.json).toHaveBeenCalledWith(
-      expect.objectContaining({ success: false, message: "Internal server error" }),
+      expect.objectContaining({
+        success: false,
+        message: "Internal server error",
+      }),
     );
   });
 });

@@ -139,14 +139,9 @@
   }
 }
 
-
-
 .animate-slide-up {
   animation: slide-up 0.3s ease-out;
 }
-
-
-
 
 /* Chatbot Animation */
 @keyframes fadeIn {
@@ -166,7 +161,8 @@
 
 /* Smooth Skeleton Pulse Animation */
 @keyframes skeletonPulse {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 1;
   }
   50% {

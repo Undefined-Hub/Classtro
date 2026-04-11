@@ -12,10 +12,10 @@ export default function OAuthCallback() {
   useEffect(() => {
     // Prevent multiple executions
     if (hasProcessed.current) return;
-    
+
     const handleOAuthCallback = () => {
       hasProcessed.current = true;
-      
+
       // Get OAuth result from URL parameters
       const success = searchParams.get("success");
       const error = searchParams.get("error");
@@ -62,7 +62,7 @@ export default function OAuthCallback() {
             // Small delay to ensure state is updated before navigation
             setTimeout(() => {
               safeToast.success("Welcome back!");
-              
+
               // Check for redirect parameter first
               if (redirectTo) {
                 navigate(redirectTo, { replace: true });

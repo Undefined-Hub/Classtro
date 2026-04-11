@@ -26,7 +26,7 @@ export const HostSessionProvider = ({ children }) => {
   const [showBroadcastForm, setShowBroadcastForm] = useState(false);
   const [activeParticipantsCount, setActiveParticipantsCount] = useState(0);
   const socketRef = useRef(null);
-  
+
   // Quiz state
   const [activeQuiz, setActiveQuiz] = useState(null);
   const [quizSubmissions, setQuizSubmissions] = useState([]);
@@ -110,13 +110,13 @@ export const HostSessionProvider = ({ children }) => {
       // Quiz context
       activeQuiz,
       setActiveQuiz,
-      
+
       quizSubmissions,
       setQuizSubmissions,
 
       showQuizImport,
       setShowQuizImport,
-      
+
       pastQuizzes,
       setPastQuizzes,
 

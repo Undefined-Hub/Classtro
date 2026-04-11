@@ -8,7 +8,9 @@ const {
   getQuizResults,
   validateTemplateForMode,
 } = require("../controllers/liveQuizController");
-const { getParticipantSubmission } = require("../controllers/quizEvaluationController");
+const {
+  getParticipantSubmission,
+} = require("../controllers/quizEvaluationController");
 const authenticateJWT = require("../middlewares/authenticateJWT");
 
 const router = Router();

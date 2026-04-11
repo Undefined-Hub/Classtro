@@ -23,7 +23,10 @@ const {
   trackView,
 } = require("../controllers/broadcastController");
 const authenticateJWT = require("../middlewares/authenticateJWT");
-const { uploadBroadcastFiles, handleBroadcastUploadError } = require("../config/multer");
+const {
+  uploadBroadcastFiles,
+  handleBroadcastUploadError,
+} = require("../config/multer");
 
 // ---------------- PUBLIC / SHARED ROUTES ----------------
 router.get("/code/:code", getSessionByCode); // Get session metadata by join code (public, for join UI) ✅
@@ -47,10 +50,28 @@ router.post("/:sessionId/polls", authenticateJWT, createPoll); // Create a poll 
 router.get("/:sessionId/polls", authenticateJWT, listPolls); // List all polls in a session (teacher only)
 
 // ---------------- BROADCAST / ANNOUNCEMENT ROUTES ----------------
-router.post("/:sessionId/broadcasts", authenticateJWT, uploadBroadcastFiles, handleBroadcastUploadError, addBroadcast); // Send broadcast with optional files (teacher only)
+router.post(
+  "/:sessionId/broadcasts",
+  authenticateJWT,
+  uploadBroadcastFiles,
+  handleBroadcastUploadError,
+  addBroadcast,
+); // Send broadcast with optional files (teacher only)
 router.get("/:sessionId/broadcasts", authenticateJWT, getBroadcasts); // Get all broadcasts for a session
-router.delete("/:sessionId/broadcasts/:broadcastId", authenticateJWT, deleteBroadcast); // Delete a broadcast (teacher only)
-router.post("/:sessionId/broadcasts/:broadcastId/react", authenticateJWT, addReaction); // Add/toggle reaction to broadcast
-router.post("/:sessionId/broadcasts/:broadcastId/view", authenticateJWT, trackView); // Track broadcast view
+router.delete(
+  "/:sessionId/broadcasts/:broadcastId",
+  authenticateJWT,
+  deleteBroadcast,
+); // Delete a broadcast (teacher only)
+router.post(
+  "/:sessionId/broadcasts/:broadcastId/react",
+  authenticateJWT,
+  addReaction,
+); // Add/toggle reaction to broadcast
+router.post(
+  "/:sessionId/broadcasts/:broadcastId/view",
+  authenticateJWT,
+  trackView,
+); // Track broadcast view
 
 module.exports = router;

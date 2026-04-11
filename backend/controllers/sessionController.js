@@ -4,10 +4,10 @@ const Poll = require("../models/Polls");
 const Participant = require("../models/Participant");
 const { validateInput } = require("../utils/validateInput");
 const { getIOInstance } = require("../socket");
-const { 
-  trackJoinActivity, 
-  trackLeaveActivity, 
-  trackReconnectActivity 
+const {
+  trackJoinActivity,
+  trackLeaveActivity,
+  trackReconnectActivity,
 } = require("../services/sessionActivityTracker");
 const crypto = require("crypto");
 const {
@@ -101,8 +101,8 @@ const getSessionByCode = async (req, res, next) => {
       code: params.code,
       isActive: true,
     })
-    .select("title code roomId participantCount isActive startAt createdAt")
-    .populate("roomId", "name");
+      .select("title code roomId participantCount isActive startAt createdAt")
+      .populate("roomId", "name");
 
     if (!session) {
       return res.status(404).json({ error: "Session not found or inactive" });
@@ -197,10 +197,12 @@ const closeSession = async (req, res, next) => {
     console.log("✅ Closed polls:", polls.modifiedCount);
 
     // Mark all active participants as left
-    const activeParticipants = await Participant.find(
-      { sessionId: session._id, isActive: true, leftAt: { $exists: false } },
-    );
-    
+    const activeParticipants = await Participant.find({
+      sessionId: session._id,
+      isActive: true,
+      leftAt: { $exists: false },
+    });
+
     for (const participant of activeParticipants) {
       await Participant.findByIdAndUpdate(participant._id, {
         $set: { leftAt: new Date(), isActive: false },
@@ -209,7 +211,7 @@ const closeSession = async (req, res, next) => {
         session._id,
         participant._id,
         participant.userId,
-        "session_ended"
+        "session_ended",
       );
     }
     console.log("✅ Marked participants as left:", activeParticipants.length);
@@ -246,18 +248,19 @@ const updateSession = async (req, res, next) => {
     next(err);
   }
 };
-/* 
-* Delete a session (teacher only)
-* DELETE /api/sessions/:sessionId
-*/
+/*
+ * Delete a session (teacher only)
+ * DELETE /api/sessions/:sessionId
+ */
 const deleteSession = async (req, res, next) => {
   try {
     const params = validateInput(sessionIdParamSchema, req.params);
     const { disconnectSockets } = req.body || {};
 
-    const session = await Session.findOne(
-      { _id: params.sessionId, teacherId: req.user.id }
-    );
+    const session = await Session.findOne({
+      _id: params.sessionId,
+      teacherId: req.user.id,
+    });
 
     if (!session) {
       return res
@@ -271,60 +274,82 @@ const deleteSession = async (req, res, next) => {
       if (io) {
         const sessionNamespace = io.of("/sessions");
         const roomName = `session:${session.code}`;
-        
-        console.log(`🔌 [DELETE] Verifying and disconnecting all sockets in ${roomName}`);
-        
+
+        console.log(
+          `🔌 [DELETE] Verifying and disconnecting all sockets in ${roomName}`,
+        );
+
         // ✅ STEP 1: Count sockets BEFORE disconnection
-        const socketsBefore = await sessionNamespace.in(roomName).fetchSockets();
+        const socketsBefore = await sessionNamespace
+          .in(roomName)
+          .fetchSockets();
         const countBefore = socketsBefore.length;
         console.log(`📊 [DELETE] Sockets connected BEFORE: ${countBefore}`);
-        
+
         if (countBefore > 0) {
           // Emit session-ended event to all clients to disconnect them gracefully
-          console.log(`📢 [DELETE] Sending force-end event to ${countBefore} participants...`);
+          console.log(
+            `📢 [DELETE] Sending force-end event to ${countBefore} participants...`,
+          );
           sessionNamespace.to(roomName).emit("session:force-ended", {
             message: "This session has been deleted by the instructor",
-            sessionId: session._id
+            sessionId: session._id,
           });
-          
+
           // Disconnect all sockets in this room
           for (const socket of socketsBefore) {
             socket.leave(roomName);
             socket.disconnect(true);
           }
-          
-          console.log(`✅ [DELETE] Forced disconnection of ${countBefore} sockets`);
-          
+
+          console.log(
+            `✅ [DELETE] Forced disconnection of ${countBefore} sockets`,
+          );
+
           // ✅ STEP 2: Wait a bit for disconnection to propagate
-          await new Promise(resolve => setTimeout(resolve, 200));
-          
+          await new Promise((resolve) => setTimeout(resolve, 200));
+
           // ✅ STEP 3: Verify disconnection - count sockets AFTER
-          const socketsAfter = await sessionNamespace.in(roomName).fetchSockets();
+          const socketsAfter = await sessionNamespace
+            .in(roomName)
+            .fetchSockets();
           const countAfter = socketsAfter.length;
           console.log(`📊 [DELETE] Sockets connected AFTER: ${countAfter}`);
-          
+
           if (countAfter > 0) {
-            console.warn(`⚠️  [DELETE] WARNING: Still ${countAfter} sockets connected after disconnection attempt!`);
-            console.warn(`⚠️  [DELETE] Proceeding with deletion anyway (session will be invalid for remaining clients)`);
+            console.warn(
+              `⚠️  [DELETE] WARNING: Still ${countAfter} sockets connected after disconnection attempt!`,
+            );
+            console.warn(
+              `⚠️  [DELETE] Proceeding with deletion anyway (session will be invalid for remaining clients)`,
+            );
           } else {
             console.log(`✨ [DELETE] All sockets successfully terminated!`);
           }
         } else {
-          console.log(`ℹ️  [DELETE] No active sockets in room - proceeding with deletion`);
+          console.log(
+            `ℹ️  [DELETE] No active sockets in room - proceeding with deletion`,
+          );
         }
       }
     }
 
     // Delete the session
-    const deletedSession = await Session.findOneAndDelete(
-      { _id: params.sessionId, teacherId: req.user.id }
-    );
+    const deletedSession = await Session.findOneAndDelete({
+      _id: params.sessionId,
+      teacherId: req.user.id,
+    });
 
-    console.log(`🗑️  [DELETE] Session ${session._id} permanently deleted from database`);
+    console.log(
+      `🗑️  [DELETE] Session ${session._id} permanently deleted from database`,
+    );
 
     // Optionally, also delete related data like participants, polls, etc.
 
-    res.json({ message: "Session deleted successfully", session: deletedSession });
+    res.json({
+      message: "Session deleted successfully",
+      session: deletedSession,
+    });
   } catch (err) {
     next(err);
   }
@@ -372,15 +397,10 @@ const joinSession = async (req, res, next) => {
           await participant.save();
 
           // Track reconnect activity
-          await trackReconnectActivity(
-            session._id,
-            participant._id,
-            userId,
-            {
-              ip: req.ip,
-              deviceInfo: req.headers["user-agent"],
-            }
-          );
+          await trackReconnectActivity(session._id, participant._id, userId, {
+            ip: req.ip,
+            deviceInfo: req.headers["user-agent"],
+          });
 
           // Increment only concurrent count
           await Session.findByIdAndUpdate(session._id, {
@@ -427,15 +447,10 @@ const joinSession = async (req, res, next) => {
     });
 
     // Track join activity
-    await trackJoinActivity(
-      session._id,
-      participant._id,
-      userId,
-      {
-        ip: req.ip,
-        deviceInfo: req.headers["user-agent"],
-      }
-    );
+    await trackJoinActivity(session._id, participant._id, userId, {
+      ip: req.ip,
+      deviceInfo: req.headers["user-agent"],
+    });
 
     // Update both counts
     await Session.findByIdAndUpdate(session._id, {
@@ -489,16 +504,21 @@ const leaveSession = async (req, res, next) => {
         session._id,
         participant._id,
         participant.userId,
-        "manual"
+        "manual",
       );
-      
+
       // Decrement concurrent count only
       await Session.findByIdAndUpdate(session._id, {
         $inc: { participantCount: -1 },
       });
       res.json({ message: "Left session", success: true });
     } else {
-      return res.status(404).json({ message: "Participant not found or already left", success: false });
+      return res
+        .status(404)
+        .json({
+          message: "Participant not found or already left",
+          success: false,
+        });
     }
   } catch (err) {
     next(err);

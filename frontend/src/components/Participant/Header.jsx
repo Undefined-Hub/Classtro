@@ -42,8 +42,8 @@ const Header = ({ onLogout }) => {
     };
 
     if (showProfileDropdown) {
-      document.addEventListener('click', handleClickOutside);
-      return () => document.removeEventListener('click', handleClickOutside);
+      document.addEventListener("click", handleClickOutside);
+      return () => document.removeEventListener("click", handleClickOutside);
     }
   }, [showProfileDropdown]);
 
@@ -82,7 +82,7 @@ const Header = ({ onLogout }) => {
 
             {/* Profile Dropdown */}
             <div className="flex-shrink-0 flex items-center gap-2">
-              <div 
+              <div
                 className="relative"
                 onMouseEnter={handleMouseEnter}
                 onMouseLeave={handleMouseLeave}
@@ -98,7 +98,16 @@ const Header = ({ onLogout }) => {
                   <ProfileImageOrInitials
                     src={user.profilePicture}
                     alt={user.name}
-                    initials={user.name ? user.name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2) : "U"}
+                    initials={
+                      user.name
+                        ? user.name
+                            .split(" ")
+                            .map((n) => n[0])
+                            .join("")
+                            .toUpperCase()
+                            .slice(0, 2)
+                        : "U"
+                    }
                     className="w-8 h-8 sm:w-14 sm:h-14 rounded-full border-2 border-white/20 group-hover:border-white/40 transition-colors cursor-pointer"
                     avatarColorClass="bg-blue-500"
                     textSizeClass="text-lg"

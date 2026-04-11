@@ -15,10 +15,18 @@ const DashboardLayout = lazy(() => import("./components/DashboardLayout.jsx"));
 const RoomsPage = lazy(() => import("./pages/Host/RoomsPage.jsx"));
 const SessionsPage = lazy(() => import("./pages/Host/SessionsPage.jsx"));
 const RoomDetailPage = lazy(() => import("./pages/Host/RoomDetailPage.jsx"));
-const SessionWorkspace = lazy(() => import("./pages/Host/SessionWorkspace.jsx"));
-const ParticipantHome = lazy(() => import("./pages/Participant/ParticipantHome"));
-const ParticipantSession = lazy(() => import("./pages/Participant/ParticipantSession"));
-const ParticipantJoin = lazy(() => import("./pages/Participant/ParticipantJoin"));
+const SessionWorkspace = lazy(
+  () => import("./pages/Host/SessionWorkspace.jsx"),
+);
+const ParticipantHome = lazy(
+  () => import("./pages/Participant/ParticipantHome"),
+);
+const ParticipantSession = lazy(
+  () => import("./pages/Participant/ParticipantSession"),
+);
+const ParticipantJoin = lazy(
+  () => import("./pages/Participant/ParticipantJoin"),
+);
 const NotFound = lazy(() => import("./pages/NotFound"));
 const Unauthorized = lazy(() => import("./pages/Unauthorized"));
 const Register = lazy(() => import("./pages/Register"));
@@ -26,23 +34,24 @@ const VerifyAndRole = lazy(() => import("./pages/VerifyAndRole"));
 const AnalyticsPage = lazy(() => import("./pages/Host/AnalyticsPage.jsx"));
 const OAuthCallback = lazy(() => import("./pages/OAuthCallback.jsx"));
 const HostProfilePage = lazy(() => import("./pages/Host/HostProfilePage.jsx"));
-const ParticipantProfilePage = lazy(() => import("./pages/Participant/ParticipantProfilePage.jsx"));
+const ParticipantProfilePage = lazy(
+  () => import("./pages/Participant/ParticipantProfilePage.jsx"),
+);
 
 // Profile redirect component
 const ProfileRedirect = () => {
   const { user } = useAuth();
-  
+
   if (user?.role === "TEACHER") {
     return <Navigate to="/teacher/profile" replace />;
   } else if (user?.role === "STUDENT") {
     return <Navigate to="/participant/profile" replace />;
   }
-  
+
   return <Navigate to="/login" replace />;
 };
 
 //const BACKEND_BASE_URL = import.meta.env.VITE_BACKEND_BASE_URL || "http://localhost:3000";
-
 
 function App() {
   const navigate = useNavigate();
@@ -75,12 +84,7 @@ function App() {
           element={<OAuthCallback onLogin={handleLogin} />}
         />
         {/* Universal Profile Route - redirects based on role */}
-        <Route
-          path="/profile"
-          element={
-            <ProtectedRoute />
-          }
-        >
+        <Route path="/profile" element={<ProtectedRoute />}>
           <Route index element={<ProfileRedirect />} />
         </Route>
 
@@ -107,9 +111,12 @@ function App() {
         <Route element={<ProtectedRoute roles={["STUDENT"]} />}>
           <Route path="/participant/home" element={<ParticipantHome />} />
           <Route path="/participant/session" element={<ParticipantSession />} />
-          <Route path="/participant/profile" element={<ParticipantProfilePage />} />
+          <Route
+            path="/participant/profile"
+            element={<ParticipantProfilePage />}
+          />
         </Route>
-        
+
         {/* QR Join Route - Public but requires login */}
         <Route path="/participant/join" element={<ParticipantJoin />} />
         <Route path="/unauthorized" element={<Unauthorized />} />

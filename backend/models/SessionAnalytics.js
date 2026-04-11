@@ -50,7 +50,7 @@ const SessionAnalyticsSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 // Optional TTL index for auto-cleanup (uncomment if needed)

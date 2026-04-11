@@ -130,18 +130,24 @@ const SessionWorkspace = () => {
     // Detect actual mobile/tablet devices, not just small windows
     const checkActualMobileDevice = () => {
       const userAgent = navigator.userAgent.toLowerCase();
-      const isMobileUA = /mobile|android|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent);
-      const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+      const isMobileUA =
+        /mobile|android|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(
+          userAgent,
+        );
+      const isTouchDevice =
+        "ontouchstart" in window || navigator.maxTouchPoints > 0;
       console.log("User Agent:", navigator.userAgent);
       const isSmallScreen = window.innerWidth < 1024;
-      
+
       // Only block if it's an actual mobile device (has mobile UA AND touch capability AND small screen)
       // Or if it's a tablet (touch + small screen but might not have mobile UA)
-      const isActualMobile = (isMobileUA && isTouchDevice) || (isTouchDevice && isSmallScreen && window.innerHeight < 900);
-      
+      const isActualMobile =
+        (isMobileUA && isTouchDevice) ||
+        (isTouchDevice && isSmallScreen && window.innerHeight < 900);
+
       setIsMobile(isActualMobile);
     };
-    
+
     checkActualMobileDevice();
     // Don't add resize listener - desktop users should be able to resize their windows
   }, []);
@@ -327,7 +333,14 @@ const SessionWorkspace = () => {
     // Quiz socket listeners
     const onQuizNewSubmission = (payload) => {
       // When a student submits a quiz, add their submission to the list
-      const { participantId, participantName, score, total, percentage, submittedAt } = payload;
+      const {
+        participantId,
+        participantName,
+        score,
+        total,
+        percentage,
+        submittedAt,
+      } = payload;
       setQuizSubmissions((prev) => [
         ...prev,
         {
@@ -352,15 +365,20 @@ const SessionWorkspace = () => {
     });
     // Listen for broadcast reactions in real-time
     const onReactionUpdate = (payload) => {
-      console.log("[REACTION] Host received broadcast:reaction-update:", payload);
-      
+      console.log(
+        "[REACTION] Host received broadcast:reaction-update:",
+        payload,
+      );
+
       setBroadcastHistory((prev) =>
         prev.map((broadcast) => {
           if (broadcast._id !== payload.broadcastId) return broadcast;
 
           // If full reactions array is provided, use it directly (fallback)
           if (payload.reactions && Array.isArray(payload.reactions)) {
-            console.log("[REACTION] Host: Using full reactions array from backend");
+            console.log(
+              "[REACTION] Host: Using full reactions array from backend",
+            );
             return {
               ...broadcast,
               reactions: payload.reactions,
@@ -369,14 +387,14 @@ const SessionWorkspace = () => {
 
           // Otherwise, apply incremental update
           const { emoji, userId, userName, action } = payload;
-          
+
           // Create a copy of reactions array to avoid mutations
           let reactions = broadcast.reactions ? [...broadcast.reactions] : [];
 
           if (action === "added") {
             // Add reaction if not already present
             const exists = reactions.some(
-              (r) => r.userId === userId && r.emoji === emoji
+              (r) => r.userId === userId && r.emoji === emoji,
             );
             if (!exists) {
               reactions.push({
@@ -385,21 +403,29 @@ const SessionWorkspace = () => {
                 userName,
                 timestamp: new Date(),
               });
-              console.log("[REACTION] Host: Added reaction to broadcast:", payload.broadcastId, emoji);
+              console.log(
+                "[REACTION] Host: Added reaction to broadcast:",
+                payload.broadcastId,
+                emoji,
+              );
             }
           } else if (action === "removed") {
             // Remove reaction
             reactions = reactions.filter(
-              (r) => !(r.userId === userId && r.emoji === emoji)
+              (r) => !(r.userId === userId && r.emoji === emoji),
             );
-            console.log("[REACTION] Host: Removed reaction from broadcast:", payload.broadcastId, emoji);
+            console.log(
+              "[REACTION] Host: Removed reaction from broadcast:",
+              payload.broadcastId,
+              emoji,
+            );
           }
 
           return {
             ...broadcast,
             reactions,
           };
-        })
+        }),
       );
     };
     socket.on("broadcast:reaction-update", onReactionUpdate);
@@ -442,10 +468,12 @@ const SessionWorkspace = () => {
   // Fetch broadcast history
   const fetchBroadcastHistory = useCallback(async () => {
     if (!sessionData?._id) return;
-    
+
     setLoadingBroadcasts(true);
     try {
-      const response = await api.get(`/api/sessions/${sessionData._id}/broadcasts`);
+      const response = await api.get(
+        `/api/sessions/${sessionData._id}/broadcasts`,
+      );
       setBroadcastHistory(response.data.broadcasts || []);
     } catch (error) {
       console.error("Error fetching broadcast history:", error);
@@ -474,7 +502,7 @@ const SessionWorkspace = () => {
       // 1. Prepare FormData for file upload
       const formData = new FormData();
       formData.append("message", message.trim());
-      
+
       // Append files if any
       files.forEach((file) => {
         formData.append("files", file);
@@ -488,7 +516,7 @@ const SessionWorkspace = () => {
           headers: {
             "Content-Type": "multipart/form-data",
           },
-        }
+        },
       );
 
       const newBroadcast = response.data.broadcast;
@@ -705,17 +733,18 @@ const SessionWorkspace = () => {
       <div className="h-screen flex items-center justify-center p-6 bg-gray-50 dark:bg-gray-900">
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 max-w-xs w-full text-center">
           <Monitor className="w-12 h-12 text-blue-600 dark:text-blue-400 mx-auto mb-4" />
-          
+
           <h1 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
             Not Available on Mobile
           </h1>
-          
+
           <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-            Session management is not yet available on mobile. Please use a larger screen.
+            Session management is not yet available on mobile. Please use a
+            larger screen.
           </p>
 
           <button
-            onClick={() => navigate('/dashboard')}
+            onClick={() => navigate("/dashboard")}
             className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
           >
             Back to Dashboard
@@ -749,13 +778,17 @@ const SessionWorkspace = () => {
           />
 
           {/* Main Content */}
-          {activeView === "main" && <MainContent isParticipantListOpen={isParticipantListOpen} />}
+          {activeView === "main" && (
+            <MainContent isParticipantListOpen={isParticipantListOpen} />
+          )}
 
           {/* Poll Manager */}
           <PollManager isParticipantListOpen={isParticipantListOpen} />
 
           {/* Quiz Manager */}
-          {activeView === "quiz" && <QuizManager isParticipantListOpen={isParticipantListOpen} />}
+          {activeView === "quiz" && (
+            <QuizManager isParticipantListOpen={isParticipantListOpen} />
+          )}
 
           {/* Q&A Manager */}
           <QAManager
@@ -803,7 +836,9 @@ const SessionWorkspace = () => {
             {/* Custom Tooltip */}
             <div className="absolute right-full mr-3 top-1/2 transform -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-all duration-300 delay-300 pointer-events-none z-30 group-hover:scale-100 scale-95">
               <div className="bg-black text-white text-xs px-3 py-2 rounded-lg whitespace-nowrap shadow-lg border border-gray-800">
-                {isParticipantListOpen ? "Hide Participants" : "Show Participants"}
+                {isParticipantListOpen
+                  ? "Hide Participants"
+                  : "Show Participants"}
                 {/* Tooltip Arrow */}
                 <div className="absolute left-full top-1/2 transform -translate-y-1/2 border-4 border-transparent border-l-black"></div>
               </div>
@@ -813,8 +848,8 @@ const SessionWorkspace = () => {
           {/* Participants Panel */}
           <div
             className={`transition-all duration-300 ease-in-out overflow-hidden ${
-              isParticipantListOpen 
-                ? "w-80 opacity-100 translate-x-0" 
+              isParticipantListOpen
+                ? "w-80 opacity-100 translate-x-0"
                 : "w-0 opacity-0 translate-x-full"
             }`}
           >

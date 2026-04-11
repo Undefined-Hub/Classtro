@@ -50,8 +50,8 @@ const FeedbackModal = ({
         className="bg-white dark:bg-gray-800 rounded-3xl max-w-[500px] w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-gray-200 dark:border-gray-700 transition-all duration-300 scrollbar-hide"
         onClick={(e) => e.stopPropagation()}
         style={{
-          scrollbarWidth: 'none',
-          msOverflowStyle: 'none'
+          scrollbarWidth: "none",
+          msOverflowStyle: "none",
         }}
       >
         {/* Header */}
@@ -112,7 +112,10 @@ const FeedbackModal = ({
                 Rate your experience *
               </label>
               <div className="flex justify-center">
-                <StarRating rating={formData.rating || 0} onRatingChange={onRatingChange} />
+                <StarRating
+                  rating={formData.rating || 0}
+                  onRatingChange={onRatingChange}
+                />
               </div>
             </div>
           )}

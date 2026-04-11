@@ -15,7 +15,7 @@ const Poll = require("./models/Polls");
 const authenticateSocket = (socket, next) => {
   try {
     const token = socket.handshake.auth?.token;
-    
+
     if (!token) {
       socket.user = null;
       return next();
@@ -27,7 +27,7 @@ const authenticateSocket = (socket, next) => {
         socket.user = null;
         return next();
       }
-      
+
       // JWT payload is { user: { id: ... } }
       socket.user = {
         id: decoded.user?.id || decoded.id,
@@ -54,7 +54,7 @@ function setupSockets(server) {
   ioInstance = io;
 
   const sessionNamespace = io.of("/sessions");
-  
+
   // Apply authentication middleware to the namespace
   sessionNamespace.use(authenticateSocket);
 
@@ -74,10 +74,10 @@ function setupSockets(server) {
 
   sessionNamespace.on("connection", (socket) => {
     console.log("🔌 Socket connected:", socket.id);
-    
+
     // Register quiz socket handlers
     registerQuizSocket(sessionNamespace, socket);
-    
+
     socket.on("poll:close", ({ code, pollId }) => {
       // Optionally: mark poll as closed in DB here
       sessionNamespace.to(`session:${code}`).emit("poll:closed", { pollId });
@@ -136,23 +136,34 @@ function setupSockets(server) {
     });
 
     // --- TEACHER BROADCAST MESSAGE ---
-    socket.on("broadcast:teacher", ({ code, message, urls = [], urlMetadata = null, files = [], teacherId, broadcastId }) => {
-      console.log(
-        `📢 Teacher ${teacherId} broadcast in session ${code}: ${message}`,
-      );
-
-      // Send message to all in this session (students + teacher if connected)
-      sessionNamespace.to(`session:${code}`).emit("broadcast:message", {
-        from: "teacher",
-        message,
-        urls,
-        urlMetadata,
-        files,
+    socket.on(
+      "broadcast:teacher",
+      ({
         code,
+        message,
+        urls = [],
+        urlMetadata = null,
+        files = [],
+        teacherId,
         broadcastId,
-        timestamp: new Date(),
-      });
-    });
+      }) => {
+        console.log(
+          `📢 Teacher ${teacherId} broadcast in session ${code}: ${message}`,
+        );
+
+        // Send message to all in this session (students + teacher if connected)
+        sessionNamespace.to(`session:${code}`).emit("broadcast:message", {
+          from: "teacher",
+          message,
+          urls,
+          urlMetadata,
+          files,
+          code,
+          broadcastId,
+          timestamp: new Date(),
+        });
+      },
+    );
 
     socket.on("disconnecting", () => {
       socket.rooms.forEach((roomName) => {
@@ -200,22 +211,27 @@ function setupSockets(server) {
     });
 
     // --- BROADCAST REACTIONS ---
-    socket.on("broadcast:reaction", ({ code, broadcastId, emoji, userId, userName, action }) => {
-      console.log(
-        `${action === "added" ? "👍" : "🚫"} User ${userName} ${action} reaction ${emoji} to broadcast ${broadcastId}`
-      );
-      console.log(`[SOCKET:reaction] Emitting to room: session:${code}`);
+    socket.on(
+      "broadcast:reaction",
+      ({ code, broadcastId, emoji, userId, userName, action }) => {
+        console.log(
+          `${action === "added" ? "👍" : "🚫"} User ${userName} ${action} reaction ${emoji} to broadcast ${broadcastId}`,
+        );
+        console.log(`[SOCKET:reaction] Emitting to room: session:${code}`);
 
-      // Notify all participants in the session about the reaction update
-      sessionNamespace.to(`session:${code}`).emit("broadcast:reaction-update", {
-        broadcastId,
-        emoji,
-        userId,
-        userName,
-        action, // "added" or "removed"
-        timestamp: new Date(),
-      });
-    });
+        // Notify all participants in the session about the reaction update
+        sessionNamespace
+          .to(`session:${code}`)
+          .emit("broadcast:reaction-update", {
+            broadcastId,
+            emoji,
+            userId,
+            userName,
+            action, // "added" or "removed"
+            timestamp: new Date(),
+          });
+      },
+    );
 
     socket.on("poll:create", async ({ code, poll }) => {
       sessionNamespace.to(`session:${code}`).emit("polls:new-poll", poll);

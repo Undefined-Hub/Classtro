@@ -32,7 +32,9 @@ const submitSessionFeedback = async (req, res) => {
 
     // Check if session exists
     const session = await Session.findById(sessionId)
-      .select("isActive roomId startAt endAt participantCount totalParticipants teacherId")
+      .select(
+        "isActive roomId startAt endAt participantCount totalParticipants teacherId",
+      )
       .lean();
 
     if (!session) {
@@ -87,7 +89,9 @@ const submitSessionFeedback = async (req, res) => {
       submittedAt: new Date(),
     });
 
-    console.log(`Session feedback submitted by user ${userId} for session ${sessionId}`);
+    console.log(
+      `Session feedback submitted by user ${userId} for session ${sessionId}`,
+    );
 
     res.status(201).json({
       success: true,
@@ -126,7 +130,8 @@ const getSessionFeedback = async (req, res) => {
     validateInput(sessionIdParamSchema, { sessionId });
 
     // Check if session exists
-    const session = await Session.findById(sessionId).select("roomId teacherId");
+    const session =
+      await Session.findById(sessionId).select("roomId teacherId");
 
     if (!session) {
       return res.status(404).json({

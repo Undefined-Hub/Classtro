@@ -95,7 +95,9 @@ describe("analyticsController", () => {
   });
 
   it("getParticipantStatsTest returns participant stats", async () => {
-    analyticsBuilder.generateParticipantStats.mockResolvedValueOnce({ total: 5 });
+    analyticsBuilder.generateParticipantStats.mockResolvedValueOnce({
+      total: 5,
+    });
 
     const req = { params: { sessionId: "s1" } };
     const res = createMockRes();
@@ -104,7 +106,10 @@ describe("analyticsController", () => {
     await getParticipantStatsTest(req, res, next);
 
     expect(res.status).toHaveBeenCalledWith(200);
-    expect(res.json).toHaveBeenCalledWith({ success: true, data: { total: 5 } });
+    expect(res.json).toHaveBeenCalledWith({
+      success: true,
+      data: { total: 5 },
+    });
   });
 
   it("getFrontendAnalytics returns not-generated state when no cache", async () => {

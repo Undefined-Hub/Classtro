@@ -8,33 +8,33 @@ const SessionActivitySchema = new mongoose.Schema({
     required: true,
     index: true,
   },
-  
+
   participantId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "Participant", 
+    ref: "Participant",
     required: true,
     index: true,
   },
-  
+
   userId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
     default: null, // null for guests
     index: true,
   },
-  
+
   activityType: {
     type: String,
     enum: ["join", "leave", "kicked", "reconnect"],
     required: true,
   },
-  
+
   timestamp: {
     type: Date,
     default: Date.now,
     index: true,
   },
-  
+
   metadata: {
     ip: String,
     deviceInfo: String,

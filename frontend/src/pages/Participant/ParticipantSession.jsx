@@ -40,7 +40,7 @@ const ParticipantSession = () => {
     setQuizAnswers,
     setQuizSubmitted,
     setQuizResult,
-    
+
     // HOST_CONTROLLED quiz context
     setHcCurrentQuestion,
     setHcQuestionIndex,
@@ -131,9 +131,11 @@ const ParticipantSession = () => {
   // * Fetch broadcast history
   const fetchBroadcastHistory = async () => {
     if (!sessionData?.session?._id) return;
-    
+
     try {
-      const response = await api.get(`/api/sessions/${sessionData.session._id}/broadcasts`);
+      const response = await api.get(
+        `/api/sessions/${sessionData.session._id}/broadcasts`,
+      );
       const loadedBroadcasts = response.data.broadcasts || [];
       console.log("[BROADCAST] Initial broadcasts fetched:", loadedBroadcasts);
       setBroadcasts(loadedBroadcasts);
@@ -196,7 +198,7 @@ const ParticipantSession = () => {
       setBroadcastMsg(
         `${data.message}${data.from ? ` (from ${data.from})` : ""}`,
       );
-      
+
       // Add to broadcasts array for the feed
       const newBroadcast = {
         _id: data.broadcastId || Date.now().toString(),
@@ -214,7 +216,7 @@ const ParticipantSession = () => {
     // Handle real-time reaction updates
     const onReactionUpdate = (data) => {
       console.log("[REACTION] Received broadcast:reaction-update event:", data);
-      
+
       setBroadcasts((prev) =>
         prev.map((broadcast) => {
           if (broadcast._id !== data.broadcastId) return broadcast;
@@ -230,14 +232,14 @@ const ParticipantSession = () => {
 
           // Otherwise, apply incremental update
           const { emoji, userId, userName, action } = data;
-          
+
           // Create a copy of reactions array to avoid mutations
           let reactions = broadcast.reactions ? [...broadcast.reactions] : [];
 
           if (action === "added") {
             // Add reaction if not already present
             const exists = reactions.some(
-              (r) => r.userId === userId && r.emoji === emoji
+              (r) => r.userId === userId && r.emoji === emoji,
             );
             if (!exists) {
               reactions.push({
@@ -246,21 +248,29 @@ const ParticipantSession = () => {
                 userName,
                 timestamp: new Date(),
               });
-              console.log("[REACTION] Added reaction to broadcast:", data.broadcastId, emoji);
+              console.log(
+                "[REACTION] Added reaction to broadcast:",
+                data.broadcastId,
+                emoji,
+              );
             }
           } else if (action === "removed") {
             // Remove reaction
             reactions = reactions.filter(
-              (r) => !(r.userId === userId && r.emoji === emoji)
+              (r) => !(r.userId === userId && r.emoji === emoji),
             );
-            console.log("[REACTION] Removed reaction from broadcast:", data.broadcastId, emoji);
+            console.log(
+              "[REACTION] Removed reaction from broadcast:",
+              data.broadcastId,
+              emoji,
+            );
           }
 
           return {
             ...broadcast,
             reactions,
           };
-        })
+        }),
       );
     };
 
@@ -277,9 +287,14 @@ const ParticipantSession = () => {
     };
 
     const onSessionForceEnded = (payload) => {
-      console.log("🔌 [FORCE-END] Session force-ended event received:", payload);
+      console.log(
+        "🔌 [FORCE-END] Session force-ended event received:",
+        payload,
+      );
       // Show critical alert to user
-      alert("This session has been deleted by the instructor. You will be redirected.");
+      alert(
+        "This session has been deleted by the instructor. You will be redirected.",
+      );
       // Clear session data
       clearSession();
       // Redirect to home
@@ -348,12 +363,12 @@ const ParticipantSession = () => {
         _id: quizData.quizId || quizData._id,
       };
       setActiveQuiz(normalizedQuiz);
-      
+
       // Reset ONE_SHOT quiz state
       setQuizAnswers({});
       setQuizSubmitted(false);
       setQuizResult(null);
-      
+
       // Reset HOST_CONTROLLED quiz state
       setHcCurrentQuestion(null);
       setHcQuestionIndex(-1);
@@ -363,7 +378,7 @@ const ParticipantSession = () => {
       setHcLeaderboard([]);
       setHcFinalResults(null);
       setHcShowResults(false);
-      
+
       sessionStorage.setItem("activeQuiz", JSON.stringify(normalizedQuiz));
     };
 
@@ -392,20 +407,34 @@ const ParticipantSession = () => {
       // Use ref to get current activeQuiz (avoids stale closure)
       const currentQuiz = activeQuizRef.current;
       if (currentQuiz && data.quizId !== currentQuiz._id) {
-        console.log("🚫 Ignoring HC question from different quiz:", data.quizId, "current:", currentQuiz._id);
+        console.log(
+          "🚫 Ignoring HC question from different quiz:",
+          data.quizId,
+          "current:",
+          currentQuiz._id,
+        );
         return;
       }
-      const { question, questionIndex, totalQuestions, durationSeconds, startedAt } = data;
-      
+      const {
+        question,
+        questionIndex,
+        totalQuestions,
+        durationSeconds,
+        startedAt,
+      } = data;
+
       setHcCurrentQuestion(question);
       setHcQuestionIndex(questionIndex);
       setHcQuestionDuration(durationSeconds);
       setHcAnswerSubmitted(false);
       setHcShowResults(false);
-      
+
       // Calculate remaining time
       const elapsed = Date.now() - new Date(startedAt).getTime();
-      const remaining = Math.max(0, durationSeconds - Math.floor(elapsed / 1000));
+      const remaining = Math.max(
+        0,
+        durationSeconds - Math.floor(elapsed / 1000),
+      );
       setHcTimeRemaining(remaining);
     };
 
@@ -414,7 +443,12 @@ const ParticipantSession = () => {
       // Use ref to get current activeQuiz (avoids stale closure)
       const currentQuiz = activeQuizRef.current;
       if (currentQuiz && data.quizId !== currentQuiz._id) {
-        console.log("🚫 Ignoring HC answer ack from different quiz:", data.quizId, "current:", currentQuiz._id);
+        console.log(
+          "🚫 Ignoring HC answer ack from different quiz:",
+          data.quizId,
+          "current:",
+          currentQuiz._id,
+        );
         return;
       }
       setHcAnswerSubmitted(true);
@@ -425,7 +459,12 @@ const ParticipantSession = () => {
       // Use ref to get current activeQuiz (avoids stale closure)
       const currentQuiz = activeQuizRef.current;
       if (currentQuiz && data.quizId !== currentQuiz._id) {
-        console.log("🚫 Ignoring HC results from different quiz:", data.quizId, "current:", currentQuiz._id);
+        console.log(
+          "🚫 Ignoring HC results from different quiz:",
+          data.quizId,
+          "current:",
+          currentQuiz._id,
+        );
         return;
       }
       const { leaderboard } = data;
@@ -438,7 +477,12 @@ const ParticipantSession = () => {
       // Use ref to get current activeQuiz (avoids stale closure)
       const currentQuiz = activeQuizRef.current;
       if (currentQuiz && data.quizId !== currentQuiz._id) {
-        console.log("🚫 Ignoring HC final results from different quiz:", data.quizId, "current:", currentQuiz._id);
+        console.log(
+          "🚫 Ignoring HC final results from different quiz:",
+          data.quizId,
+          "current:",
+          currentQuiz._id,
+        );
         return;
       }
       setHcFinalResults(data);
@@ -472,7 +516,7 @@ const ParticipantSession = () => {
       // Quiz listeners
       socket.on("quiz:launched", onQuizLaunched);
       socket.on("quiz:closed", onQuizClosed);
-      
+
       // HOST_CONTROLLED quiz listeners
       socket.on("quiz:hc:question", onHCQuestion);
       socket.on("quiz:hc:answer:ack", onHCAnswerAck);
@@ -504,7 +548,7 @@ const ParticipantSession = () => {
         // Quiz listeners
         socket.off("quiz:launched", onQuizLaunched);
         socket.off("quiz:closed", onQuizClosed);
-        
+
         // HOST_CONTROLLED quiz listeners
         socket.off("quiz:hc:question", onHCQuestion);
         socket.off("quiz:hc:answer:ack", onHCAnswerAck);
@@ -582,13 +626,16 @@ const ParticipantSession = () => {
   const handleFeedbackSubmit = async ({ rating, description }) => {
     setFeedbackSubmitting(true);
     try {
-      await api.post(`/api/feedback/${sessionData.session._id}/sessionFeedback`, {
-        rating,
-        description
-      });
-      
+      await api.post(
+        `/api/feedback/${sessionData.session._id}/sessionFeedback`,
+        {
+          rating,
+          description,
+        },
+      );
+
       console.log("Feedback submitted:", { rating, description });
-      
+
       toast.success("Thank you for your feedback!");
       clearSession();
       navigate("/participant/home");
@@ -659,8 +706,8 @@ const ParticipantSession = () => {
       />
 
       {/* Broadcast Feed - Floating Announcement Panel */}
-      <BroadcastFeed 
-        broadcasts={broadcasts} 
+      <BroadcastFeed
+        broadcasts={broadcasts}
         sessionId={sessionData?.session?._id}
         userId={user?.id}
         userName={user?.name}

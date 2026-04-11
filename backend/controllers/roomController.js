@@ -43,12 +43,12 @@ const listRooms = async (req, res, next) => {
     const query = validateInput(listRoomsQuerySchema, req.query);
 
     // Filter condition to exclude archived rooms
-    const filterCondition = { 
+    const filterCondition = {
       teacherId: req.user.id,
       $or: [
         { archivedAt: { $exists: false } }, // Field doesn't exist
-        { archivedAt: null } // Field exists but is null
-      ]
+        { archivedAt: null }, // Field exists but is null
+      ],
     };
 
     // Count total non-archived rooms first
@@ -145,7 +145,7 @@ const archiveRoom = async (req, res, next) => {
     // First check if room exists and is owned by the user
     const existingRoom = await Room.findOne({
       _id: params.roomId,
-      teacherId: req.user.id
+      teacherId: req.user.id,
     });
 
     if (!existingRoom) {
@@ -155,7 +155,9 @@ const archiveRoom = async (req, res, next) => {
       throw error;
     }
 
-    console.log(`Found room: ${existingRoom.name}, current archivedAt: ${existingRoom.archivedAt}`);
+    console.log(
+      `Found room: ${existingRoom.name}, current archivedAt: ${existingRoom.archivedAt}`,
+    );
 
     // Check if room is already archived
     if (existingRoom.archivedAt) {
@@ -169,7 +171,7 @@ const archiveRoom = async (req, res, next) => {
     const room = await Room.findOneAndUpdate(
       { _id: params.roomId, teacherId: req.user.id },
       { $set: { archivedAt: new Date() } },
-      { new: true }
+      { new: true },
     );
 
     console.log(`Room ${params.roomId} archived successfully`);
@@ -190,7 +192,7 @@ const unarchiveRoom = async (req, res, next) => {
     // First check if room exists and is owned by the user
     const existingRoom = await Room.findOne({
       _id: params.roomId,
-      teacherId: req.user.id
+      teacherId: req.user.id,
     });
 
     if (!existingRoom) {
@@ -200,7 +202,9 @@ const unarchiveRoom = async (req, res, next) => {
       throw error;
     }
 
-    console.log(`Found room: ${existingRoom.name}, archivedAt: ${existingRoom.archivedAt}`);
+    console.log(
+      `Found room: ${existingRoom.name}, archivedAt: ${existingRoom.archivedAt}`,
+    );
 
     // Check if room is actually archived
     if (!existingRoom.archivedAt) {
@@ -214,7 +218,7 @@ const unarchiveRoom = async (req, res, next) => {
     const room = await Room.findOneAndUpdate(
       { _id: params.roomId, teacherId: req.user.id },
       { $unset: { archivedAt: 1 } }, // Remove the field completely
-      { new: true }
+      { new: true },
     );
 
     console.log(`Room ${params.roomId} unarchived successfully`);
@@ -243,7 +247,9 @@ const hardDeleteRoom = async (req, res, next) => {
       throw error;
     }
 
-    console.log(`🗑️  [ROOM DELETE] Starting room deletion: ${room.name} (${room._id})`);
+    console.log(
+      `🗑️  [ROOM DELETE] Starting room deletion: ${room.name} (${room._id})`,
+    );
 
     // Find all sessions in this room
     const activeSessions = await Session.find({
@@ -251,7 +257,9 @@ const hardDeleteRoom = async (req, res, next) => {
       isActive: true,
     });
 
-    console.log(`📊 [ROOM DELETE] Found ${activeSessions.length} active sessions in room`);
+    console.log(
+      `📊 [ROOM DELETE] Found ${activeSessions.length} active sessions in room`,
+    );
 
     // If there are active sessions and disconnect flag is set, terminate their sockets
     if (disconnectSockets && activeSessions.length > 0) {
@@ -261,35 +269,46 @@ const hardDeleteRoom = async (req, res, next) => {
 
         for (const session of activeSessions) {
           const roomName = `session:${session.code}`;
-          
-          console.log(`🔌 [ROOM DELETE] Disconnecting sockets for session: ${session.title} (${session._id})`);
-          
+
+          console.log(
+            `🔌 [ROOM DELETE] Disconnecting sockets for session: ${session.title} (${session._id})`,
+          );
+
           // Get all sockets in this session
           const sockets = await sessionNamespace.in(roomName).fetchSockets();
           const countBefore = sockets.length;
-          console.log(`📊 [ROOM DELETE] Sockets connected BEFORE: ${countBefore}`);
-          
+          console.log(
+            `📊 [ROOM DELETE] Sockets connected BEFORE: ${countBefore}`,
+          );
+
           if (countBefore > 0) {
             // Emit force-end event
             sessionNamespace.to(roomName).emit("session:force-ended", {
-              message: "This session has been deleted because the room was deleted by the instructor",
-              sessionId: session._id
+              message:
+                "This session has been deleted because the room was deleted by the instructor",
+              sessionId: session._id,
             });
-            
+
             // Disconnect all sockets
             for (const socket of sockets) {
               socket.leave(roomName);
               socket.disconnect(true);
             }
-            
-            console.log(`✅ [ROOM DELETE] Forced disconnection of ${countBefore} sockets`);
-            
+
+            console.log(
+              `✅ [ROOM DELETE] Forced disconnection of ${countBefore} sockets`,
+            );
+
             // Wait for propagation
-            await new Promise(resolve => setTimeout(resolve, 200));
-            
+            await new Promise((resolve) => setTimeout(resolve, 200));
+
             // Verify disconnection
-            const socketsAfter = await sessionNamespace.in(roomName).fetchSockets();
-            console.log(`📊 [ROOM DELETE] Sockets connected AFTER: ${socketsAfter.length}`);
+            const socketsAfter = await sessionNamespace
+              .in(roomName)
+              .fetchSockets();
+            console.log(
+              `📊 [ROOM DELETE] Sockets connected AFTER: ${socketsAfter.length}`,
+            );
           }
         }
       }
@@ -310,12 +329,14 @@ const hardDeleteRoom = async (req, res, next) => {
       teacherId: req.user.id,
     });
 
-    console.log(`✅ [ROOM DELETE] Room permanently deleted: ${deletedRoom.name}`);
+    console.log(
+      `✅ [ROOM DELETE] Room permanently deleted: ${deletedRoom.name}`,
+    );
 
-    res.json({ 
-      message: "Room permanently deleted", 
+    res.json({
+      message: "Room permanently deleted",
       room: deletedRoom,
-      sessionsDisconnected: activeSessions.length 
+      sessionsDisconnected: activeSessions.length,
     });
   } catch (err) {
     next(err);
@@ -357,16 +378,16 @@ const getArchivedRoomsByUserId = async (req, res, next) => {
     const { userId } = req.params;
 
     // Validate that the user is requesting their own archived rooms or has admin access
-    if (req.user.id !== userId && req.user.role !== 'ADMIN') {
+    if (req.user.id !== userId && req.user.role !== "ADMIN") {
       const error = new Error("Unauthorized access to user's archived rooms");
       error.status = 403;
       throw error;
     }
 
     // Filter condition to get only archived rooms for the user
-    const filterCondition = { 
+    const filterCondition = {
       teacherId: userId,
-      archivedAt: { $exists: true, $ne: null } // Only get archived rooms (not null and exists)
+      archivedAt: { $exists: true, $ne: null }, // Only get archived rooms (not null and exists)
     };
 
     // Count total archived rooms
@@ -386,7 +407,9 @@ const getArchivedRoomsByUserId = async (req, res, next) => {
       .skip(skip)
       .limit(query.limit)
       .sort({ archivedAt: -1 }) // Sort by most recently archived first
-      .select('name description defaultMaxStudents teacherId createdAt archivedAt updatedAt');
+      .select(
+        "name description defaultMaxStudents teacherId createdAt archivedAt updatedAt",
+      );
 
     res.json({
       success: true,

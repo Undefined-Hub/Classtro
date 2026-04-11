@@ -10,16 +10,16 @@ const createQuizTemplate = async (req, res) => {
     const processedQuestions = questions.map((question) => {
       // Create a map of temporary optionId to MongoDB ObjectId
       const optionIdMap = {};
-      
+
       // Generate MongoDB ObjectIds for each option
       const processedOptions = question.options.map((option) => {
         const mongoId = new mongoose.Types.ObjectId();
-        
+
         // If user provided a temporary optionId, map it
         if (option.optionId) {
           optionIdMap[option.optionId] = mongoId;
         }
-        
+
         return {
           _id: mongoId,
           text: option.text,
@@ -43,7 +43,7 @@ const createQuizTemplate = async (req, res) => {
           if (!isNaN(index) && processedOptions[index]) {
             return processedOptions[index]._id;
           }
-          
+
           throw new Error(`Invalid correctAnswer: ${answerId}`);
         });
       }
@@ -61,7 +61,7 @@ const createQuizTemplate = async (req, res) => {
     // Calculate total points
     const totalPoints = processedQuestions.reduce(
       (sum, q) => sum + (q.points || 1),
-      0
+      0,
     );
 
     const template = await QuizTemplate.create({
@@ -84,7 +84,7 @@ const getQuizTemplates = async (req, res) => {
   try {
     const { roomId } = req.query;
     const filter = { createdBy: req.user.id };
-    
+
     if (roomId) {
       filter.roomId = roomId;
     }
@@ -97,11 +97,15 @@ const getQuizTemplates = async (req, res) => {
 
     const templates = await QuizTemplate.aggregate([
       { $match: match },
-      { $addFields: { questionsCount: { $size: { $ifNull: ["$questions", []] } } } },
+      {
+        $addFields: {
+          questionsCount: { $size: { $ifNull: ["$questions", []] } },
+        },
+      },
       { $project: { questions: 0, roomId: 0, createdBy: 0 } },
       { $sort: { createdAt: -1 } },
     ]);
-    
+
     res.json(templates);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -114,7 +118,7 @@ const getQuizTemplateById = async (req, res) => {
     const template = await QuizTemplate.findById(req.params.id)
       .populate("roomId", "name")
       .populate("createdBy", "name email");
-    
+
     if (!template) {
       return res.status(404).json({ error: "Quiz template not found" });
     }
@@ -134,7 +138,7 @@ const getQuizTemplateById = async (req, res) => {
 const updateQuizTemplate = async (req, res) => {
   try {
     const template = await QuizTemplate.findById(req.params.id);
-    
+
     if (!template) {
       return res.status(404).json({ error: "Quiz template not found" });
     }
@@ -146,11 +150,11 @@ const updateQuizTemplate = async (req, res) => {
 
     // Process questions to handle both new and existing options
     let updateData = { ...req.body };
-    
+
     if (req.body.questions) {
       const processedQuestions = req.body.questions.map((question) => {
         const optionIdMap = {};
-        
+
         // Process options: keep existing MongoDB IDs, create new ones for temp IDs
         const processedOptions = question.options.map((option) => {
           // If option already has MongoDB ObjectId (from existing quiz), keep it
@@ -160,14 +164,14 @@ const updateQuizTemplate = async (req, res) => {
               text: option.text,
             };
           }
-          
+
           // For new options (with temp optionId), create a new MongoDB ObjectId
           const mongoId = new mongoose.Types.ObjectId();
-          
+
           if (option.optionId) {
             optionIdMap[option.optionId] = mongoId;
           }
-          
+
           return {
             _id: mongoId,
             text: option.text,
@@ -182,12 +186,12 @@ const updateQuizTemplate = async (req, res) => {
             if (optionIdMap[answerId]) {
               return optionIdMap[answerId];
             }
-            
+
             // Handle ObjectId strings (existing options)
             if (mongoose.Types.ObjectId.isValid(answerId)) {
               return answerId;
             }
-            
+
             throw new Error(`Invalid correctAnswer: ${answerId}`);
           });
         }
@@ -205,14 +209,14 @@ const updateQuizTemplate = async (req, res) => {
       updateData.questions = processedQuestions;
       updateData.totalPoints = processedQuestions.reduce(
         (sum, q) => sum + (q.points || 1),
-        0
+        0,
       );
     }
 
     const updatedTemplate = await QuizTemplate.findByIdAndUpdate(
       req.params.id,
       updateData,
-      { new: true, runValidators: true }
+      { new: true, runValidators: true },
     );
 
     res.json(updatedTemplate);
@@ -225,7 +229,7 @@ const updateQuizTemplate = async (req, res) => {
 const deleteQuizTemplate = async (req, res) => {
   try {
     const template = await QuizTemplate.findById(req.params.id);
-    
+
     if (!template) {
       return res.status(404).json({ error: "Quiz template not found" });
     }

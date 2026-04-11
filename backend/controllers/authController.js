@@ -14,7 +14,9 @@ emailService.verifyConnection().then((ok) => {
 dotenv.config();
 
 const REFRESH_TOKEN_COOKIE_MAX_AGE = 7 * 24 * 60 * 60 * 1000; // 7 days
-const isProduction = process.env.NODE_ENV === "production" || process.env.NODE_ENV === "development"; // Treat development as production for cookie settings
+const isProduction =
+  process.env.NODE_ENV === "production" ||
+  process.env.NODE_ENV === "development"; // Treat development as production for cookie settings
 
 const getRefreshCookieOptions = () => ({
   httpOnly: true,
@@ -95,12 +97,10 @@ const loginUser = async (req, res) => {
       user: safeUser,
     });
   } catch (err) {
-    res
-      .status(500)
-      .json({
-        message: "Server error. Please try again later.",
-        error: err.message,
-      });
+    res.status(500).json({
+      message: "Server error. Please try again later.",
+      error: err.message,
+    });
   }
 };
 
@@ -238,9 +238,11 @@ const googleAuthCallback = async (req, res) => {
     callbackUrl.searchParams.set("isNewUser", user.isNewUser || false);
 
     res.redirect(callbackUrl.toString());
-    } catch (error) {
+  } catch (error) {
     console.error("Google OAuth callback error:", error);
-    res.redirect(`${process.env.CLIENT_ORIGIN || "http://localhost:5173"}/auth/callback?error=internal_error`);
+    res.redirect(
+      `${process.env.CLIENT_ORIGIN || "http://localhost:5173"}/auth/callback?error=internal_error`,
+    );
   }
 };
 

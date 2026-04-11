@@ -2,10 +2,10 @@
   "feature": "rooms",
   "title": "Rooms & Room Management",
   "description": "Virtual classrooms where teachers organize and conduct interactive sessions with students",
-  
+
   "teacher": {
     "overview": "Rooms are your virtual classrooms where you organize and conduct sessions. Each room has a unique code that students use to join.",
-    
+
     "howTo": {
       "create": [
         "Go to Dashboard and click 'Create Room' button",
@@ -28,14 +28,14 @@
         "Use the session to create polls, Q&A, and gather feedback"
       ]
     },
-    
+
     "tips": [
       "Use clear, descriptive room names (e.g., 'Math Grade 10 - Room A' instead of just 'Math')",
       "Create separate rooms for different subjects or class sections",
       "Share room codes via email, LMS, or display on screen",
       "Archive old rooms to keep your dashboard organized"
     ],
-    
+
     "canDo": [
       "Create unlimited rooms",
       "Rename or edit room details anytime",
@@ -44,13 +44,13 @@
       "Archive and restore rooms",
       "Share room codes with students"
     ],
-    
+
     "cannotDo": [
       "Delete rooms with active sessions",
       "Transfer room ownership to another teacher",
       "Merge multiple rooms together"
     ],
-    
+
     "bestPractices": [
       "Create one room per course or subject",
       "Keep room codes secure - only share with enrolled students",
@@ -58,10 +58,10 @@
       "Use descriptive names to help students identify the right room"
     ]
   },
-  
+
   "student": {
     "overview": "Rooms are virtual classrooms where you join sessions hosted by your teachers. You need a room code to join.",
-    
+
     "howTo": {
       "join": [
         "Get the room code from your teacher",
@@ -77,27 +77,27 @@
         "View your participation history in each room"
       ]
     },
-    
+
     "tips": [
       "Save room codes in your notes for quick access",
       "Check room names to ensure you're joining the correct class",
       "You can join multiple rooms for different subjects",
       "Check Dashboard regularly for active sessions"
     ],
-    
+
     "canDo": [
       "Join multiple rooms",
       "View all your joined rooms on Dashboard",
       "See session history for rooms you're in",
       "Leave a room if you joined by mistake"
     ],
-    
+
     "cannotDo": [
       "Create your own rooms (teacher-only feature)",
       "Invite other students to rooms",
       "See other students in the room before session starts"
     ],
-    
+
     "commonIssues": [
       {
         "problem": "Invalid room code error",
@@ -113,6 +113,6 @@
       }
     ]
   },
-  
+
   "relatedFeatures": ["sessions", "qna", "polls", "feedback"]
 }

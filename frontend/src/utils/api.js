@@ -1,6 +1,7 @@
 import axios from "axios";
 
-const baseURL = import.meta.env.VITE_BACKEND_BASE_URL || "http://localhost:3000";
+const baseURL =
+  import.meta.env.VITE_BACKEND_BASE_URL || "http://localhost:3000";
 
 const api = axios.create({
   baseURL,
@@ -65,7 +66,7 @@ api.interceptors.response.use(
           {},
           {
             withCredentials: true, // Include HTTP-only cookie
-          }
+          },
         );
 
         const { accessToken } = refreshResponse.data;
@@ -97,14 +98,18 @@ api.interceptors.response.use(
     }
 
     return Promise.reject(error);
-  }
+  },
 );
 
 // Helper function to get absolute URL for backend resources
 export const getBackendURL = (path) => {
   if (!path) return "";
   // If path is already absolute (starts with http, https, or blob), return as is
-  if (path.startsWith("http://") || path.startsWith("https://") || path.startsWith("blob:")) {
+  if (
+    path.startsWith("http://") ||
+    path.startsWith("https://") ||
+    path.startsWith("blob:")
+  ) {
     return path;
   }
   // Remove leading slash if present to avoid double slashes

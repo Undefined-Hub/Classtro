@@ -1,5 +1,5 @@
 // Build Classtro-specific prompt with knowledge injection
-function buildClasstroPrompt(knowledgeContext, question, role = 'guest') {
+function buildClasstroPrompt(knowledgeContext, question, role = "guest") {
   let prompt = `You are an AI assistant for Classtro, a classroom engagement platform.
 
 IMPORTANT RULES:
@@ -26,9 +26,9 @@ FORMATTING RULES:
   }
 
   // Add role-specific restrictions
-  if (role === 'student') {
+  if (role === "student") {
     prompt += `ROLE RESTRICTION:\nYou are helping a STUDENT. Do NOT explain teacher-only features. If asked about teacher features, say "That's a teacher-only feature."\n\n`;
-  } else if (role === 'teacher') {
+  } else if (role === "teacher") {
     prompt += `ROLE RESTRICTION:\nYou are helping a TEACHER. Focus on session management and teaching tools.\n\n`;
   } else {
     prompt += `NOTE:\nUser is a guest. Encourage them to sign up for full features.\n\n`;
@@ -45,7 +45,11 @@ function buildGeneralPrompt(question, previousContext = null) {
   let prompt = `You are an educational AI assistant inside Classtro.`;
 
   // Add previous context if available (for follow-up questions)
-  if (previousContext && previousContext.lastUserMessage && previousContext.lastAssistantSummary) {
+  if (
+    previousContext &&
+    previousContext.lastUserMessage &&
+    previousContext.lastAssistantSummary
+  ) {
     prompt += `
 
 Previous Context:

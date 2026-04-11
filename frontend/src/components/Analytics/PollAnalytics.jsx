@@ -225,7 +225,11 @@ const PollAnalytics = () => {
             <div className="h-full overflow-y-auto hide-scrollbar">
               <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
                 {polls.slice(0, 2).map((poll, index) => (
-                  <PollCard key={getPollKey(poll, index)} poll={poll} index={index} />
+                  <PollCard
+                    key={getPollKey(poll, index)}
+                    poll={poll}
+                    index={index}
+                  />
                 ))}
               </div>
 
@@ -247,7 +251,11 @@ const PollAnalytics = () => {
                 style={{ width: "max-content" }}
               >
                 {polls.map((poll, index) => (
-                  <PollCard key={getPollKey(poll, index)} poll={poll} index={index} />
+                  <PollCard
+                    key={getPollKey(poll, index)}
+                    poll={poll}
+                    index={index}
+                  />
                 ))}
               </div>
             </div>

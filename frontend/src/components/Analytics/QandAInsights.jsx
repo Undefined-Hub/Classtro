@@ -318,12 +318,14 @@ const QandAInsights = () => {
             )}
           </div>
           <div className="flex-1 overflow-y-auto space-y-3 pr-2 hide-scrollbar">
-            {sortedQuestions.slice(0, maxVisibleQuestions).map((question, index) => (
-              <QuestionCard
-                key={getQuestionKey(question, index)}
-                question={question}
-              />
-            ))}
+            {sortedQuestions
+              .slice(0, maxVisibleQuestions)
+              .map((question, index) => (
+                <QuestionCard
+                  key={getQuestionKey(question, index)}
+                  question={question}
+                />
+              ))}
 
             {sortedQuestions.length > maxVisibleQuestions && (
               <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-4 text-center">

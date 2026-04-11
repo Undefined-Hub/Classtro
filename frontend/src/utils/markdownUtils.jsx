@@ -49,7 +49,7 @@ export const parseMarkdown = (text) => {
     const isOverlapping = activeMatches.some(
       (active) =>
         (match.start >= active.start && match.start < active.end) ||
-        (match.end > active.start && match.end <= active.end)
+        (match.end > active.start && match.end <= active.end),
     );
 
     if (!isOverlapping) {
@@ -137,7 +137,7 @@ export const renderMarkdownHTML = (text) => {
   // Handle code
   html = html.replace(
     /`(.+?)`/g,
-    '<code style="background-color: #d1d5db; padding: 0.375rem 0.5rem; border-radius: 0.25rem; font-family: monospace; font-size: 0.75rem;">$1</code>'
+    '<code style="background-color: #d1d5db; padding: 0.375rem 0.5rem; border-radius: 0.25rem; font-family: monospace; font-size: 0.75rem;">$1</code>',
   );
 
   return html;

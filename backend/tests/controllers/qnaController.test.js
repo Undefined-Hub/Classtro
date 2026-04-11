@@ -58,11 +58,15 @@ describe("qnaController", () => {
     await createQuestion(req, res);
 
     expect(res.status).toHaveBeenCalledWith(400);
-    expect(res.json).toHaveBeenCalledWith({ message: "sessionId and text are required" });
+    expect(res.json).toHaveBeenCalledWith({
+      message: "sessionId and text are required",
+    });
   });
 
   it("createQuestion returns 404 when session does not exist", async () => {
-    Session.findById.mockReturnValueOnce({ lean: jest.fn().mockResolvedValue(null) });
+    Session.findById.mockReturnValueOnce({
+      lean: jest.fn().mockResolvedValue(null),
+    });
 
     const req = { body: { sessionId: "s404", text: "Q?" }, user: { id: "u1" } };
     const res = createMockRes();
@@ -80,20 +84,31 @@ describe("qnaController", () => {
     await upvoteQuestion(req, res);
 
     expect(res.status).toHaveBeenCalledWith(403);
-    expect(res.json).toHaveBeenCalledWith({ message: "Teachers cannot upvote questions" });
+    expect(res.json).toHaveBeenCalledWith({
+      message: "Teachers cannot upvote questions",
+    });
   });
 
   it("upvoteQuestion toggles off on duplicate key", async () => {
-    Question.findById.mockResolvedValueOnce({ _id: "q1", sessionId: "s1", isDeleted: false });
+    Question.findById.mockResolvedValueOnce({
+      _id: "q1",
+      sessionId: "s1",
+      isDeleted: false,
+    });
     QuestionUpvote.create.mockRejectedValueOnce({ code: 11000 });
-    Session.findById.mockReturnValueOnce({ lean: jest.fn().mockResolvedValue({ code: "ABC123" }) });
+    Session.findById.mockReturnValueOnce({
+      lean: jest.fn().mockResolvedValue({ code: "ABC123" }),
+    });
 
     const req = { params: { id: "q1" }, user: { id: "u1", role: "STUDENT" } };
     const res = createMockRes();
 
     await upvoteQuestion(req, res);
 
-    expect(QuestionUpvote.deleteOne).toHaveBeenCalledWith({ questionId: "q1", participantId: "u1" });
+    expect(QuestionUpvote.deleteOne).toHaveBeenCalledWith({
+      questionId: "q1",
+      participantId: "u1",
+    });
     expect(res.status).toHaveBeenCalledWith(200);
     expect(res.json).toHaveBeenCalledWith({ message: "Upvote removed" });
   });
@@ -109,13 +124,17 @@ describe("qnaController", () => {
   });
 
   it("getQuestionsBySession returns sorted questions list", async () => {
-    const leanMock = jest.fn().mockResolvedValue([
-      { _id: "q1", authorId: "u1", upvotes: 2, createdAt: new Date() },
-    ]);
+    const leanMock = jest
+      .fn()
+      .mockResolvedValue([
+        { _id: "q1", authorId: "u1", upvotes: 2, createdAt: new Date() },
+      ]);
     const sortMock = jest.fn(() => ({ lean: leanMock }));
     Question.find.mockReturnValueOnce({ sort: sortMock });
 
-    User.find.mockReturnValueOnce({ lean: jest.fn().mockResolvedValue([{ _id: "u1", name: "Harsh" }]) });
+    User.find.mockReturnValueOnce({
+      lean: jest.fn().mockResolvedValue([{ _id: "u1", name: "Harsh" }]),
+    });
 
     const req = { params: { sessionId: "s1" }, query: {} };
     const res = createMockRes();

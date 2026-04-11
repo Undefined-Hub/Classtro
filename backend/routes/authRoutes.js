@@ -60,12 +60,12 @@ router.get(
 // Handle OAuth failures
 router.get("/google/failure", (req, res) => {
   const clientOrigin = process.env.CLIENT_ORIGIN || "http://localhost:5173";
-  
+
   // For redirect-based OAuth, redirect back to login with error parameter
   const errorMessage = encodeURIComponent(
-    "This account was registered via a different method. Please use the original login method."
+    "This account was registered via a different method. Please use the original login method.",
   );
-  
+
   res.redirect(`${clientOrigin}/login?oauth_error=${errorMessage}`);
 });
 

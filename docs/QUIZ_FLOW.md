@@ -55,11 +55,11 @@ Key design points:
 
 - QuizTemplate (backend/models/QuizTemplate.js)
   - title, description, createdBy, roomId, questions[]
-  - question: { type, questionText, options[] (with _id), correctAnswers[], points, negativePoints }
+  - question: { type, questionText, options[] (with \_id), correctAnswers[], points, negativePoints }
 
 - LiveQuiz (backend/models/LiveQuiz.js)
   - sessionId, launchedBy, sourceTemplateId, title, questions[], status (DRAFT|LIVE|CLOSED), durationSeconds, startedAt, closedAt, allowLateSubmission
-  - questions use their own `_id` values (LiveOptionSchema preserves option _id)
+  - questions use their own `_id` values (LiveOptionSchema preserves option \_id)
 
 - QuizSubmission (backend/models/QuizSubmission.js)
   - liveQuizId, participantId, sessionId, answers[], score, maxScore, percentage, evaluated, submittedAt, isLate
@@ -225,7 +225,7 @@ Important: When controllers emit real-time events (e.g. `launchQuiz`, `closeQuiz
 
 - Socket auth failures: Verify the client connects with `auth: { token }` to the namespace and the server `authenticateSocket` reads `socket.handshake.auth.token`. Tokens must be valid JWTs signed with `process.env.JWT_SECRET`.
 
-- Option _id missing in UI: Templates set option `_id` values in `QuizTemplate` and `createLiveQuiz` copies these `_id` into the `LiveQuiz` questions/options. If option `_id` is missing, verify template creation logic and mapping in `createQuizTemplate` & `createLiveQuiz`.
+- Option \_id missing in UI: Templates set option `_id` values in `QuizTemplate` and `createLiveQuiz` copies these `_id` into the `LiveQuiz` questions/options. If option `_id` is missing, verify template creation logic and mapping in `createQuizTemplate` & `createLiveQuiz`.
 
 - Duplicate submissions: `QuizSubmission` has a unique index on `{ liveQuizId, participantId }`; handle `E11000` duplicate key errors and surface user-friendly messages.
 
