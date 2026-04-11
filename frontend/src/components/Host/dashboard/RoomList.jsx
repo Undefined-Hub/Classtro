@@ -38,6 +38,23 @@ const RoomList = ({
     setOpenMenuId(openMenuId === roomId ? null : roomId);
   };
 
+  const handleMenuAction = (action, room) => {
+    setOpenMenuId(null);
+    switch (action) {
+      case 'manage':
+        onManageRoom(room);
+        break;
+      case 'archive':
+        onArchiveRoom(room);
+        break;
+      case 'delete':
+        onDeleteRoom(room);
+        break;
+      default:
+        break;
+    }
+  };
+
   // Log room details for debugging
   useEffect(() => {
     if (rooms.length > 0) {
