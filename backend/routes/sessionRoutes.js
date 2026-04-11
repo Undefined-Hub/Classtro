@@ -8,6 +8,7 @@ const {
   listActiveSessions,
   closeSession,
   updateSession,
+  deleteSession,
   joinSession,
   leaveSession,
   getSessionParticipants,
@@ -34,6 +35,7 @@ router.post("/", authenticateJWT, createSessionStandalone); // Create a session 
 router.get("/id/:sessionId", authenticateJWT, getSessionById); // Get session details by sessionId (teacher only)✅
 router.patch("/id/:sessionId", authenticateJWT, updateSession); // Update session metadata (teacher only)✅
 router.post("/code/:code/close", authenticateJWT, closeSession); // Close a session (teacher only) ✅
+router.delete("/id/:sessionId", authenticateJWT, deleteSession); // Delete a session (teacher only) - same as closing for now, can be extended later with a 'soft delete' field if needed
 
 // ---------------- STUDENT ROUTES ----------------
 router.post("/code/:code/join", authenticateJWT, joinSession); // Student joins a session✅

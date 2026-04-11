@@ -276,6 +276,16 @@ const ParticipantSession = () => {
       setShowFeedbackModal(true);
     };
 
+    const onSessionForceEnded = (payload) => {
+      console.log("🔌 [FORCE-END] Session force-ended event received:", payload);
+      // Show critical alert to user
+      alert("This session has been deleted by the instructor. You will be redirected.");
+      // Clear session data
+      clearSession();
+      // Redirect to home
+      navigate("/");
+    };
+
     // * Q&A Handlers
     const onCreated = (payload) => {
       const q = payload.question;
@@ -451,6 +461,7 @@ const ParticipantSession = () => {
       console.log("[SOCKET] broadcast:reaction-update listener registered");
       socket.on("participants:update", onParticipantsUpdate);
       socket.on("session:ended", onSessionEnded);
+      socket.on("session:force-ended", onSessionForceEnded);
 
       socket.on("qna:question:created", onCreated);
       socket.on("qna:question:updated", onUpdated);
@@ -482,6 +493,7 @@ const ParticipantSession = () => {
         socket.off("broadcast:reaction-update", onReactionUpdate);
         socket.off("participants:update", onParticipantsUpdate);
         socket.off("session:ended", onSessionEnded);
+        socket.off("session:force-ended", onSessionForceEnded);
 
         socket.off("qna:question:created", onCreated);
         socket.off("qna:question:updated", onUpdated);

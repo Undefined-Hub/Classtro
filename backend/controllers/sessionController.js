@@ -3,6 +3,7 @@ const Room = require("../models/Room");
 const Poll = require("../models/Polls");
 const Participant = require("../models/Participant");
 const { validateInput } = require("../utils/validateInput");
+const { getIOInstance } = require("../socket");
 const { 
   trackJoinActivity, 
   trackLeaveActivity, 
@@ -241,6 +242,89 @@ const updateSession = async (req, res, next) => {
     }
 
     res.json(session);
+  } catch (err) {
+    next(err);
+  }
+};
+/* 
+* Delete a session (teacher only)
+* DELETE /api/sessions/:sessionId
+*/
+const deleteSession = async (req, res, next) => {
+  try {
+    const params = validateInput(sessionIdParamSchema, req.params);
+    const { disconnectSockets } = req.body || {};
+
+    const session = await Session.findOne(
+      { _id: params.sessionId, teacherId: req.user.id }
+    );
+
+    if (!session) {
+      return res
+        .status(404)
+        .json({ error: "Session not found or not owned by you" });
+    }
+
+    // If disconnectSockets flag is set and session is active, disconnect all participants first
+    if (disconnectSockets && session.isActive) {
+      const io = getIOInstance();
+      if (io) {
+        const sessionNamespace = io.of("/sessions");
+        const roomName = `session:${session.code}`;
+        
+        console.log(`🔌 [DELETE] Verifying and disconnecting all sockets in ${roomName}`);
+        
+        // ✅ STEP 1: Count sockets BEFORE disconnection
+        const socketsBefore = await sessionNamespace.in(roomName).fetchSockets();
+        const countBefore = socketsBefore.length;
+        console.log(`📊 [DELETE] Sockets connected BEFORE: ${countBefore}`);
+        
+        if (countBefore > 0) {
+          // Emit session-ended event to all clients to disconnect them gracefully
+          console.log(`📢 [DELETE] Sending force-end event to ${countBefore} participants...`);
+          sessionNamespace.to(roomName).emit("session:force-ended", {
+            message: "This session has been deleted by the instructor",
+            sessionId: session._id
+          });
+          
+          // Disconnect all sockets in this room
+          for (const socket of socketsBefore) {
+            socket.leave(roomName);
+            socket.disconnect(true);
+          }
+          
+          console.log(`✅ [DELETE] Forced disconnection of ${countBefore} sockets`);
+          
+          // ✅ STEP 2: Wait a bit for disconnection to propagate
+          await new Promise(resolve => setTimeout(resolve, 200));
+          
+          // ✅ STEP 3: Verify disconnection - count sockets AFTER
+          const socketsAfter = await sessionNamespace.in(roomName).fetchSockets();
+          const countAfter = socketsAfter.length;
+          console.log(`📊 [DELETE] Sockets connected AFTER: ${countAfter}`);
+          
+          if (countAfter > 0) {
+            console.warn(`⚠️  [DELETE] WARNING: Still ${countAfter} sockets connected after disconnection attempt!`);
+            console.warn(`⚠️  [DELETE] Proceeding with deletion anyway (session will be invalid for remaining clients)`);
+          } else {
+            console.log(`✨ [DELETE] All sockets successfully terminated!`);
+          }
+        } else {
+          console.log(`ℹ️  [DELETE] No active sockets in room - proceeding with deletion`);
+        }
+      }
+    }
+
+    // Delete the session
+    const deletedSession = await Session.findOneAndDelete(
+      { _id: params.sessionId, teacherId: req.user.id }
+    );
+
+    console.log(`🗑️  [DELETE] Session ${session._id} permanently deleted from database`);
+
+    // Optionally, also delete related data like participants, polls, etc.
+
+    res.json({ message: "Session deleted successfully", session: deletedSession });
   } catch (err) {
     next(err);
   }
@@ -514,6 +598,7 @@ module.exports = {
   listActiveSessions,
   closeSession,
   updateSession,
+  deleteSession,
   joinSession,
   leaveSession,
   getSessionParticipants,

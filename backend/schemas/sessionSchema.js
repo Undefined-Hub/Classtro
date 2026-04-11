@@ -37,6 +37,8 @@ const listActiveSessionsQuerySchema = z.object({
 const updateSessionSchema = z.object({
   title: z.string().min(3).optional(),
   maxStudents: z.number().min(1).max(1000).optional(),
+  isActive: z.boolean().optional(),
+  endAt: z.string().datetime().optional(),
   metadata: z.record(z.any()).optional(),
 });
 

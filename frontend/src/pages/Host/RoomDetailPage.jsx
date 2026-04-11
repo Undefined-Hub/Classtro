@@ -168,6 +168,14 @@ function RoomDetailPage() {
     }
   };
 
+  const handleDeleteSession = (deletedSessionId) => {
+    // Remove the deleted session from the sessions list
+    setSessions(prevSessions => 
+      prevSessions.filter(session => session._id !== deletedSessionId)
+    );
+    toast.success("Session deleted successfully!");
+  };
+
   if (!selectedRoom) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -218,6 +226,7 @@ function RoomDetailPage() {
         onCreateSession={() => setShowCreateSessionModal(true)}
         onSessionClick={handleSessionClick}
         onManageSession={handleManageSession}
+        onDeleteSession={handleDeleteSession}
         sessions={sessions}
         setSessions={setSessions}
         loading={sessionsLoading}
