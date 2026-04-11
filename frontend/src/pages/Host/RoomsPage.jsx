@@ -16,7 +16,10 @@ function RoomsPage() {
   const [showManageRoomModal, setShowManageRoomModal] = useState(false);
   const [showArchiveConfirmModal, setShowArchiveConfirmModal] = useState(false);
   const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
+  const [showDeleteRoomWithSessionsModal, setShowDeleteRoomWithSessionsModal] = useState(false);
   const [selectedRoom, setSelectedRoom] = useState(null);
+  const [activeSessionsInRoom, setActiveSessionsInRoom] = useState([]);
+  const [isDeletingRoom, setIsDeletingRoom] = useState(false);
   const [roomFormData, setRoomFormData] = useState({
     name: "",
     description: "",
@@ -228,14 +231,40 @@ function RoomsPage() {
 
   const handleDeleteRoom = async (room) => {
     setSelectedRoom(room);
-    setShowDeleteConfirmModal(true);
+    try {
+      // Check for active sessions in this room
+      const res = await api.get(`/api/rooms/${room._id}/sessions?active=true`);
+      const activeSessions = res.data || [];
+      
+      if (activeSessions.length > 0) {
+        // Show modal with active sessions warning
+        setActiveSessionsInRoom(activeSessions);
+        setShowDeleteRoomWithSessionsModal(true);
+      } else {
+        // No active sessions, show normal delete confirmation
+        setShowDeleteConfirmModal(true);
+      }
+    } catch (err) {
+      console.error("Error checking active sessions:", err);
+      // If error, proceed to normal delete confirmation
+      setShowDeleteConfirmModal(true);
+    }
   };
 
   const confirmDeleteRoom = async () => {
     if (!selectedRoom) return;
 
     try {
-      const res = await api.delete(`/api/rooms/${selectedRoom._id}/hard`);
+      setIsDeletingRoom(true);
+      
+      // Check if we need to disconnect sockets (if there are active sessions)
+      const hasActiveSessions = activeSessionsInRoom.length > 0;
+      
+      const res = await api.delete(`/api/rooms/${selectedRoom._id}/hard`, {
+        data: { 
+          disconnectSockets: hasActiveSessions 
+        }
+      });
       
       if (res.status !== 200) {
         throw new Error("Failed to delete room");
@@ -246,9 +275,16 @@ function RoomsPage() {
 
       // Show success toast
       toast.success("Room deleted permanently!");
+      
+      // Close modals
+      setShowDeleteConfirmModal(false);
+      setShowDeleteRoomWithSessionsModal(false);
+      setActiveSessionsInRoom([]);
 
     } catch (error) {
       toast.error(error.response?.data?.message || error.message || "Failed to delete room");
+    } finally {
+      setIsDeletingRoom(false);
     }
   };
 
@@ -373,6 +409,102 @@ function RoomsPage() {
           </div>
         </div>
       </ConfirmationModal>
+
+      {/* Delete Room with Active Sessions Modal */}
+      <div
+        className={`fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 ${
+          showDeleteRoomWithSessionsModal ? "block" : "hidden"
+        }`}
+      >
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-lg w-full">
+          {/* Header */}
+          <div className="flex items-center p-6 pb-4">
+            <div className="w-10 h-10 rounded-full flex items-center justify-center mr-3 bg-red-100 dark:bg-red-900/30">
+              <svg className="w-6 h-6 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.732 15.5C3.962 16.333 4.924 18 6.464 18z" />
+              </svg>
+            </div>
+            <div className="flex-1">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                Delete Room with Active Sessions?
+              </h3>
+            </div>
+            <button
+              onClick={() => {
+                setShowDeleteRoomWithSessionsModal(false);
+                setActiveSessionsInRoom([]);
+              }}
+              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+            >
+              <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+
+          {/* Content */}
+          <div className="px-6 pb-6 space-y-4">
+            <div className="text-gray-600 dark:text-gray-400">
+              <p className="mb-2">
+                The room <span className="font-semibold text-gray-900 dark:text-white">"{selectedRoom?.name}"</span> has <span className="font-semibold">{activeSessionsInRoom.length}</span> active session{activeSessionsInRoom.length !== 1 ? 's' : ''}.
+              </p>
+              <p className="mb-4">
+                If you delete this room now, all participants in active sessions will be disconnected immediately.
+              </p>
+            </div>
+
+            {/* Active Sessions List */}
+            <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 max-h-40 overflow-y-auto">
+              <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Active Sessions:</p>
+              <ul className="space-y-2">
+                {activeSessionsInRoom.map((session) => (
+                  <li key={session._id} className="text-sm text-gray-600 dark:text-gray-400 flex items-center">
+                    <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
+                    {session.title} ({session.participantCount || 0} participants)
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+              <div className="flex items-start">
+                <svg className="w-5 h-5 text-red-500 mt-0.5 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.732 15.5C3.962 16.333 4.924 18 6.464 18z" />
+                </svg>
+                <div className="text-sm text-red-700 dark:text-red-300">
+                  <p className="font-semibold mb-1">This action will:</p>
+                  <ul className="space-y-1 list-disc list-inside">
+                    <li>Disconnect all participants from active sessions</li>
+                    <li>Permanently delete the room and all its sessions</li>
+                    <li>Remove all session data and analytics</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex items-center justify-end space-x-3 pt-4">
+              <button
+                onClick={() => {
+                  setShowDeleteRoomWithSessionsModal(false);
+                  setActiveSessionsInRoom([]);
+                }}
+                className="px-4 py-2 text-gray-700 dark:text-gray-200 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 rounded-lg font-medium transition-colors"
+                disabled={isDeletingRoom}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDeleteRoom}
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors"
+                disabled={isDeletingRoom}
+              >
+                {isDeletingRoom ? "Deleting..." : "Delete Room"}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
     </>
   );
 }
