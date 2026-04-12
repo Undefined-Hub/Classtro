@@ -1,4 +1,4 @@
-import { useState, useCallback, memo, useMemo } from "react";
+import { useState, useCallback, memo, useMemo, useEffect } from "react";
 import {
   ArrowLeft,
   Save,
@@ -73,28 +73,61 @@ const QuestionSkeleton = memo(() => (
 ));
 
 function QuizCreation({ quizName, quizDescription, onBack, existingQuiz }) {
+  const draftKey = existingQuiz?._id ? `quiz_draft_${existingQuiz._id}` : null;
+  const draftData = useMemo(() => {
+    if (!draftKey) return null;
+    try {
+      const saved = localStorage.getItem(draftKey);
+      return saved ? JSON.parse(saved) : null;
+    } catch(e) {
+      return null;
+    }
+  }, [draftKey]);
+
   const [questions, setQuestions] = useState(
-    existingQuiz
+    draftData?.questions || (existingQuiz
       ? existingQuiz.questions.map((q, idx) => ({
           ...q,
           _id: q._id || `existing_${Date.now()}_${idx}_${Math.random()}`,
         }))
-      : [],
+      : [])
   );
-  const [currentQuestion, setCurrentQuestion] = useState("");
-  const [options, setOptions] = useState(["", ""]);
-  const [optionIds, setOptionIds] = useState([null, null]); // Store _ids alongside options
-  const [questionType, setQuestionType] = useState("MCQ");
-  const [correctIndex, setCorrectIndex] = useState(0);
-  const [correctIndices, setCorrectIndices] = useState([0]); // For MULTI_SELECT
-  const [points, setPoints] = useState(1);
-  const [negativePoints, setNegativePoints] = useState(0);
-  const [showNegativePoints, setShowNegativePoints] = useState(false);
+  const [currentQuestion, setCurrentQuestion] = useState(draftData?.currentQuestion || "");
+  const [options, setOptions] = useState(draftData?.options || ["", ""]);
+  const [optionIds, setOptionIds] = useState(draftData?.optionIds || [null, null]); // Store _ids alongside options
+  const [questionType, setQuestionType] = useState(draftData?.questionType || "MCQ");
+  const [correctIndex, setCorrectIndex] = useState(draftData?.correctIndex ?? 0);
+  const [correctIndices, setCorrectIndices] = useState(draftData?.correctIndices || [0]); // For MULTI_SELECT
+  const [points, setPoints] = useState(draftData?.points ?? 1);
+  const [negativePoints, setNegativePoints] = useState(draftData?.negativePoints ?? 0);
+  const [showNegativePoints, setShowNegativePoints] = useState(draftData?.showNegativePoints || false);
   const [isSaving, setIsSaving] = useState(false);
   const [showAIGenerator, setShowAIGenerator] = useState(false);
   const [isAIGenerating, setIsAIGenerating] = useState(false);
   const [aiSkeletonCount, setAiSkeletonCount] = useState(3);
   const [layoutMode, setLayoutMode] = useState("vertical"); // "horizontal" or "vertical"
+
+  // Autosave to draft
+  useEffect(() => {
+    if (draftKey) {
+      const stateToSave = {
+        questions,
+        currentQuestion,
+        options,
+        optionIds,
+        questionType,
+        correctIndex,
+        correctIndices,
+        points,
+        negativePoints,
+        showNegativePoints,
+      };
+      localStorage.setItem(draftKey, JSON.stringify(stateToSave));
+    }
+  }, [
+    draftKey, questions, currentQuestion, options, optionIds, questionType, 
+    correctIndex, correctIndices, points, negativePoints, showNegativePoints
+  ]);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -311,6 +344,7 @@ function QuizCreation({ quizName, quizDescription, onBack, existingQuiz }) {
         );
 
         if (res.status === 200 || res.status === 204) {
+          if (draftKey) localStorage.removeItem(draftKey);
           // Update localStorage as backup
           const existingQuizzes = JSON.parse(
             localStorage.getItem("quizzes") || "[]",
@@ -369,6 +403,7 @@ function QuizCreation({ quizName, quizDescription, onBack, existingQuiz }) {
       const response = await api.post("/api/quiz-templates", quizPayload);
 
       if (response.status === 201) {
+        if (draftKey) localStorage.removeItem(draftKey);
         // Save to localStorage as backup
         const quizObject = {
           _id: response.data._id || `quiz_${Date.now()}`,
@@ -439,7 +474,8 @@ function QuizCreation({ quizName, quizDescription, onBack, existingQuiz }) {
   };
 
   const handleDiscard = () => {
-    if (window.confirm("Are you sure you want to discard this quiz?")) {
+    if (window.confirm("Are you sure you want to discard your changes?")) {
+      if (draftKey) localStorage.removeItem(draftKey);
       onBack();
     }
   };

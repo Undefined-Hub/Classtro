@@ -70,11 +70,28 @@ function SessionsPage() {
     });
   };
 
-  const handleCreateQuiz = () => {
+  const handleCreateQuiz = async () => {
     if (quizName.trim()) {
-      setEditingQuiz(null); // Ensure it's a new quiz
-      setIsQuizCreated(true);
       setIsModalOpen(false);
+      try {
+        setIsLoading(true);
+        // Create draft directly in DB
+        const response = await api.post("/api/quiz-templates", {
+          title: quizName,
+          description: quizDescription,
+          questions: []
+        });
+        const newQuiz = response.data;
+        setEditingQuiz(newQuiz);
+        setQuizName(newQuiz.title);
+        setQuizDescription(newQuiz.description || "");
+        setIsQuizCreated(true); // Open edit page
+      } catch (err) {
+        console.error("Error creating draft quiz", err);
+        alert("Failed to create quiz draft. Please try again.");
+      } finally {
+        setIsLoading(false);
+      }
     } else {
       alert("Please enter a quiz name.");
     }
@@ -106,6 +123,7 @@ function SessionsPage() {
     if (!quizToDelete) return;
 
     try {
+      localStorage.removeItem(`quiz_draft_${quizToDelete._id}`);
       console.log("Attempting to delete quiz:", quizToDelete._id);
       const response = await api.delete(
         `/api/quiz-templates/${quizToDelete._id}`,
