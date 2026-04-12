@@ -65,6 +65,7 @@ const QuizManager = ({ isParticipantListOpen = true }) => {
   const [isPublishing, setIsPublishing] = useState(false);
   const [isClosingQuestion, setIsClosingQuestion] = useState(false);
   const [showLeaderboard, setShowLeaderboard] = useState(false);
+  const [hcTimeRemaining, setHcTimeRemaining] = useState(0);
 
   const getModeLabel = (mode) =>
     mode === "HOST_CONTROLLED" ? "Live Guided" : "Self-Paced";
@@ -219,6 +220,12 @@ const QuizManager = ({ isParticipantListOpen = true }) => {
       if (currentQuiz && currentQuiz._id === data.quizId) {
         setCurrentQuestion(data.question);
         setCurrentQuestionIndex(data.questionIndex);
+        setQuestionDuration(data.durationSeconds || questionDuration);
+        
+        const elapsed = Date.now() - new Date(data.startedAt).getTime();
+        const remaining = Math.max(0, data.durationSeconds - Math.floor(elapsed / 1000));
+        setHcTimeRemaining(remaining);
+
         setIsPublishing(false);
         setShowLeaderboard(false);
         setQuestionResults(null);
@@ -441,6 +448,23 @@ const QuizManager = ({ isParticipantListOpen = true }) => {
 
     console.log("📤 Ending HOST_CONTROLLED quiz...");
   }, [activeQuiz, socketRef]);
+
+  // Host Timer
+  useEffect(() => {
+    if (activeQuiz?.mode !== "HOST_CONTROLLED" || !currentQuestion || showLeaderboard || questionResults) {
+      return; 
+    }
+    const timerId = setInterval(() => {
+      setHcTimeRemaining((prev) => {
+        if (prev <= 1) {
+          clearInterval(timerId);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(timerId);
+  }, [activeQuiz?.mode, currentQuestion, showLeaderboard, questionResults]);
 
   // Render mode selector for import modal
   const renderModeSelector = () => (
@@ -992,8 +1016,8 @@ const QuizManager = ({ isParticipantListOpen = true }) => {
               </p>
             </div>
             <div className="text-right">
-              <div className="text-2xl font-bold">{questionDuration}s</div>
-              <div className="text-blue-200 text-sm">per question</div>
+              <div className={`text-2xl font-bold ${hcTimeRemaining <= 10 ? 'text-red-300 animate-pulse' : ''}`}>{hcTimeRemaining}s</div>
+              <div className="text-blue-200 text-sm">remaining</div>
             </div>
           </div>
 

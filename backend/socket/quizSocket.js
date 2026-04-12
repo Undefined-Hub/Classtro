@@ -315,9 +315,12 @@ const registerQuizSocket = (io, socket) => {
         const responseTimeMs =
           now.getTime() - new Date(quiz.currentQuestionStartedAt).getTime();
         const timeoutMs = quiz.questionDurationSeconds * 1000;
+        
+        // Allow a 5-second grace period for network latency and auto-submits
+        const GRACE_PERIOD_MS = 5000; 
 
         // Check if answer is within time limit
-        if (responseTimeMs > timeoutMs) {
+        if (responseTimeMs > timeoutMs + GRACE_PERIOD_MS) {
           socket.emit("quiz:hc:error", {
             error: "Time expired for this question",
           });

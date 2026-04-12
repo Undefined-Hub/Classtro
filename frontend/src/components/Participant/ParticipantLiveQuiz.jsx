@@ -100,9 +100,9 @@ const ParticipantLiveQuiz = () => {
   }, [isHostControlled, hcCurrentQuestion?._id]);
 
   // Handle HC answer submission
-  const handleHCSubmitAnswer = useCallback(() => {
+  const handleHCSubmitAnswer = useCallback((autoSubmitEmpty = false) => {
     if (
-      !hcSelectedOption ||
+      (!hcSelectedOption && !autoSubmitEmpty) ||
       hcAnswerSubmitted ||
       !activeQuiz ||
       !hcCurrentQuestion
@@ -116,7 +116,7 @@ const ParticipantLiveQuiz = () => {
       socket.emit("quiz:hc:answer", {
         quizId: activeQuiz._id,
         questionId: hcCurrentQuestion._id,
-        selectedOptions: [hcSelectedOption],
+        selectedOptions: hcSelectedOption ? [hcSelectedOption] : [],
       });
 
       // Optimistically mark as submitted
@@ -132,20 +132,18 @@ const ParticipantLiveQuiz = () => {
     setHcAnswerSubmitted,
   ]);
 
-  // Auto-submit when time runs out (if answer selected)
+  // Auto-submit when time runs out (even if no answer selected)
   useEffect(() => {
     if (
       isHostControlled &&
       hcTimeRemaining === 0 &&
-      hcSelectedOption &&
       !hcAnswerSubmitted
     ) {
-      handleHCSubmitAnswer();
+      handleHCSubmitAnswer(true);
     }
   }, [
     isHostControlled,
     hcTimeRemaining,
-    hcSelectedOption,
     hcAnswerSubmitted,
     handleHCSubmitAnswer,
   ]);
