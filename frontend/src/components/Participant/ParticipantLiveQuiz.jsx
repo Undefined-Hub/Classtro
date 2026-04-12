@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useParticipantSession } from "../../context/ParticipantSessionContext";
+import safeToast from "../../utils/toastUtils";
 import {
+
   CheckCircle,
   Circle,
   Square,
@@ -260,7 +262,7 @@ const ParticipantLiveQuiz = () => {
 
         socket.once("quiz:submission:error", ({ error }) => {
           console.error("Quiz submission error:", error);
-          alert(error || "Failed to submit quiz");
+          safeToast.error(error || "Failed to submit quiz");
           setSubmitting(false);
         });
 

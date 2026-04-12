@@ -1,7 +1,9 @@
 import React, { useEffect, useState, useCallback, useRef } from "react";
 import api from "../../../utils/api";
 import { useHostSession } from "../../../context/HostSessionContext";
+import safeToast from "../../../utils/toastUtils";
 import {
+
   ClipboardCheck,
   Users,
   Play,
@@ -268,7 +270,7 @@ const QuizManager = ({ isParticipantListOpen = true }) => {
     // HOST_CONTROLLED: error handler
     const onHCError = ({ error }) => {
       console.error("HOST_CONTROLLED error:", error);
-      alert(error);
+      safeToast.error(error);
       setIsPublishing(false);
       setIsClosingQuestion(false);
     };
@@ -310,7 +312,7 @@ const QuizManager = ({ isParticipantListOpen = true }) => {
       templateValidation &&
       !templateValidation.compatible
     ) {
-      alert("This template is not compatible with Live Guided mode.");
+      safeToast.error("This template is not compatible with Live Guided mode.");
       return;
     }
 
@@ -348,7 +350,7 @@ const QuizManager = ({ isParticipantListOpen = true }) => {
       console.log("✅ Quiz launched successfully in", selectedMode, "mode");
     } catch (err) {
       console.error("Failed to launch quiz:", err);
-      alert(
+      safeToast.error(
         err.response?.data?.error || "Failed to launch quiz. Please try again.",
       );
     } finally {
@@ -377,7 +379,7 @@ const QuizManager = ({ isParticipantListOpen = true }) => {
       console.log("✅ Quiz closed successfully");
     } catch (err) {
       console.error("Failed to close quiz:", err);
-      alert("Failed to close quiz. Please try again.");
+      safeToast.error("Failed to close quiz. Please try again.");
     } finally {
       setClosing(false);
     }

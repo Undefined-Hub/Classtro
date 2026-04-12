@@ -36,6 +36,8 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import api from "../../utils/api";
 import AIQuizGenerator from "./AIQuizGenerator";
+import safeToast from "../../utils/toastUtils";
+
 
 const QuestionSkeleton = memo(() => (
   <div className="bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 p-3 rounded-xl shadow-sm">
@@ -193,7 +195,7 @@ function QuizCreation({ quizName, quizDescription, onBack, existingQuiz }) {
       setPoints(1);
       setNegativePoints(0);
     } else {
-      alert("Please fill in the question and all options.");
+      safeToast.error("Please fill in the question and all options.");
     }
   };
 
@@ -364,7 +366,7 @@ function QuizCreation({ quizName, quizDescription, onBack, existingQuiz }) {
           }
           localStorage.setItem("quizzes", JSON.stringify(existingQuizzes));
 
-          alert("Quiz updated successfully!");
+          safeToast.success("Quiz updated successfully!");
           onBack();
           return;
         } else {
@@ -423,7 +425,7 @@ function QuizCreation({ quizName, quizDescription, onBack, existingQuiz }) {
         existingQuizzes.push(quizObject);
         localStorage.setItem("quizzes", JSON.stringify(existingQuizzes));
 
-        alert("Quiz saved successfully!");
+        safeToast.success("Quiz saved successfully!");
         onBack();
       } else {
         throw new Error("Failed to save quiz");
@@ -464,7 +466,7 @@ function QuizCreation({ quizName, quizDescription, onBack, existingQuiz }) {
       }
       localStorage.setItem("quizzes", JSON.stringify(existingQuizzes));
 
-      alert(
+      safeToast.success(
         `API call failed, but quiz saved locally. ${existingQuiz ? "Quiz updated successfully!" : "Quiz saved successfully!"}`,
       );
       onBack();

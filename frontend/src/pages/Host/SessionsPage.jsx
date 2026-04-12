@@ -15,6 +15,8 @@ import QuizCreation from "../../components/Host/QuizCreation";
 
 /* Api import */
 import api from "../../utils/api";
+import safeToast from "../../utils/toastUtils";
+
 
 function SessionsPage() {
   const navigate = useNavigate();
@@ -88,12 +90,12 @@ function SessionsPage() {
         setIsQuizCreated(true); // Open edit page
       } catch (err) {
         console.error("Error creating draft quiz", err);
-        alert("Failed to create quiz draft. Please try again.");
+        safeToast.error("Failed to create quiz draft. Please try again.");
       } finally {
         setIsLoading(false);
       }
     } else {
-      alert("Please enter a quiz name.");
+      safeToast.error("Please enter a quiz name.");
     }
   };
 
@@ -110,7 +112,7 @@ function SessionsPage() {
       setIsQuizCreated(true);
     } catch (err) {
       console.error("Error loading quiz details:", err);
-      alert("Failed to load quiz details. Please try again.");
+      safeToast.error("Failed to load quiz details. Please try again.");
     }
   };
 
@@ -136,12 +138,12 @@ function SessionsPage() {
       setQuizToDelete(null);
 
       // Show success message
-      alert("Quiz deleted successfully!");
+      safeToast.success("Quiz deleted successfully!");
     } catch (err) {
       console.error("Error deleting quiz:", err);
       const errorMessage =
         err.response?.data?.error || err.message || "Failed to delete quiz";
-      alert(`Error: ${errorMessage}`);
+      safeToast.error(`Error: ${errorMessage}`);
     }
   };
 

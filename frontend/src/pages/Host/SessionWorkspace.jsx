@@ -18,6 +18,8 @@ import { useAuth } from "../../context/UserContext.jsx";
 import axios from "axios";
 // * API import
 import api from "../../utils/api.js";
+import safeToast from "../../utils/toastUtils";
+
 
 const BACKEND_BASE_URL =
   import.meta.env.VITE_BACKEND_BASE_URL || "http://localhost:5000";
@@ -614,7 +616,7 @@ const SessionWorkspace = () => {
       // Socket event will update all clients' state
     } catch (err) {
       console.error("Failed to mark question as answered:", err);
-      alert("Failed to mark question as answered");
+      safeToast.error("Failed to mark question as answered");
     }
   };
 
@@ -656,7 +658,7 @@ const SessionWorkspace = () => {
       navigate("/dashboard");
     } catch (err) {
       console.error("❌ Session end failed:", err);
-      alert("Failed to close session. Please try again.");
+      safeToast.error("Failed to close session. Please try again.");
     }
   };
 
