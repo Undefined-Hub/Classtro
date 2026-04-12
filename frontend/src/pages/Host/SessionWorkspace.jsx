@@ -255,6 +255,11 @@ const SessionWorkspace = () => {
     // Log teacher socket ID and connection status
     socket.on("connect", () => {
       console.log("🔌 Socket connected with ID:", socket.id);
+      // Teacher joins session for presence (also triggers on reconnects)
+      socket.emit("join-session", {
+        code: sessionData.code,
+        participantId: "teacher1",
+      });
     });
     socket.on("connect_error", (err) => {
       console.error("❌ Socket connect_error:", err.message);
@@ -267,11 +272,6 @@ const SessionWorkspace = () => {
     });
     socket.on("reconnect_error", (error) => {
       console.error("❌ Socket reconnect failed:", error);
-    });
-    // Teacher joins session for presence
-    socket.emit("join-session", {
-      code: sessionData.code,
-      participantId: "teacher1",
     });
     // Q&A socket listeners
     const onCreated = (payload) => {
