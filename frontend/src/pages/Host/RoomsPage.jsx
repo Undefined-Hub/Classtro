@@ -65,38 +65,52 @@ function RoomsPage() {
           const teacherId = user?._id || user?.id;
 
           if (teacherId) {
-            // Fetch active sessions for all rooms in parallel
-            const roomsWithActiveSessions = await Promise.all(
+            // Fetch both total and active sessions for all rooms in parallel
+            const roomsWithSessionCounts = await Promise.all(
               fetchedRooms.map(async (room) => {
                 try {
-                  const sessionsRes = await api.get(
-                    `/api/sessions/active?teacherId=${teacherId}&roomId=${room._id}&limit=10`,
-                  );
-                  const activeSessions = sessionsRes.data || [];
+                  // Fetch both total sessions and active sessions in parallel
+                  const [totalRes, activeRes] = await Promise.all([
+                    api.get(`/api/rooms/${room._id}/sessions`),
+                    api.get(
+                      `/api/sessions/active?teacherId=${teacherId}&roomId=${room._id}&limit=10`,
+                    ),
+                  ]);
+
+                  const totalSessions = totalRes.data?.length || 0;
+                  const activeSessions = activeRes.data?.length || 0;
+
                   console.log(
-                    `Room ${room._id} has ${sessionsRes.data?.length || 0} active sessions`,
+                    `Room ${room._id}: ${totalSessions} total, ${activeSessions} active`,
                   );
+
                   return {
                     ...room,
-                    activeSessions: activeSessions.length,
+                    totalSessions,
+                    activeSessions,
                   };
                 } catch (err) {
                   console.error(
-                    `Failed to fetch active sessions for room ${room._id}:`,
+                    `Failed to fetch session counts for room ${room._id}:`,
                     err,
                   );
                   return {
                     ...room,
+                    totalSessions: 0,
                     activeSessions: 0,
                   };
                 }
               }),
             );
-            setRooms(roomsWithActiveSessions);
+            setRooms(roomsWithSessionCounts);
           } else {
-            // If no teacher ID, set activeSessions to 0
+            // If no teacher ID, set counts to 0
             setRooms(
-              fetchedRooms.map((room) => ({ ...room, activeSessions: 0 })),
+              fetchedRooms.map((room) => ({
+                ...room,
+                totalSessions: 0,
+                activeSessions: 0,
+              })),
             );
           }
         } else {
