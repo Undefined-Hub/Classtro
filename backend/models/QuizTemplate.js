@@ -4,7 +4,7 @@ const OptionSchema = new mongoose.Schema(
   {
     text: { type: String, required: true },
   },
-  { _id: true }
+  { _id: true },
 );
 
 const QuestionSchema = new mongoose.Schema(
@@ -20,7 +20,7 @@ const QuestionSchema = new mongoose.Schema(
     points: { type: Number, default: 1 },
     negativePoints: { type: Number, default: 0 },
   },
-  { _id: true }
+  { _id: true },
 );
 
 const QuizTemplateSchema = new mongoose.Schema(
@@ -39,7 +39,7 @@ const QuizTemplateSchema = new mongoose.Schema(
     questions: { type: [QuestionSchema], required: true },
     totalPoints: { type: Number, default: 0 },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 module.exports = mongoose.model("QuizTemplate", QuizTemplateSchema);

@@ -9,10 +9,10 @@ import toast from "../../../utils/toastUtils";
 const ChatBotWindow = ({ isOpen, onClose }) => {
   const { user } = useAuth();
   const location = useLocation();
-  
+
   // Determine if user is logged in
   const isAuthenticated = !!user;
-  
+
   // Get initial suggestions based on auth status and role
   const getInitialSuggestions = useCallback(() => {
     if (!isAuthenticated) {
@@ -20,21 +20,21 @@ const ChatBotWindow = ({ isOpen, onClose }) => {
       return [
         "What is Classtro?",
         "How can I improve my study habits?",
-        "How does online learning work?"
+        "How does online learning work?",
       ];
-    } else if (user.role === 'TEACHER') {
+    } else if (user.role === "TEACHER") {
       // Teacher suggestions
       return [
         "How do I create a room?",
         "What's the session workflow?",
-        "How to manage student questions?"
+        "How to manage student questions?",
       ];
     } else {
       // Student suggestions
       return [
         "How do I join a session?",
         "What features are available?",
-        "How to ask questions anonymously?"
+        "How to ask questions anonymously?",
       ];
     }
   }, [isAuthenticated, user?.role]);
@@ -86,21 +86,21 @@ const ChatBotWindow = ({ isOpen, onClose }) => {
   // Function to send message to AI and get response
   const sendMessageToAI = async (message, role, page, isAuthenticated) => {
     try {
-      const response = await api.post('/api/ai/chat', {
-        role: isAuthenticated ? role : 'guest',
+      const response = await api.post("/api/ai/chat", {
+        role: isAuthenticated ? role : "guest",
         page,
         message,
-        isAuthenticated
+        isAuthenticated,
       });
-      
+
       if (response.data.success) {
         return {
           message: response.data.data.message,
-          timestamp: response.data.data.timestamp
+          timestamp: response.data.data.timestamp,
         };
       }
     } catch (error) {
-      console.error('Error sending message to AI:', error);
+      console.error("Error sending message to AI:", error);
       throw error;
     }
   };
@@ -129,14 +129,14 @@ const ChatBotWindow = ({ isOpen, onClose }) => {
     setIsTyping(true);
 
     try {
-      const currentPage = location.pathname.split('/')[1] || 'home';
+      const currentPage = location.pathname.split("/")[1] || "home";
       const aiResponse = await sendMessageToAI(
         userInput,
-        user?.role || 'student',
+        user?.role || "student",
         currentPage,
-        isAuthenticated
+        isAuthenticated,
       );
-      
+
       const botMessage = {
         id: messages.length + 2,
         text: aiResponse.message,
@@ -147,12 +147,14 @@ const ChatBotWindow = ({ isOpen, onClose }) => {
     } catch (error) {
       const errorMessage = {
         id: messages.length + 2,
-        text: error.response?.data?.message || "Sorry, I'm having trouble responding right now. Please try again.",
+        text:
+          error.response?.data?.message ||
+          "Sorry, I'm having trouble responding right now. Please try again.",
         isBot: true,
         timestamp: new Date(),
       };
       setMessages((prev) => [...prev, errorMessage]);
-      toast.error('Failed to get AI response');
+      toast.error("Failed to get AI response");
     } finally {
       setIsTyping(false);
     }
@@ -194,7 +196,11 @@ const ChatBotWindow = ({ isOpen, onClose }) => {
             className="p-1.5 sm:p-2 rounded-lg text-white/80 hover:text-white hover:bg-white/20 transition-all duration-200 cursor-pointer border-none bg-transparent"
             aria-label={isMinimized ? "Maximize" : "Minimize"}
           >
-            {isMinimized ? <Maximize2 size={16} className="sm:w-[18px] sm:h-[18px]" /> : <Minimize2 size={16} className="sm:w-[18px] sm:h-[18px]" />}
+            {isMinimized ? (
+              <Maximize2 size={16} className="sm:w-[18px] sm:h-[18px]" />
+            ) : (
+              <Minimize2 size={16} className="sm:w-[18px] sm:h-[18px]" />
+            )}
           </button>
           <button
             onClick={onClose}
@@ -213,7 +219,7 @@ const ChatBotWindow = ({ isOpen, onClose }) => {
             {messages.map((msg) => (
               <div key={msg.id}>
                 <ChatMessage message={msg.text} isBot={msg.isBot} />
-                
+
                 {/* Show suggestions only for first bot message */}
                 {msg.isBot && msg.suggestions && msg.id === 1 && (
                   <div className="flex flex-wrap gap-2 mb-4 ml-0 sm:ml-11">
@@ -235,7 +241,10 @@ const ChatBotWindow = ({ isOpen, onClose }) => {
             {isTyping && (
               <div className="flex gap-2 sm:gap-3 mb-3 sm:mb-4 justify-start">
                 <div className="flex-shrink-0 w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-md">
-                  <Bot size={16} className="text-white sm:w-[18px] sm:h-[18px]" />
+                  <Bot
+                    size={16}
+                    className="text-white sm:w-[18px] sm:h-[18px]"
+                  />
                 </div>
                 <div className="bg-gray-100 dark:bg-gray-700 rounded-2xl rounded-tl-sm px-3 py-2 sm:px-4 sm:py-3 shadow-sm">
                   <div className="flex gap-1">

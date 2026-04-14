@@ -1,10 +1,12 @@
 import React, { useState } from "react";
 import { Outlet, useNavigate, useLocation, NavLink } from "react-router-dom";
+import { useAuth } from "../context/UserContext";
 import { User, LogOut } from "lucide-react";
 import LogoutModal from "./LogoutModal.jsx";
 import ProfileImageOrInitials from "./ProfileImageOrInitials.jsx";
 
 function DashboardLayout() {
+  const { logout } = useAuth();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
   const navigate = useNavigate();
@@ -18,8 +20,8 @@ function DashboardLayout() {
     };
 
     if (showProfileDropdown) {
-      document.addEventListener('click', handleClickOutside);
-      return () => document.removeEventListener('click', handleClickOutside);
+      document.addEventListener("click", handleClickOutside);
+      return () => document.removeEventListener("click", handleClickOutside);
     }
   }, [showProfileDropdown]);
 
@@ -59,13 +61,9 @@ function DashboardLayout() {
     setShowLogoutModal(true);
   };
 
-  const confirmLogout = () => {
-    // Clear user data and token
-    localStorage.removeItem("accessToken");
-    localStorage.removeItem("user");
-    // Close the modal
+  const confirmLogout = async () => {
+    await logout();
     setShowLogoutModal(false);
-    // Redirect to login page
     navigate("/login");
   };
 
@@ -81,7 +79,7 @@ function DashboardLayout() {
             </div>
             <div className="mt-4 md:mt-0 flex items-center space-x-4">
               {/* Profile Dropdown */}
-              <div 
+              <div
                 className="relative"
                 onMouseEnter={handleMouseEnter}
                 onMouseLeave={handleMouseLeave}
@@ -103,7 +101,6 @@ function DashboardLayout() {
                     textSizeClass="text-lg"
                   />
                 </div>
-                
 
                 {/* Dropdown Menu */}
                 {showProfileDropdown && (
@@ -111,13 +108,13 @@ function DashboardLayout() {
                     {/* Invisible bridge to prevent gap issues */}
                     <div className="absolute right-0 top-full h-1 w-full"></div>
                     <div className="absolute left-0 sm:right-0 sm:left-auto mt-1 w-40 sm:w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-2 z-50">
-                    <button
-                      onClick={() => navigate("/teacher/profile")}
-                      className="w-full flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                    >
-                      <User className="w-4 h-4 mr-3" />
-                      View Profile
-                    </button>
+                      <button
+                        onClick={() => navigate("/teacher/profile")}
+                        className="w-full flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                      >
+                        <User className="w-4 h-4 mr-3" />
+                        View Profile
+                      </button>
                       <button
                         onClick={handleLogout}
                         className="w-full flex items-center px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"

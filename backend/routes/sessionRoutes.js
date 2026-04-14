@@ -8,6 +8,7 @@ const {
   listActiveSessions,
   closeSession,
   updateSession,
+  deleteSession,
   joinSession,
   leaveSession,
   getSessionParticipants,
@@ -22,7 +23,10 @@ const {
   trackView,
 } = require("../controllers/broadcastController");
 const authenticateJWT = require("../middlewares/authenticateJWT");
-const { uploadBroadcastFiles, handleBroadcastUploadError } = require("../config/multer");
+const {
+  uploadBroadcastFiles,
+  handleBroadcastUploadError,
+} = require("../config/multer");
 
 // ---------------- PUBLIC / SHARED ROUTES ----------------
 router.get("/code/:code", getSessionByCode); // Get session metadata by join code (public, for join UI) ✅
@@ -34,6 +38,7 @@ router.post("/", authenticateJWT, createSessionStandalone); // Create a session 
 router.get("/id/:sessionId", authenticateJWT, getSessionById); // Get session details by sessionId (teacher only)✅
 router.patch("/id/:sessionId", authenticateJWT, updateSession); // Update session metadata (teacher only)✅
 router.post("/code/:code/close", authenticateJWT, closeSession); // Close a session (teacher only) ✅
+router.delete("/id/:sessionId", authenticateJWT, deleteSession); // Delete a session (teacher only) - same as closing for now, can be extended later with a 'soft delete' field if needed
 
 // ---------------- STUDENT ROUTES ----------------
 router.post("/code/:code/join", authenticateJWT, joinSession); // Student joins a session✅
@@ -45,10 +50,28 @@ router.post("/:sessionId/polls", authenticateJWT, createPoll); // Create a poll 
 router.get("/:sessionId/polls", authenticateJWT, listPolls); // List all polls in a session (teacher only)
 
 // ---------------- BROADCAST / ANNOUNCEMENT ROUTES ----------------
-router.post("/:sessionId/broadcasts", authenticateJWT, uploadBroadcastFiles, handleBroadcastUploadError, addBroadcast); // Send broadcast with optional files (teacher only)
+router.post(
+  "/:sessionId/broadcasts",
+  authenticateJWT,
+  uploadBroadcastFiles,
+  handleBroadcastUploadError,
+  addBroadcast,
+); // Send broadcast with optional files (teacher only)
 router.get("/:sessionId/broadcasts", authenticateJWT, getBroadcasts); // Get all broadcasts for a session
-router.delete("/:sessionId/broadcasts/:broadcastId", authenticateJWT, deleteBroadcast); // Delete a broadcast (teacher only)
-router.post("/:sessionId/broadcasts/:broadcastId/react", authenticateJWT, addReaction); // Add/toggle reaction to broadcast
-router.post("/:sessionId/broadcasts/:broadcastId/view", authenticateJWT, trackView); // Track broadcast view
+router.delete(
+  "/:sessionId/broadcasts/:broadcastId",
+  authenticateJWT,
+  deleteBroadcast,
+); // Delete a broadcast (teacher only)
+router.post(
+  "/:sessionId/broadcasts/:broadcastId/react",
+  authenticateJWT,
+  addReaction,
+); // Add/toggle reaction to broadcast
+router.post(
+  "/:sessionId/broadcasts/:broadcastId/view",
+  authenticateJWT,
+  trackView,
+); // Track broadcast view
 
 module.exports = router;

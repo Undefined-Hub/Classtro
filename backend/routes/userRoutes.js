@@ -1,9 +1,9 @@
 const { Router } = require("express");
 const dotenv = require("dotenv");
 const {
-    updateUserProfile,
-    changePassword,
-    getUserProfile,
+  updateUserProfile,
+  changePassword,
+  getUserProfile,
 } = require("../controllers/userController.js");
 
 const router = Router();

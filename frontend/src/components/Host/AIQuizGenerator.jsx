@@ -245,8 +245,6 @@ export default function AIQuizGenerator({
                     </label>
 
                     <div className="flex items-center gap-2">
-                      
-
                       <div className="h-6 bg-slate-300 dark:bg-slate-600"></div>
 
                       {/* Custom Input with Stepper */}
@@ -279,7 +277,7 @@ export default function AIQuizGenerator({
                       >
                         <Plus size={14} />
                       </button>
-                      <hr className="border border-slate-700 h-8"/>
+                      <hr className="border border-slate-700 h-8" />
                       {/* Preset Buttons */}
                       {[3, 5, 10].map((preset) => (
                         <button
@@ -296,7 +294,6 @@ export default function AIQuizGenerator({
                         </button>
                       ))}
                     </div>
-                    
                   </div>
 
                   {/* Keywords */}

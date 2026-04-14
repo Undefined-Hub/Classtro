@@ -9,14 +9,14 @@ const Contact = () => {
     name: "",
     email: "",
     subject: "",
-    message: ""
+    message: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleChange = (e) => {
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value
+      [e.target.name]: e.target.value,
     });
   };
 
@@ -35,7 +35,7 @@ const Contact = () => {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <Navbar />
-      
+
       <section className="pt-24 pb-16 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-12">
@@ -46,7 +46,8 @@ const Contact = () => {
               </span>
             </h1>
             <p className="text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
-              Have questions? We'd love to hear from you. Send us a message and we'll respond as soon as possible.
+              Have questions? We'd love to hear from you. Send us a message and
+              we'll respond as soon as possible.
             </p>
           </div>
 
@@ -58,7 +59,10 @@ const Contact = () => {
               </h2>
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div>
-                  <label htmlFor="name" className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">
+                  <label
+                    htmlFor="name"
+                    className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2"
+                  >
                     Name *
                   </label>
                   <input
@@ -74,7 +78,10 @@ const Contact = () => {
                 </div>
 
                 <div>
-                  <label htmlFor="email" className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">
+                  <label
+                    htmlFor="email"
+                    className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2"
+                  >
                     Email *
                   </label>
                   <input
@@ -90,7 +97,10 @@ const Contact = () => {
                 </div>
 
                 <div>
-                  <label htmlFor="subject" className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">
+                  <label
+                    htmlFor="subject"
+                    className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2"
+                  >
                     Subject *
                   </label>
                   <input
@@ -106,7 +116,10 @@ const Contact = () => {
                 </div>
 
                 <div>
-                  <label htmlFor="message" className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">
+                  <label
+                    htmlFor="message"
+                    className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2"
+                  >
                     Message *
                   </label>
                   <textarea
@@ -153,8 +166,13 @@ const Contact = () => {
                       <Mail className="w-6 h-6 text-blue-600 dark:text-blue-400" />
                     </div>
                     <div>
-                      <h3 className="font-semibold text-gray-900 dark:text-white mb-1">Email</h3>
-                      <a href="mailto:official.team.undefined@gmail.com" className="text-blue-600 dark:text-blue-400 hover:underline">
+                      <h3 className="font-semibold text-gray-900 dark:text-white mb-1">
+                        Email
+                      </h3>
+                      <a
+                        href="mailto:official.team.undefined@gmail.com"
+                        className="text-blue-600 dark:text-blue-400 hover:underline"
+                      >
                         official.team.undefined@gmail.com
                       </a>
                     </div>
@@ -165,8 +183,12 @@ const Contact = () => {
                       <Phone className="w-6 h-6 text-blue-600 dark:text-blue-400" />
                     </div>
                     <div>
-                      <h3 className="font-semibold text-gray-900 dark:text-white mb-1">Phone</h3>
-                      <p className="text-gray-600 dark:text-gray-300">+91 7249236027</p>
+                      <h3 className="font-semibold text-gray-900 dark:text-white mb-1">
+                        Phone
+                      </h3>
+                      <p className="text-gray-600 dark:text-gray-300">
+                        +91 7249236027
+                      </p>
                     </div>
                   </div>
 
@@ -175,7 +197,9 @@ const Contact = () => {
                       <MapPin className="w-6 h-6 text-blue-600 dark:text-blue-400" />
                     </div>
                     <div>
-                      <h3 className="font-semibold text-gray-900 dark:text-white mb-1">Location</h3>
+                      <h3 className="font-semibold text-gray-900 dark:text-white mb-1">
+                        Location
+                      </h3>
                       <p className="text-gray-600 dark:text-gray-300">India</p>
                     </div>
                   </div>
@@ -185,7 +209,9 @@ const Contact = () => {
               <div className="bg-gradient-to-br from-blue-600 to-blue-800 rounded-2xl shadow-xl p-8 text-white">
                 <h3 className="text-2xl font-bold mb-4">Quick Response</h3>
                 <p className="text-white/90 leading-relaxed">
-                  We typically respond to all inquiries within 24 hours during business days. For urgent matters, please mark your subject line with "URGENT".
+                  We typically respond to all inquiries within 24 hours during
+                  business days. For urgent matters, please mark your subject
+                  line with "URGENT".
                 </p>
               </div>
             </div>

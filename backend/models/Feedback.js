@@ -75,7 +75,7 @@ const FeedbackSchema = new mongoose.Schema(
         "User Profile",
         "Notifications",
         "File Upload",
-        "Other"
+        "Other",
       ],
       trim: true,
     },

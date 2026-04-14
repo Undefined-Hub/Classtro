@@ -41,11 +41,11 @@ const buildModeCompatibility = (template, mode) => {
 // Create a live quiz (draft state)
 const createLiveQuiz = async (req, res) => {
   try {
-    const { 
-      sessionId, 
-      templateId, 
-      title, 
-      questions, 
+    const {
+      sessionId,
+      templateId,
+      title,
+      questions,
       durationSeconds,
       mode = "ONE_SHOT",
       questionDurationSeconds = 30,
@@ -60,22 +60,25 @@ const createLiveQuiz = async (req, res) => {
       if (!template) {
         return res.status(404).json({ error: "Quiz template not found" });
       }
-      
+
       // Validate for HOST_CONTROLLED mode - no MULTI_SELECT allowed
       if (mode === "HOST_CONTROLLED") {
-        const hasMultiSelect = template.questions.some(q => q.type === "MULTI_SELECT");
+        const hasMultiSelect = template.questions.some(
+          (q) => q.type === "MULTI_SELECT",
+        );
         if (hasMultiSelect) {
-          return res.status(400).json({ 
-            error: "Live Guided mode does not support MULTI_SELECT questions. Please use a template with only MCQ questions." 
+          return res.status(400).json({
+            error:
+              "Live Guided mode does not support MULTI_SELECT questions. Please use a template with only MCQ questions.",
           });
         }
       }
-      
+
       // Map template questions to preserve option IDs properly
-      quizQuestions = template.questions.map(q => ({
+      quizQuestions = template.questions.map((q) => ({
         type: q.type,
         questionText: q.questionText,
-        options: q.options.map(opt => ({
+        options: q.options.map((opt) => ({
           _id: opt._id,
           text: opt.text,
         })),
@@ -87,15 +90,19 @@ const createLiveQuiz = async (req, res) => {
     }
 
     if (!quizQuestions || quizQuestions.length === 0) {
-      return res.status(400).json({ error: "Quiz must have at least one question" });
+      return res
+        .status(400)
+        .json({ error: "Quiz must have at least one question" });
     }
-    
+
     // Validate mode-specific requirements for provided questions
     if (mode === "HOST_CONTROLLED" && !templateId) {
-      const hasMultiSelect = quizQuestions.some(q => q.type === "MULTI_SELECT");
+      const hasMultiSelect = quizQuestions.some(
+        (q) => q.type === "MULTI_SELECT",
+      );
       if (hasMultiSelect) {
-        return res.status(400).json({ 
-          error: "Live Guided mode does not support MULTI_SELECT questions." 
+        return res.status(400).json({
+          error: "Live Guided mode does not support MULTI_SELECT questions.",
         });
       }
     }
@@ -109,7 +116,8 @@ const createLiveQuiz = async (req, res) => {
       durationSeconds,
       status: "DRAFT",
       mode,
-      questionDurationSeconds: mode === "HOST_CONTROLLED" ? questionDurationSeconds : undefined,
+      questionDurationSeconds:
+        mode === "HOST_CONTROLLED" ? questionDurationSeconds : undefined,
       currentQuestionIndex: mode === "HOST_CONTROLLED" ? -1 : undefined,
       leaderboard: mode === "HOST_CONTROLLED" ? [] : undefined,
     });
@@ -124,7 +132,7 @@ const createLiveQuiz = async (req, res) => {
 const launchQuiz = async (req, res) => {
   try {
     const quiz = await LiveQuiz.findById(req.params.id);
-    
+
     if (!quiz) {
       return res.status(404).json({ error: "Quiz not found" });
     }
@@ -166,11 +174,11 @@ const launchQuiz = async (req, res) => {
           quizId: quiz._id,
           title: quiz.title,
           mode: quiz.mode || "ONE_SHOT",
-          questions: quiz.questions.map(q => ({
+          questions: quiz.questions.map((q) => ({
             _id: q._id,
             type: q.type,
             questionText: q.questionText,
-            options: q.options.map(opt => ({
+            options: q.options.map((opt) => ({
               _id: opt._id,
               text: opt.text,
             })),
@@ -192,7 +200,7 @@ const launchQuiz = async (req, res) => {
 const closeQuiz = async (req, res) => {
   try {
     const quiz = await LiveQuiz.findById(req.params.id);
-    
+
     if (!quiz) {
       return res.status(404).json({ error: "Quiz not found" });
     }
@@ -233,12 +241,12 @@ const closeQuiz = async (req, res) => {
 const getSessionQuizzes = async (req, res) => {
   try {
     const { sessionId } = req.params;
-    
+
     const quizzes = await LiveQuiz.find({ sessionId })
       .populate("launchedBy", "name email")
       .populate("sourceTemplateId", "title")
       .sort({ createdAt: -1 });
-    
+
     res.json(quizzes);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -251,7 +259,7 @@ const getLiveQuizById = async (req, res) => {
     const quiz = await LiveQuiz.findById(req.params.id)
       .populate("launchedBy", "name email")
       .populate("sourceTemplateId", "title");
-    
+
     if (!quiz) {
       return res.status(404).json({ error: "Quiz not found" });
     }
@@ -266,7 +274,7 @@ const getLiveQuizById = async (req, res) => {
 const getQuizResults = async (req, res) => {
   try {
     const { id: quizId } = req.params;
-    
+
     const quiz = await LiveQuiz.findById(quizId);
     if (!quiz) {
       return res.status(404).json({ error: "Quiz not found" });
@@ -275,7 +283,7 @@ const getQuizResults = async (req, res) => {
     const submissions = await QuizSubmission.find({ liveQuizId: quizId })
       .populate("participantId", "name email")
       .sort({ score: -1 });
-    
+
     res.json({
       quiz: {
         title: quiz.title,
@@ -285,9 +293,11 @@ const getQuizResults = async (req, res) => {
       submissions,
       stats: {
         totalSubmissions: submissions.length,
-        averageScore: submissions.length > 0
-          ? submissions.reduce((sum, s) => sum + (s.score || 0), 0) / submissions.length
-          : 0,
+        averageScore:
+          submissions.length > 0
+            ? submissions.reduce((sum, s) => sum + (s.score || 0), 0) /
+              submissions.length
+            : 0,
         highestScore: submissions.length > 0 ? submissions[0].score : 0,
       },
     });
@@ -300,21 +310,21 @@ const getQuizResults = async (req, res) => {
 const validateTemplateForMode = async (req, res) => {
   try {
     const { templateId, mode } = req.query;
-    
+
     if (!templateId) {
       return res.status(400).json({ error: "templateId is required" });
     }
-    
+
     const template = await QuizTemplate.findById(templateId);
     if (!template) {
       return res.status(404).json({ error: "Quiz template not found" });
     }
-    
+
     // Check ownership
     if (template.createdBy.toString() !== req.user.id) {
       return res.status(403).json({ error: "Access denied" });
     }
-    
+
     const result = {
       templateId,
       title: template.title,
@@ -326,19 +336,22 @@ const validateTemplateForMode = async (req, res) => {
       },
       issues: [],
     };
-    
+
     // Analyze question types
-    template.questions.forEach(q => {
+    template.questions.forEach((q) => {
       result.questionTypes[q.type] = (result.questionTypes[q.type] || 0) + 1;
     });
-    
+
     // Check HOST_CONTROLLED compatibility
-    const hostControlledCheck = buildModeCompatibility(template, "HOST_CONTROLLED");
+    const hostControlledCheck = buildModeCompatibility(
+      template,
+      "HOST_CONTROLLED",
+    );
     if (!hostControlledCheck.compatible) {
       result.compatible.HOST_CONTROLLED = false;
       result.issues.push(hostControlledCheck.reason);
     }
-    
+
     // If specific mode requested, return simple boolean
     if (mode) {
       const modeCheck = buildModeCompatibility(template, mode);
@@ -349,7 +362,7 @@ const validateTemplateForMode = async (req, res) => {
         invalidQuestions: modeCheck.invalidQuestions,
       });
     }
-    
+
     res.json(result);
   } catch (err) {
     res.status(500).json({ error: err.message });

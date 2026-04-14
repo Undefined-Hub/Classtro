@@ -1,17 +1,17 @@
 import React from "react";
 import { Archive } from "lucide-react";
 
-const ConfirmationModal = ({ 
-  isOpen, 
-  onClose, 
-  onConfirm, 
-  title, 
-  message, 
-  confirmText = "Confirm", 
+const ConfirmationModal = ({
+  isOpen,
+  onClose,
+  onConfirm,
+  title,
+  message,
+  confirmText = "Confirm",
   confirmType = "danger", // "danger", "warning", or "primary"
   requireTextConfirmation = false,
   textToType = "",
-  children
+  children,
 }) => {
   const [inputValue, setInputValue] = React.useState("");
 
@@ -30,27 +30,41 @@ const ConfirmationModal = ({
 
   if (!isOpen) return null;
 
-  const confirmButtonClass = confirmType === "danger" 
-    ? "bg-red-600 hover:bg-red-700 text-white"
-    : confirmType === "primary"
-    ? "bg-blue-600 hover:bg-blue-700 text-white"
-    : "bg-amber-600 hover:bg-amber-700 text-white";
+  const confirmButtonClass =
+    confirmType === "danger"
+      ? "bg-red-600 hover:bg-red-700 text-white"
+      : confirmType === "primary"
+        ? "bg-blue-600 hover:bg-blue-700 text-white"
+        : "bg-amber-600 hover:bg-amber-700 text-white";
 
-  const iconColor = confirmType === "danger" 
-    ? "text-red-500" 
-    : confirmType === "primary"
-    ? "text-blue-500"
-    : "text-amber-500";
+  const iconColor =
+    confirmType === "danger"
+      ? "text-red-500"
+      : confirmType === "primary"
+        ? "text-blue-500"
+        : "text-amber-500";
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-lg w-full">
         {/* Header */}
         <div className="flex items-center p-6 pb-4">
-          <div className={`w-10 h-10 rounded-full flex items-center justify-center mr-3 ${confirmType === "danger" ? "bg-red-100 dark:bg-red-900/30" : confirmType === "primary" ? "bg-blue-100 dark:bg-blue-900/30" : "bg-amber-100 dark:bg-amber-900/30"}`}>
+          <div
+            className={`w-10 h-10 rounded-full flex items-center justify-center mr-3 ${confirmType === "danger" ? "bg-red-100 dark:bg-red-900/30" : confirmType === "primary" ? "bg-blue-100 dark:bg-blue-900/30" : "bg-amber-100 dark:bg-amber-900/30"}`}
+          >
             {confirmType === "danger" ? (
-              <svg className={`w-6 h-6 ${iconColor}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.732 15.5C3.962 16.333 4.924 18 6.464 18z" />
+              <svg
+                className={`w-6 h-6 ${iconColor}`}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.732 15.5C3.962 16.333 4.924 18 6.464 18z"
+                />
               </svg>
             ) : confirmType === "primary" ? (
               <Archive className={`w-6 h-6 ${iconColor}`} />
@@ -67,8 +81,18 @@ const ConfirmationModal = ({
             onClick={handleClose}
             className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
           >
-            <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            <svg
+              className="w-5 h-5 text-gray-500"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M6 18L18 6M6 6l12 12"
+              />
             </svg>
           </button>
         </div>

@@ -1,7 +1,13 @@
 // controllers/analyticsController.js
 const SessionAnalytics = require("../models/SessionAnalytics");
-const { buildAnalytics, buildFrontendAnalytics, formatStoredAnalytics, generateParticipantStats, generateFeedbackStats } = require("../services/analyticsBuilder");
-const {validateInput} = require("../utils/validateInput");
+const {
+  buildAnalytics,
+  buildFrontendAnalytics,
+  formatStoredAnalytics,
+  generateParticipantStats,
+  generateFeedbackStats,
+} = require("../services/analyticsBuilder");
+const { validateInput } = require("../utils/validateInput");
 const {
   generateAnalyticsSchema,
   sessionIdSchema,
@@ -12,7 +18,7 @@ const generateAnalytics = async (req, res, next) => {
   try {
     const params = validateInput(sessionIdSchema, req.params);
     const body = validateInput(generateAnalyticsSchema, req.body);
-    
+
     const { sessionId } = params;
     const { sections = {} } = body;
 
@@ -24,7 +30,7 @@ const generateAnalytics = async (req, res, next) => {
       qna: true,
       attendance: true,
       feedback: true,
-      ai: false,
+      ai: true,
       ...sections,
     };
 
@@ -32,11 +38,10 @@ const generateAnalytics = async (req, res, next) => {
     const analytics = await buildAnalytics(sessionId, defaultSections);
 
     // Save or overwrite existing analytics
-    await SessionAnalytics.findOneAndUpdate(
-      { sessionId },
-      analytics,
-      { upsert: true, new: true }
-    );
+    await SessionAnalytics.findOneAndUpdate({ sessionId }, analytics, {
+      upsert: true,
+      new: true,
+    });
 
     return res.status(200).json({
       success: true,
@@ -45,7 +50,7 @@ const generateAnalytics = async (req, res, next) => {
     });
   } catch (error) {
     console.error("Generate analytics error:", error);
-    if (error.name === 'ValidationError') {
+    if (error.name === "ValidationError") {
       return res.status(400).json({
         success: false,
         message: "Validation failed",
@@ -83,7 +88,7 @@ const getAnalytics = async (req, res, next) => {
     });
   } catch (error) {
     console.error("Get analytics error:", error);
-    if (error.name === 'ValidationError') {
+    if (error.name === "ValidationError") {
       return res.status(400).json({
         success: false,
         message: "Validation failed",
@@ -115,7 +120,7 @@ const deleteAnalytics = async (req, res, next) => {
     });
   } catch (error) {
     console.error("Delete analytics error:", error);
-    if (error.name === 'ValidationError') {
+    if (error.name === "ValidationError") {
       return res.status(400).json({
         success: false,
         message: "Validation failed",
@@ -140,7 +145,7 @@ const getParticipantStatsTest = async (req, res, next) => {
     });
   } catch (error) {
     console.error("Get participant stats test error:", error);
-    if (error.name === 'ValidationError') {
+    if (error.name === "ValidationError") {
       return res.status(400).json({
         success: false,
         message: "Validation failed",
@@ -165,13 +170,13 @@ const getFrontendAnalytics = async (req, res, next) => {
     if (cachedAnalytics) {
       // Analytics exist - format from cached sections
       console.log("📊 Serving analytics from cache for session:", sessionId);
-      
+
       // Refresh feedback section to include any new submissions
       const latestFeedback = await generateFeedbackStats(sessionId);
       cachedAnalytics.sections.feedback = latestFeedback;
-      
+
       const analyticsData = await formatStoredAnalytics(cachedAnalytics);
-      
+
       return res.status(200).json({
         success: true,
         generated: true,
@@ -186,13 +191,13 @@ const getFrontendAnalytics = async (req, res, next) => {
     return res.status(200).json({
       success: true,
       generated: false,
-      message: "Analytics have not been generated yet. Please generate analytics first.",
+      message:
+        "Analytics have not been generated yet. Please generate analytics first.",
       data: null,
     });
-    
   } catch (error) {
     console.error("Get frontend analytics error:", error);
-    if (error.name === 'ValidationError') {
+    if (error.name === "ValidationError") {
       return res.status(400).json({
         success: false,
         message: "Validation failed",

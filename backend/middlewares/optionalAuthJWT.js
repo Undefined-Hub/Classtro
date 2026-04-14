@@ -6,14 +6,14 @@ const optionalAuthJWT = (req, res, next) => {
     if (err) {
       return next(err);
     }
-    
+
     // If user exists (token is valid), attach to request
     if (user) {
       req.user = user;
     }
     // If no user (no token or invalid token), continue without user
     // req.user will be undefined for guest users
-    
+
     next();
   })(req, res, next);
 };

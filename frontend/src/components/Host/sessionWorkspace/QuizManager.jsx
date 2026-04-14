@@ -22,7 +22,7 @@ import {
   SkipForward,
   Timer,
   Medal,
-  Search
+  Search,
 } from "lucide-react";
 
 const QuizManager = ({ isParticipantListOpen = true }) => {
@@ -55,7 +55,7 @@ const QuizManager = ({ isParticipantListOpen = true }) => {
   const [questionDuration, setQuestionDuration] = useState(30);
   const [templateValidation, setTemplateValidation] = useState(null);
   const [validatingTemplate, setValidatingTemplate] = useState(false);
-  
+
   // HOST_CONTROLLED live states
   const [currentQuestion, setCurrentQuestion] = useState(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(-1);
@@ -119,14 +119,19 @@ const QuizManager = ({ isParticipantListOpen = true }) => {
       setTemplateValidation(null);
       return;
     }
-    
+
     setValidatingTemplate(true);
     try {
-      const res = await api.get(`/api/live-quizzes/validate-template?templateId=${templateId}&mode=${mode}`);
+      const res = await api.get(
+        `/api/live-quizzes/validate-template?templateId=${templateId}&mode=${mode}`,
+      );
       setTemplateValidation(res.data);
     } catch (err) {
       console.error("Failed to validate template:", err);
-      setTemplateValidation({ compatible: false, issues: ["Failed to validate template"] });
+      setTemplateValidation({
+        compatible: false,
+        issues: ["Failed to validate template"],
+      });
     } finally {
       setValidatingTemplate(false);
     }
@@ -138,7 +143,7 @@ const QuizManager = ({ isParticipantListOpen = true }) => {
     try {
       const res = await api.get(`/api/live-quizzes/session/${sessionData._id}`);
       const quizzes = res.data || [];
-      
+
       // Find active quiz
       const liveQuiz = quizzes.find((q) => q.status === "LIVE");
       if (liveQuiz) {
@@ -149,7 +154,7 @@ const QuizManager = ({ isParticipantListOpen = true }) => {
           setLeaderboard(liveQuiz.leaderboard || []);
         }
       }
-      
+
       // Set past quizzes (closed ones)
       setPastQuizzes(quizzes.filter((q) => q.status === "CLOSED"));
     } catch (err) {
@@ -196,10 +201,15 @@ const QuizManager = ({ isParticipantListOpen = true }) => {
     };
 
     // HOST_CONTROLLED: answer received notification
-    const onHCAnswerReceived = ({ quizId, questionId, participantId, participantName }) => {
+    const onHCAnswerReceived = ({
+      quizId,
+      questionId,
+      participantId,
+      participantName,
+    }) => {
       const currentQuiz = activeQuizRef.current;
       if (currentQuiz && currentQuiz._id === quizId) {
-        setAnswerCount(prev => prev + 1);
+        setAnswerCount((prev) => prev + 1);
       }
     };
 
@@ -234,8 +244,15 @@ const QuizManager = ({ isParticipantListOpen = true }) => {
       if (currentQuiz && currentQuiz._id === data.quizId) {
         const finalLeaderboard = data.leaderboard || [];
         // Update activeQuiz with CLOSED status + final leaderboard so renderHCResults() has correct data immediately
-        setActiveQuiz(prev => ({ ...prev, status: "CLOSED", leaderboard: finalLeaderboard }));
-        setPastQuizzes(prev => [{ ...currentQuiz, status: "CLOSED", leaderboard: finalLeaderboard }, ...prev]);
+        setActiveQuiz((prev) => ({
+          ...prev,
+          status: "CLOSED",
+          leaderboard: finalLeaderboard,
+        }));
+        setPastQuizzes((prev) => [
+          { ...currentQuiz, status: "CLOSED", leaderboard: finalLeaderboard },
+          ...prev,
+        ]);
         // Also fetch submissions so renderHCResults() submission table is populated
         fetchQuizResults(currentQuiz._id);
       }
@@ -279,13 +296,17 @@ const QuizManager = ({ isParticipantListOpen = true }) => {
   // Launch quiz from template
   const handleLaunchQuiz = async () => {
     if (!selectedTemplate || !sessionData?._id) return;
-    
+
     // Check validation for HOST_CONTROLLED
-    if (selectedMode === "HOST_CONTROLLED" && templateValidation && !templateValidation.compatible) {
+    if (
+      selectedMode === "HOST_CONTROLLED" &&
+      templateValidation &&
+      !templateValidation.compatible
+    ) {
       alert("This template is not compatible with Live Guided mode.");
       return;
     }
-    
+
     setLaunching(true);
     try {
       // Create live quiz from template with mode
@@ -293,17 +314,20 @@ const QuizManager = ({ isParticipantListOpen = true }) => {
         sessionId: sessionData._id,
         templateId: selectedTemplate._id,
         mode: selectedMode,
-        questionDurationSeconds: selectedMode === "HOST_CONTROLLED" ? questionDuration : undefined,
+        questionDurationSeconds:
+          selectedMode === "HOST_CONTROLLED" ? questionDuration : undefined,
       });
 
       // Launch the quiz
-      const launchRes = await api.post(`/api/live-quizzes/${createRes.data._id}/launch`);
-      
+      const launchRes = await api.post(
+        `/api/live-quizzes/${createRes.data._id}/launch`,
+      );
+
       setActiveQuiz(launchRes.data.quiz);
       setShowQuizImport(false);
       setSelectedTemplate(null);
       setQuizSubmissions([]);
-      
+
       // Reset HC states
       if (selectedMode === "HOST_CONTROLLED") {
         setCurrentQuestionIndex(-1);
@@ -313,11 +337,13 @@ const QuizManager = ({ isParticipantListOpen = true }) => {
         setQuestionResults(null);
         setShowLeaderboard(false);
       }
-      
+
       console.log("✅ Quiz launched successfully in", selectedMode, "mode");
     } catch (err) {
       console.error("Failed to launch quiz:", err);
-      alert(err.response?.data?.error || "Failed to launch quiz. Please try again.");
+      alert(
+        err.response?.data?.error || "Failed to launch quiz. Please try again.",
+      );
     } finally {
       setLaunching(false);
     }
@@ -326,21 +352,21 @@ const QuizManager = ({ isParticipantListOpen = true }) => {
   // Close active quiz
   const handleCloseQuiz = async () => {
     if (!activeQuiz) return;
-    
+
     setClosing(true);
     try {
       await api.post(`/api/live-quizzes/${activeQuiz._id}/close`);
-      
+
       // Move to past quizzes
       setPastQuizzes((prev) => [{ ...activeQuiz, status: "CLOSED" }, ...prev]);
       setShowResults(true);
-      
+
       // Fetch final results
       await fetchQuizResults(activeQuiz._id);
-      
+
       // Keep activeQuiz for results display
       setActiveQuiz((prev) => ({ ...prev, status: "CLOSED" }));
-      
+
       console.log("✅ Quiz closed successfully");
     } catch (err) {
       console.error("Failed to close quiz:", err);
@@ -369,30 +395,31 @@ const QuizManager = ({ isParticipantListOpen = true }) => {
   const handlePublishQuestion = useCallback(() => {
     const socket = socketRef.current;
     if (!activeQuiz || !socket || isPublishing) return;
-    
+
     setIsPublishing(true);
     setAnswerCount(0);
-    // Note: showLeaderboard, questionResults, and currentQuestion 
+    // Note: showLeaderboard, questionResults, and currentQuestion
     // will be updated when quiz:hc:question event is received
-    
+
     socket.emit("quiz:hc:publish", {
       quizId: activeQuiz._id,
     });
-    
+
     console.log("📤 Publishing next question...");
   }, [activeQuiz, socketRef, isPublishing]);
 
   // HOST_CONTROLLED: Close current question (stop accepting answers)
   const handleCloseCurrentQuestion = useCallback(() => {
     const socket = socketRef.current;
-    if (!activeQuiz || !socket || isClosingQuestion || currentQuestionIndex < 0) return;
-    
+    if (!activeQuiz || !socket || isClosingQuestion || currentQuestionIndex < 0)
+      return;
+
     setIsClosingQuestion(true);
-    
+
     socket.emit("quiz:hc:close", {
       quizId: activeQuiz._id,
     });
-    
+
     // Results will arrive via quiz:hc:results event
     console.log("📤 Closing current question...");
   }, [activeQuiz, socketRef, isClosingQuestion, currentQuestionIndex]);
@@ -401,17 +428,17 @@ const QuizManager = ({ isParticipantListOpen = true }) => {
   const handleEndHCQuiz = useCallback(() => {
     const socket = socketRef.current;
     if (!activeQuiz || !socket) return;
-    
+
     const confirmEnd = window.confirm(
-      "Are you sure you want to end the quiz? This will show final results to all participants."
+      "Are you sure you want to end the quiz? This will show final results to all participants.",
     );
-    
+
     if (!confirmEnd) return;
-    
+
     socket.emit("quiz:hc:end", {
       quizId: activeQuiz._id,
     });
-    
+
     console.log("📤 Ending HOST_CONTROLLED quiz...");
   }, [activeQuiz, socketRef]);
 
@@ -420,9 +447,11 @@ const QuizManager = ({ isParticipantListOpen = true }) => {
     <div className="mt-4 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl space-y-4">
       <div className="flex items-center gap-2 mb-3">
         <Zap className="w-5 h-5 text-amber-500" />
-        <span className="font-semibold text-slate-900 dark:text-white">Launch Type</span>
+        <span className="font-semibold text-slate-900 dark:text-white">
+          Launch Type
+        </span>
       </div>
-      
+
       <div className="grid grid-cols-2 gap-3">
         <button
           onClick={() => setSelectedMode("ONE_SHOT")}
@@ -432,12 +461,14 @@ const QuizManager = ({ isParticipantListOpen = true }) => {
               : "border-slate-200 dark:border-slate-700 hover:border-slate-300"
           }`}
         >
-          <div className="font-semibold text-slate-900 dark:text-white mb-1">Self-Paced</div>
+          <div className="font-semibold text-slate-900 dark:text-white mb-1">
+            Self-Paced
+          </div>
           <div className="text-xs text-slate-500 dark:text-slate-400">
             Students answer at their own pace and submit when ready
           </div>
         </button>
-        
+
         <button
           onClick={() => setSelectedMode("HOST_CONTROLLED")}
           className={`p-4 rounded-xl border-2 transition-all text-left ${
@@ -455,7 +486,7 @@ const QuizManager = ({ isParticipantListOpen = true }) => {
           </div>
         </button>
       </div>
-      
+
       {selectedMode === "HOST_CONTROLLED" && (
         <>
           {/* Duration slider */}
@@ -485,7 +516,7 @@ const QuizManager = ({ isParticipantListOpen = true }) => {
               <span>120s</span>
             </div>
           </div>
-          
+
           {/* Validation warning */}
           {validatingTemplate && (
             <div className="flex items-center gap-2 text-sm text-slate-500">
@@ -493,7 +524,7 @@ const QuizManager = ({ isParticipantListOpen = true }) => {
               Validating template compatibility...
             </div>
           )}
-          
+
           {templateValidation && !templateValidation.compatible && (
             <div className="p-3 bg-red-50 dark:bg-red-900/30 rounded-lg border border-red-200 dark:border-red-800">
               <div className="flex items-start gap-2">
@@ -507,19 +538,24 @@ const QuizManager = ({ isParticipantListOpen = true }) => {
                   </div>
                   {templateValidation.invalidQuestions?.length > 0 && (
                     <div className="text-xs text-red-500 mt-2">
-                      Questions with issues: {templateValidation.invalidQuestions.map(q => q.index + 1).join(", ")}
+                      Questions with issues:{" "}
+                      {templateValidation.invalidQuestions
+                        .map((q) => q.index + 1)
+                        .join(", ")}
                     </div>
                   )}
                 </div>
               </div>
             </div>
           )}
-          
+
           {templateValidation && templateValidation.compatible && (
             <div className="p-3 bg-green-50 dark:bg-green-900/30 rounded-lg border border-green-200 dark:border-green-800">
               <div className="flex items-center gap-2 text-green-700 dark:text-green-300">
                 <CheckCircle className="w-5 h-5" />
-                <span className="font-medium">Template compatible with Live Guided mode</span>
+                <span className="font-medium">
+                  Template compatible with Live Guided mode
+                </span>
               </div>
             </div>
           )}
@@ -548,7 +584,9 @@ const QuizManager = ({ isParticipantListOpen = true }) => {
               </div>
               <div>
                 <h2 className="text-xl font-bold text-slate-900 dark:text-white">
-                  {importStep === 1 ? "Select Quiz Template" : "Configure Launch"}
+                  {importStep === 1
+                    ? "Select Quiz Template"
+                    : "Configure Launch"}
                 </h2>
                 <p className="text-sm text-slate-500 dark:text-slate-400">
                   {importStep === 1
@@ -664,7 +702,10 @@ const QuizManager = ({ isParticipantListOpen = true }) => {
                         <div className="flex items-center gap-4 mt-3">
                           <span className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
                             <Target className="w-3.5 h-3.5" />
-                            {(template.questionsCount ?? template.questions?.length ?? 0)} questions
+                            {template.questionsCount ??
+                              template.questions?.length ??
+                              0}{" "}
+                            questions
                           </span>
                           <span className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
                             <Award className="w-3.5 h-3.5" />
@@ -687,7 +728,10 @@ const QuizManager = ({ isParticipantListOpen = true }) => {
                           {selectedTemplate?.title}
                         </h3>
                         <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                          {(selectedTemplate?.questionsCount ?? selectedTemplate?.questions?.length ?? 0)} questions • {selectedTemplate?.totalPoints} points
+                          {selectedTemplate?.questionsCount ??
+                            selectedTemplate?.questions?.length ??
+                            0}{" "}
+                          questions • {selectedTemplate?.totalPoints} points
                         </p>
                       </div>
                       <button
@@ -734,7 +778,13 @@ const QuizManager = ({ isParticipantListOpen = true }) => {
                 </button>
                 <button
                   onClick={handleLaunchQuiz}
-                  disabled={launching || validatingTemplate || (selectedMode === "HOST_CONTROLLED" && templateValidation && !templateValidation.compatible)}
+                  disabled={
+                    launching ||
+                    validatingTemplate ||
+                    (selectedMode === "HOST_CONTROLLED" &&
+                      templateValidation &&
+                      !templateValidation.compatible)
+                  }
                   className="px-5 py-2 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white rounded-xl font-semibold flex items-center justify-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-green-500/25"
                 >
                   {launching ? (
@@ -788,8 +838,10 @@ const QuizManager = ({ isParticipantListOpen = true }) => {
             <div className="text-2xl font-bold">
               {quizSubmissions.length > 0
                 ? Math.round(
-                    quizSubmissions.reduce((sum, s) => sum + (s.percentage || 0), 0) /
-                      quizSubmissions.length
+                    quizSubmissions.reduce(
+                      (sum, s) => sum + (s.percentage || 0),
+                      0,
+                    ) / quizSubmissions.length,
                   )
                 : 0}
               %
@@ -868,10 +920,10 @@ const QuizManager = ({ isParticipantListOpen = true }) => {
                       index === 0
                         ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-400"
                         : index === 1
-                        ? "bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-300"
-                        : index === 2
-                        ? "bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-400"
-                        : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400"
+                          ? "bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-300"
+                          : index === 2
+                            ? "bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-400"
+                            : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400"
                     }`}
                   >
                     {index + 1}
@@ -898,8 +950,8 @@ const QuizManager = ({ isParticipantListOpen = true }) => {
                       submission.percentage >= 70
                         ? "text-green-600 dark:text-green-400"
                         : submission.percentage >= 40
-                        ? "text-yellow-600 dark:text-yellow-400"
-                        : "text-red-600 dark:text-red-400"
+                          ? "text-yellow-600 dark:text-yellow-400"
+                          : "text-red-600 dark:text-red-400"
                     }`}
                   >
                     {Math.round(submission.percentage)}%
@@ -918,7 +970,7 @@ const QuizManager = ({ isParticipantListOpen = true }) => {
     const totalQuestions = activeQuiz?.questions?.length || 0;
     const isLastQuestion = currentQuestionIndex >= totalQuestions - 1;
     const hasStarted = currentQuestionIndex >= 0;
-    
+
     return (
       <div className="space-y-6">
         {/* Quiz Header */}
@@ -935,7 +987,8 @@ const QuizManager = ({ isParticipantListOpen = true }) => {
               </div>
               <h2 className="text-2xl font-bold">{activeQuiz.title}</h2>
               <p className="text-blue-100 mt-1">
-                Question {Math.max(0, currentQuestionIndex + 1)} of {totalQuestions}
+                Question {Math.max(0, currentQuestionIndex + 1)} of{" "}
+                {totalQuestions}
               </p>
             </div>
             <div className="text-right">
@@ -947,9 +1000,11 @@ const QuizManager = ({ isParticipantListOpen = true }) => {
           {/* Progress Bar */}
           <div className="mt-4">
             <div className="h-2 bg-white/20 rounded-full overflow-hidden">
-              <div 
+              <div
                 className="h-full bg-white/80 transition-all duration-300"
-                style={{ width: `${((currentQuestionIndex + 1) / totalQuestions) * 100}%` }}
+                style={{
+                  width: `${((currentQuestionIndex + 1) / totalQuestions) * 100}%`,
+                }}
               />
             </div>
           </div>
@@ -987,7 +1042,10 @@ const QuizManager = ({ isParticipantListOpen = true }) => {
             <div className="grid grid-cols-2 gap-3">
               {currentQuestion.options?.map((opt, idx) => {
                 // Check if this option is correct (comparing with questionResults if available)
-                const isCorrectOption = questionResults?.question?.correctAnswers?.includes(opt._id?.toString?.() || opt._id);
+                const isCorrectOption =
+                  questionResults?.question?.correctAnswers?.includes(
+                    opt._id?.toString?.() || opt._id,
+                  );
                 return (
                   <div
                     key={opt._id || idx}
@@ -1000,7 +1058,8 @@ const QuizManager = ({ isParticipantListOpen = true }) => {
                     }`}
                   >
                     <span className="text-slate-700 dark:text-slate-300">
-                      {String.fromCharCode(65 + idx)}. {opt.text || opt.optionText}
+                      {String.fromCharCode(65 + idx)}.{" "}
+                      {opt.text || opt.optionText}
                     </span>
                     {questionResults && isCorrectOption && (
                       <CheckCircle className="w-4 h-4 text-green-500 inline ml-2" />
@@ -1038,10 +1097,10 @@ const QuizManager = ({ isParticipantListOpen = true }) => {
                           index === 0
                             ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-400"
                             : index === 1
-                            ? "bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-300"
-                            : index === 2
-                            ? "bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-400"
-                            : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400"
+                              ? "bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-300"
+                              : index === 2
+                                ? "bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-400"
+                                : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400"
                         }`}
                       >
                         {index + 1}
@@ -1117,7 +1176,7 @@ const QuizManager = ({ isParticipantListOpen = true }) => {
                 </button>
               ) : null}
             </div>
-            
+
             {/* End Quiz Early Button - always visible when quiz has started */}
             {hasStarted && !isLastQuestion && (
               <button
@@ -1151,9 +1210,14 @@ const QuizManager = ({ isParticipantListOpen = true }) => {
     const sortedLeaderboard = activeQuiz?.leaderboard
       ? [...activeQuiz.leaderboard].sort((a, b) => b.totalScore - a.totalScore)
       : [];
-    const avgScore = sortedLeaderboard.length > 0
-      ? Math.round(sortedLeaderboard.reduce((s, e) => s + e.totalScore, 0) / sortedLeaderboard.length * 100) / 100
-      : 0;
+    const avgScore =
+      sortedLeaderboard.length > 0
+        ? Math.round(
+            (sortedLeaderboard.reduce((s, e) => s + e.totalScore, 0) /
+              sortedLeaderboard.length) *
+              100,
+          ) / 100
+        : 0;
     const topScore = sortedLeaderboard[0]?.totalScore?.toFixed(2) ?? "0";
 
     return (
@@ -1180,7 +1244,9 @@ const QuizManager = ({ isParticipantListOpen = true }) => {
           <div className="grid grid-cols-3 gap-4 mt-6">
             <div className="bg-white/10 rounded-xl p-4 text-center">
               <Users className="w-6 h-6 mx-auto mb-2 text-blue-200" />
-              <div className="text-2xl font-bold">{sortedLeaderboard.length}</div>
+              <div className="text-2xl font-bold">
+                {sortedLeaderboard.length}
+              </div>
               <div className="text-blue-200 text-sm">Participants</div>
             </div>
             <div className="bg-white/10 rounded-xl p-4 text-center">
@@ -1231,13 +1297,19 @@ const QuizManager = ({ isParticipantListOpen = true }) => {
                         index === 0
                           ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-400"
                           : index === 1
-                          ? "bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-300"
-                          : index === 2
-                          ? "bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-400"
-                          : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400"
+                            ? "bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-300"
+                            : index === 2
+                              ? "bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-400"
+                              : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400"
                       }`}
                     >
-                      {index === 0 ? "🥇" : index === 1 ? "🥈" : index === 2 ? "🥉" : index + 1}
+                      {index === 0
+                        ? "🥇"
+                        : index === 1
+                          ? "🥈"
+                          : index === 2
+                            ? "🥉"
+                            : index + 1}
                     </div>
                     <span className="font-medium text-slate-900 dark:text-white">
                       {entry.participantName}
@@ -1269,7 +1341,8 @@ const QuizManager = ({ isParticipantListOpen = true }) => {
             ) : (
               quizSubmissions.map((submission, index) => {
                 const answeredCount = submission.answers?.length || 0;
-                const correctCount = submission.answers?.filter((a) => a.isCorrect).length || 0;
+                const correctCount =
+                  submission.answers?.filter((a) => a.isCorrect).length || 0;
                 return (
                   <div
                     key={submission._id}
@@ -1281,10 +1354,10 @@ const QuizManager = ({ isParticipantListOpen = true }) => {
                           index === 0
                             ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-400"
                             : index === 1
-                            ? "bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-300"
-                            : index === 2
-                            ? "bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-400"
-                            : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400"
+                              ? "bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-300"
+                              : index === 2
+                                ? "bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-400"
+                                : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400"
                         }`}
                       >
                         {index + 1}
@@ -1312,8 +1385,8 @@ const QuizManager = ({ isParticipantListOpen = true }) => {
                           submission.percentage >= 70
                             ? "text-green-600 dark:text-green-400"
                             : submission.percentage >= 40
-                            ? "text-yellow-600 dark:text-yellow-400"
-                            : "text-red-600 dark:text-red-400"
+                              ? "text-yellow-600 dark:text-yellow-400"
+                              : "text-red-600 dark:text-red-400"
                         }`}
                       >
                         {submission.percentage ?? 0}%
@@ -1368,11 +1441,15 @@ const QuizManager = ({ isParticipantListOpen = true }) => {
 
       {/* Content */}
       {activeQuiz ? (
-        activeQuiz.mode === "HOST_CONTROLLED"
-          ? activeQuiz.status === "CLOSED"
-            ? renderHCResults()
-            : renderHCControlPanel()
-          : renderActiveQuiz()
+        activeQuiz.mode === "HOST_CONTROLLED" ? (
+          activeQuiz.status === "CLOSED" ? (
+            renderHCResults()
+          ) : (
+            renderHCControlPanel()
+          )
+        ) : (
+          renderActiveQuiz()
+        )
       ) : (
         <div className="space-y-6">
           {/* Empty State or Past Quizzes */}

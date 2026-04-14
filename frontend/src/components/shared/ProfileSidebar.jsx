@@ -2,12 +2,12 @@ import React from "react";
 import { User, Archive, LogOut } from "lucide-react";
 import ProfileImageOrInitials from "../ProfileImageOrInitials";
 
-const ProfileSidebar = ({ 
-  user, 
-  activeTab, 
-  setActiveTab, 
+const ProfileSidebar = ({
+  user,
+  activeTab,
+  setActiveTab,
   onLogout,
-  userType = "host" // "host" or "participant"
+  userType = "host", // "host" or "participant"
 }) => {
   return (
     <div className="w-full">
@@ -45,7 +45,7 @@ const ProfileSidebar = ({
             <User className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-2 sm:mr-3 flex-shrink-0" />
             Profile
           </button>
-          
+
           {/* Conditional Archived Tab - Only show for Teachers/Hosts */}
           {userType === "host" && user?.role === "TEACHER" && (
             <button

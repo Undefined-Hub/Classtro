@@ -14,7 +14,7 @@ const AnswerSchema = new mongoose.Schema(
     // Response time in milliseconds (for speed bonus calculation)
     responseTimeMs: { type: Number, default: null },
   },
-  { _id: false }
+  { _id: false },
 );
 
 const QuizSubmissionSchema = new mongoose.Schema(
@@ -42,12 +42,12 @@ const QuizSubmissionSchema = new mongoose.Schema(
     submittedAt: Date,
     isLate: { type: Boolean, default: false },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 QuizSubmissionSchema.index(
   { liveQuizId: 1, participantId: 1 },
-  { unique: true }
+  { unique: true },
 );
 
 module.exports = mongoose.model("QuizSubmission", QuizSubmissionSchema);

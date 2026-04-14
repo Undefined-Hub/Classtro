@@ -19,7 +19,8 @@ async function fetchUrlMetadata(url) {
       timeout: 5000,
       maxRedirects: 5,
       headers: {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+        "User-Agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
       },
     });
 
@@ -111,7 +112,7 @@ async function fetchUrlMetadata(url) {
  */
 async function fetchMultipleUrlMetadata(urls) {
   const results = {};
-  
+
   // Process URLs in parallel with a limit
   const promises = urls.map(async (url) => {
     const metadata = await fetchUrlMetadata(url);

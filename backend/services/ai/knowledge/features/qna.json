@@ -2,10 +2,10 @@
   "feature": "qna",
   "title": "Live Q&A System",
   "description": "Interactive question and answer system where students ask questions and teachers respond in real-time",
-  
+
   "teacher": {
     "overview": "Manage student questions during live sessions. Students can ask questions, upvote others' questions, and you can answer them in real-time or after session.",
-    
+
     "howTo": {
       "access": [
         "During active session, open Q&A panel",
@@ -28,7 +28,7 @@
         "Export Q&A session as PDF for reference"
       ]
     },
-    
+
     "tips": [
       "Answer high-upvoted questions first - they interest multiple students",
       "Encourage students to upvote instead of asking duplicates",
@@ -37,7 +37,7 @@
       "Save complex questions for end-of-session Q&A time",
       "Export Q&A after session for study material"
     ],
-    
+
     "canDo": [
       "See all questions from students",
       "Answer questions with text responses",
@@ -49,14 +49,14 @@
       "Sort by time or upvotes",
       "Export Q&A session data"
     ],
-    
+
     "cannotDo": [
       "Force students to ask questions",
       "See who upvoted questions",
       "Edit student questions (can only delete)",
       "Prevent students from upvoting"
     ],
-    
+
     "bestPractices": [
       "Allocate specific Q&A time during session",
       "Acknowledge all questions even if you can't answer immediately",
@@ -64,7 +64,7 @@
       "Encourage questions by responding promptly",
       "Make Q&A part of grading to increase participation"
     ],
-    
+
     "anonymousMode": {
       "description": "Students can ask questions without revealing their identity",
       "whenToUse": "Sensitive topics, shy students, encourage honest questions",
@@ -72,10 +72,10 @@
       "limitations": "Cannot identify who asked, harder to follow up individually"
     }
   },
-  
+
   "student": {
     "overview": "Ask questions during sessions and upvote questions from classmates. Get answers from your teacher in real-time.",
-    
+
     "howTo": {
       "askQuestion": [
         "During session, open Q&A section",
@@ -98,7 +98,7 @@
         "View all Q&A in session history after class"
       ]
     },
-    
+
     "tips": [
       "Ask clear, specific questions",
       "Check if someone already asked your question - upvote instead",
@@ -107,7 +107,7 @@
       "Make sure questions are relevant to current topic",
       "Be respectful and appropriate"
     ],
-    
+
     "canDo": [
       "Ask unlimited questions during session",
       "Post anonymously if teacher enables it",
@@ -117,7 +117,7 @@
       "View all Q&A from the session",
       "See when teacher answers your question"
     ],
-    
+
     "cannotDo": [
       "Edit question after teacher answers it",
       "See who asked anonymous questions",
@@ -125,7 +125,7 @@
       "Ask questions in sessions you haven't joined",
       "Downvote questions"
     ],
-    
+
     "questionTips": {
       "good": [
         "\"Could you explain the difference between X and Y?\"",
@@ -140,7 +140,7 @@
         "Duplicate questions already asked"
       ]
     },
-    
+
     "commonIssues": [
       {
         "problem": "Cannot submit question",
@@ -159,7 +159,7 @@
         "solution": "You can only delete unanswered questions. Contact teacher if needed"
       }
     ],
-    
+
     "anonymousTips": [
       "Use anonymous mode for sensitive or potentially embarrassing questions",
       "Still be respectful and appropriate even when anonymous",
@@ -167,6 +167,6 @@
       "Great for getting honest clarifications"
     ]
   },
-  
+
   "relatedFeatures": ["sessions", "polls", "feedback"]
 }

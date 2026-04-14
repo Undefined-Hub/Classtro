@@ -11,9 +11,14 @@ const AttendanceTable = () => {
   const itemsPerPage = 10;
 
   // Calculate session duration for progress bar
-  const sessionDuration = analyticsData?.sessionInfo?.startAt && analyticsData?.sessionInfo?.endAt
-    ? Math.round((new Date(analyticsData.sessionInfo.endAt) - new Date(analyticsData.sessionInfo.startAt)) / (1000 * 60))
-    : 60; // fallback to 60 minutes
+  const sessionDuration =
+    analyticsData?.sessionInfo?.startAt && analyticsData?.sessionInfo?.endAt
+      ? Math.round(
+          (new Date(analyticsData.sessionInfo.endAt) -
+            new Date(analyticsData.sessionInfo.startAt)) /
+            (1000 * 60),
+        )
+      : 60; // fallback to 60 minutes
 
   if (loading) {
     return (

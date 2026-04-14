@@ -31,7 +31,10 @@ const MarkdownEditor = ({
       .replace(/(^|[^*])\*([^*]+)\*(?!\*)/g, '$1<em class="italic">$2</em>')
       .replace(/(^|[^_])_([^_]+)_(?!_)/g, '$1<em class="italic">$2</em>')
       // Inline code: `text`
-      .replace(/`(.+?)`/g, '<code class="bg-gray-200 dark:bg-gray-600 px-1.5 py-0.5 rounded font-mono text-xs">$1</code>')
+      .replace(
+        /`(.+?)`/g,
+        '<code class="bg-gray-200 dark:bg-gray-600 px-1.5 py-0.5 rounded font-mono text-xs">$1</code>',
+      )
       // Preserve line breaks
       .replace(/\n/g, "<br>");
 
@@ -58,7 +61,8 @@ const MarkdownEditor = ({
     const text = selectedText || defaultText;
     const formatted = `${prefix}${text}${suffix}`;
 
-    const newValue = value.substring(0, start) + formatted + value.substring(end);
+    const newValue =
+      value.substring(0, start) + formatted + value.substring(end);
     onChange(newValue);
 
     // Restore cursor position after the inserted text
@@ -148,13 +152,15 @@ const MarkdownEditor = ({
         )}
         {/* Character count overlay */}
         <div className="absolute bottom-2 right-3 text-xs pointer-events-none z-10 bg-white dark:bg-gray-700 px-2 py-0.5 rounded-md">
-          <span className={`font-medium ${
-            isOverLimit
-              ? "text-red-600 dark:text-red-400"
-              : isNearLimit
-              ? "text-yellow-600 dark:text-yellow-400"
-              : "text-gray-400 dark:text-gray-500"
-          }`}>
+          <span
+            className={`font-medium ${
+              isOverLimit
+                ? "text-red-600 dark:text-red-400"
+                : isNearLimit
+                  ? "text-yellow-600 dark:text-yellow-400"
+                  : "text-gray-400 dark:text-gray-500"
+            }`}
+          >
             {charCount}/{maxLength}
           </span>
         </div>
@@ -163,7 +169,9 @@ const MarkdownEditor = ({
       {/* Preview - Separate block */}
       {value && (
         <div className="mt-2 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-lg p-3">
-          <p className="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-2">Preview:</p>
+          <p className="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-2">
+            Preview:
+          </p>
           <div
             className="text-sm text-gray-900 dark:text-white whitespace-pre-wrap break-words"
             dangerouslySetInnerHTML={{ __html: markdownToHtml(value) }}

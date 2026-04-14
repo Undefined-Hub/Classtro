@@ -1,16 +1,19 @@
 # Analytics API Documentation
 
 ## Overview
+
 The Analytics API provides comprehensive analytics data for Classtro sessions, including participant statistics, timeline data, polls, questions, and feedback.
 
 ## Endpoints
 
 ### 1. Generate Analytics
+
 **POST** `/api/analytics/generate/:sessionId`
 
 Generates and stores analytics data for a session.
 
 **Request Body:**
+
 ```json
 {
   "sections": {
@@ -26,6 +29,7 @@ Generates and stores analytics data for a session.
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -35,11 +39,13 @@ Generates and stores analytics data for a session.
 ```
 
 ### 2. Get Raw Analytics Data
+
 **GET** `/api/analytics/:sessionId`
 
 Retrieves the raw analytics data stored in the database.
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -57,11 +63,13 @@ Retrieves the raw analytics data stored in the database.
 ```
 
 ### 3. Get Frontend-Compatible Analytics
+
 **GET** `/api/analytics/frontend/:sessionId`
 
 Retrieves analytics data formatted specifically for the frontend React components.
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -124,11 +132,13 @@ Retrieves analytics data formatted specifically for the frontend React component
 ```
 
 ### 4. Delete Analytics
+
 **DELETE** `/api/analytics/:sessionId`
 
 Deletes stored analytics data (useful for regeneration).
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -137,11 +147,13 @@ Deletes stored analytics data (useful for regeneration).
 ```
 
 ### 5. Test Participant Stats
+
 **GET** `/api/analytics/test/participants/:sessionId`
 
 Development endpoint to test participant statistics generation.
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -178,18 +190,18 @@ The frontend should use the `/api/analytics/frontend/:sessionId` endpoint as it 
 const loadData = async () => {
   try {
     setLoading(true);
-    
+
     const response = await fetch(`/api/analytics/frontend/${sessionId}`, {
       headers: {
-        'Authorization': `Bearer ${token}`
-      }
+        Authorization: `Bearer ${token}`,
+      },
     });
-    
+
     if (response.ok) {
       const result = await response.json();
       setAnalyticsData(result.data);
     } else {
-      throw new Error('Failed to load analytics');
+      throw new Error("Failed to load analytics");
     }
   } catch (err) {
     setError("Failed to load analytics data");
@@ -208,6 +220,7 @@ const loadData = async () => {
 ## Error Handling
 
 All endpoints return consistent error responses:
+
 ```json
 {
   "success": false,
@@ -217,6 +230,7 @@ All endpoints return consistent error responses:
 ```
 
 Common error codes:
+
 - **400**: Validation failed (invalid sessionId format)
 - **404**: Session not found
 - **500**: Server error during analytics generation

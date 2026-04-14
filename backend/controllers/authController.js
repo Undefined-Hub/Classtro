@@ -13,6 +13,19 @@ emailService.verifyConnection().then((ok) => {
 // Load environment variables
 dotenv.config();
 
+const REFRESH_TOKEN_COOKIE_MAX_AGE = 7 * 24 * 60 * 60 * 1000; // 7 days
+const isProduction =
+  process.env.NODE_ENV === "production" ||
+  process.env.NODE_ENV === "development"; // Treat development as production for cookie settings
+
+const getRefreshCookieOptions = () => ({
+  httpOnly: true,
+  secure: isProduction,
+  sameSite: isProduction ? "None" : "Lax",
+  maxAge: REFRESH_TOKEN_COOKIE_MAX_AGE,
+  path: "/",
+});
+
 const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -49,7 +62,7 @@ const loginUser = async (req, res) => {
     // ! Existing login logic
     const payload = { user: { id: user.id } };
     const accessToken = generateToken(payload, process.env.JWT_SECRET, {
-      expiresIn: "2h",
+      expiresIn: "1h",
     });
 
     const refreshToken = generateToken(
@@ -75,12 +88,8 @@ const loginUser = async (req, res) => {
       profilePicture: user.profilePicture,
     };
 
-    // Set refresh token in HTTP-only cookie
-    res.cookie("refreshToken", refreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "Strict",
-    });
+    // Persist refresh token cookie so it survives browser restarts.
+    res.cookie("refreshToken", refreshToken, getRefreshCookieOptions());
 
     res.status(200).json({
       message: "Login successful",
@@ -88,31 +97,31 @@ const loginUser = async (req, res) => {
       user: safeUser,
     });
   } catch (err) {
-    res
-      .status(500)
-      .json({
-        message: "Server error. Please try again later.",
-        error: err.message,
-      });
+    res.status(500).json({
+      message: "Server error. Please try again later.",
+      error: err.message,
+    });
   }
 };
 
 const logoutUser = async (req, res, next) => {
   try {
+    const refreshTokenFromCookie = req.cookies?.refreshToken;
+
     // Clear the refresh token cookie
     res.clearCookie("refreshToken", {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "Strict",
+      secure: isProduction,
+      sameSite: isProduction ? "None" : "Lax",
+      path: "/",
     });
 
-    // Optionally, remove refresh token from user in DB
-    if (req.user) {
-      const user = await User.findById(req.user.id);
-      if (user) {
-        user.refreshToken = "";
-        await user.save();
-      }
+    // Invalidate the refresh token in DB as well.
+    if (refreshTokenFromCookie) {
+      await User.findOneAndUpdate(
+        { refreshToken: refreshTokenFromCookie },
+        { refreshToken: "" },
+      );
     }
 
     res.status(200).json({ message: "Logged out successfully" });
@@ -207,12 +216,8 @@ const googleAuthCallback = async (req, res) => {
     user.refreshToken = refreshToken;
     await user.save();
 
-    // Set refresh token cookie
-    res.cookie("refreshToken", refreshToken, {
-      httpOnly: true,
-      secure: true,
-      sameSite: "Strict",
-    });
+    // Set persistent refresh token cookie for OAuth flow too.
+    res.cookie("refreshToken", refreshToken, getRefreshCookieOptions());
 
     // Prepare user data
     const safeUser = {
@@ -233,9 +238,11 @@ const googleAuthCallback = async (req, res) => {
     callbackUrl.searchParams.set("isNewUser", user.isNewUser || false);
 
     res.redirect(callbackUrl.toString());
-    } catch (error) {
+  } catch (error) {
     console.error("Google OAuth callback error:", error);
-    res.redirect(`${process.env.CLIENT_ORIGIN || "http://localhost:5173"}/auth/callback?error=internal_error`);
+    res.redirect(
+      `${process.env.CLIENT_ORIGIN || "http://localhost:5173"}/auth/callback?error=internal_error`,
+    );
   }
 };
 

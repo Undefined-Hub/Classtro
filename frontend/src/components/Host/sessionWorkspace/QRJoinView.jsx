@@ -10,11 +10,12 @@ const QRJoinView = ({ sessionData, onClose, activeView, setActiveView }) => {
   useEffect(() => {
     if (!sessionData?.code || !qrRef.current || activeView !== "qr") return;
 
-    const baseUrl = import.meta.env.VITE_FRONTEND_BASE_URL || window.location.origin;
+    const baseUrl =
+      import.meta.env.VITE_FRONTEND_BASE_URL || window.location.origin;
     const joinUrl = `${baseUrl}/participant/join?code=${sessionData.code}`;
 
     // Clear any existing QR code
-    qrRef.current.innerHTML = '';
+    qrRef.current.innerHTML = "";
 
     // Create fresh QR code instance with custom styling
     const qrCode = new QRCodeStyling({
@@ -28,33 +29,33 @@ const QRJoinView = ({ sessionData, onClose, activeView, setActiveView }) => {
       qrOptions: {
         typeNumber: "0",
         mode: "Byte",
-        errorCorrectionLevel: "Q"
+        errorCorrectionLevel: "Q",
       },
       imageOptions: {
         saveAsBlob: true,
         hideBackgroundDots: true,
         imageSize: 0.4,
-        margin: 0
+        margin: 0,
       },
       dotsOptions: {
         type: "rounded",
         color: "#000000",
         roundSize: true,
-        gradient: null
+        gradient: null,
       },
       backgroundOptions: {
         round: 0,
-        color: "#ffffff"
+        color: "#ffffff",
       },
       cornersSquareOptions: {
         type: "",
         color: "#000000",
-        gradient: null
+        gradient: null,
       },
       cornersDotOptions: {
         type: "",
-        color: "#000000"
-      }
+        color: "#000000",
+      },
     });
 
     // Ensure DOM is ready before appending
@@ -67,7 +68,7 @@ const QRJoinView = ({ sessionData, onClose, activeView, setActiveView }) => {
     // Cleanup
     return () => {
       if (qrRef.current) {
-        qrRef.current.innerHTML = '';
+        qrRef.current.innerHTML = "";
       }
     };
   }, [sessionData?.code, activeView]);
@@ -84,7 +85,8 @@ const QRJoinView = ({ sessionData, onClose, activeView, setActiveView }) => {
 
   const handleCopyLink = async () => {
     try {
-      const baseUrl = import.meta.env.VITE_FRONTEND_BASE_URL || window.location.origin;
+      const baseUrl =
+        import.meta.env.VITE_FRONTEND_BASE_URL || window.location.origin;
       const joinUrl = `${baseUrl}/participant/join?code=${sessionData.code}`;
       await navigator.clipboard.writeText(joinUrl);
       setCopied(true);
@@ -134,7 +136,7 @@ const QRJoinView = ({ sessionData, onClose, activeView, setActiveView }) => {
               <h4 className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-4">
                 Session Code
               </h4>
-              <div 
+              <div
                 onClick={handleCopyLink}
                 className="text-6xl font-mono font-bold text-blue-600 dark:text-blue-400 mb-2 tracking-wider cursor-pointer hover:text-blue-700 dark:hover:text-blue-300 transition-colors select-none"
                 title="Click to copy join link"

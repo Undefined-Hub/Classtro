@@ -16,18 +16,18 @@ const SessionHeader = ({ sessionData, onLeave }) => {
                   Live
                 </span>
               </div>
-              
+
               {/* Session Clock */}
               <SessionClock className="text-base text-gray-600 dark:text-gray-400 font-medium flex-shrink-0" />
-              
+
               {/* Divider */}
               <div className="h-6 w-px bg-gray-300 dark:bg-gray-600 hidden sm:block"></div>
-              
+
               {/* Session Title */}
               <h1 className="text-lg font-semibold text-gray-900 dark:text-white truncate hidden sm:block">
                 {sessionData?.session?.title || "Session"}
               </h1>
-              
+
               {/* Session Code */}
               <div className="hidden md:flex items-center space-x-2 bg-gray-100 dark:bg-gray-700 px-3 py-1.5 rounded-md flex-shrink-0">
                 <svg
@@ -47,7 +47,7 @@ const SessionHeader = ({ sessionData, onLeave }) => {
                   {sessionData?.joinCode || "N/A"}
                 </span>
               </div>
-              
+
               {/* Host Name */}
               <div className="hidden lg:flex items-center space-x-2 bg-gray-100 dark:bg-gray-700 px-3 py-1.5 rounded-md flex-shrink-0">
                 <svg

@@ -276,16 +276,19 @@ Gemini API Call
 ```
 
 **Error Strategy:**
+
 - ✅ **429 Rate Limit:** Immediate fallback (no retry - makes it worse)
 - ✅ **404/400:** Immediate fallback (no retry - bad config/request)
 - ✅ **503/Network:** Retryable (but MAX_RETRIES=0 currently)
 - ✅ **Status extraction:** Checks 3 error shapes for reliable detection
 - ✅ **User-friendly fallbacks:** No raw errors shown to users
+
 ---
 
 ## ⚡ Token Usage Breakdown (Hybrid Mode)
 
 ### CLASSTRO Mode (Knowledge-Grounded)
+
 ```
 User Message:          20 tokens
 System Context:        60 tokens ✅ (streamlined)
@@ -302,6 +305,7 @@ Time: 1-2 seconds
 ```
 
 ### GENERAL Mode (Educational AI)
+
 ```
 User Message:          20 tokens
 System Context:        40 tokens ✅ (concise prompt)
@@ -317,6 +321,7 @@ Time: <1 second
 ```
 
 ### GENERAL Mode + Conversational Memory (Follow-up)
+
 ```
 User Message:          15 tokens (typically shorter)
 System Context:        40 tokens
@@ -337,6 +342,7 @@ Additional overhead: +35 tokens (+17%) for context-aware response
 ```
 
 ### Comparison (Before vs After Hybrid Mode)
+
 ```
                   BEFORE      CLASSTRO    GENERAL
 Input Tokens:     820         230         80
@@ -347,6 +353,7 @@ Time:             3-5s        1-2s        <1s
 ```
 
 **Savings:**
+
 - CLASSTRO: 78% fewer tokens, 60% faster, 78% lower cost
 - GENERAL: 89% fewer tokens, 70% faster, 89% lower cost
 
@@ -421,6 +428,7 @@ getRelevantKnowledge(userMessage, role, page)
 ```
 
 **Example Output:**
+
 ```
 ## Live Sessions
 Teachers can create interactive sessions with unique codes.
@@ -486,14 +494,16 @@ AI Response:
 ## 🚀 Scalability (Hybrid Architecture)
 
 ```
+
 Multiple concurrent users:
 
 User 1 → Request → Knowledge (shared singleton)
 User 2 → Request → Knowledge (shared singleton)
 User 3 → Request → Knowledge (shared singleton)
-        ↓                ↓
-   No file I/O      Same instance
-   Fast lookup      Memory efficient
+↓ ↓
+No file I/O Same instance
+Fast lookup Memory efficient
+
 ```
 
 **Benefits:**
@@ -511,129 +521,132 @@ User 3 → Request → Knowledge (shared singleton)
 ## 💬 Conversational Memory Flow (GENERAL Mode Only)
 
 ```
+
 ┌─────────────────────────────────────────────────────────────┐
-│ User 1: "What is supervised learning?"                      │
+│ User 1: "What is supervised learning?" │
 └────────────────────────┬────────────────────────────────────┘
-                         │
-                         ▼
+│
+▼
 ┌─────────────────────────────────────────────────────────────┐
-│ Controller - Memory Check                                   │
+│ Controller - Memory Check │
 ├─────────────────────────────────────────────────────────────┤
-│ • detectIntent(message) → "GENERAL"                         │
-│ • getUserIdentifier(req) → "session_abc123"                 │
-│ • isFollowUpQuestion("What is...") → FALSE                  │
-│   (no follow-up keywords detected)                          │
-│ • previousContext = null                                    │
+│ • detectIntent(message) → "GENERAL" │
+│ • getUserIdentifier(req) → "session_abc123" │
+│ • isFollowUpQuestion("What is...") → FALSE │
+│ (no follow-up keywords detected) │
+│ • previousContext = null │
 └────────────────────────┬────────────────────────────────────┘
-                         │
-                         ▼
+│
+▼
 ┌─────────────────────────────────────────────────────────────┐
-│ Build Prompt (NO previous context)                          │
+│ Build Prompt (NO previous context) │
 ├─────────────────────────────────────────────────────────────┤
-│ buildGeneralPrompt(message, null)                           │
-│ • Basic educational prompt                                  │
-│ • No memory context added                                   │
-│ • maxTokens: 130                                            │
+│ buildGeneralPrompt(message, null) │
+│ • Basic educational prompt │
+│ • No memory context added │
+│ • maxTokens: 130 │
 └────────────────────────┬────────────────────────────────────┘
-                         │
-                         ▼
+│
+▼
 ┌─────────────────────────────────────────────────────────────┐
-│ AI Response                                                 │
+│ AI Response │
 ├─────────────────────────────────────────────────────────────┤
-│ "## Supervised Learning                                     │
-│  Uses labeled data to train models...                       │
-│  • Requires input-output pairs                              │
-│  • Examples: classification, regression                     │
-│  [SUMMARY: Explained supervised learning with examples]"    │
+│ "## Supervised Learning │
+│ Uses labeled data to train models... │
+│ • Requires input-output pairs │
+│ • Examples: classification, regression │
+│ [SUMMARY: Explained supervised learning with examples]" │
 └────────────────────────┬────────────────────────────────────┘
-                         │
-                         ▼
+│
+▼
 ┌─────────────────────────────────────────────────────────────┐
-│ Controller - Store Memory                                   │
+│ Controller - Store Memory │
 ├─────────────────────────────────────────────────────────────┤
-│ • extractSummary(response)                                  │
-│   → summary: "Explained supervised learning with examples"  │
-│   → cleanResponse: (without [SUMMARY: ...])                 │
-│ • storeMemory("session_abc123",                             │
-│              "What is supervised learning?",                │
-│              "Explained supervised learning...")            │
-│                                                             │
-│ Console: [MEMORY] Stored summary for session_abc123         │
-│                                                             │
-│ Return: cleanResponse (no [SUMMARY: ...] visible)           │
+│ • extractSummary(response) │
+│ → summary: "Explained supervised learning with examples" │
+│ → cleanResponse: (without [SUMMARY: ...]) │
+│ • storeMemory("session_abc123", │
+│ "What is supervised learning?", │
+│ "Explained supervised learning...") │
+│ │
+│ Console: [MEMORY] Stored summary for session_abc123 │
+│ │
+│ Return: cleanResponse (no [SUMMARY: ...] visible) │
 └────────────────────────┬────────────────────────────────────┘
-                         │
-                         ▼
+│
+▼
 ┌─────────────────────────────────────────────────────────────┐
-│ User 2: "which is more accurate?"                           │
+│ User 2: "which is more accurate?" │
 └────────────────────────┬────────────────────────────────────┘
-                         │
-                         ▼
+│
+▼
 ┌─────────────────────────────────────────────────────────────┐
-│ Controller - Memory Check                                   │
+│ Controller - Memory Check │
 ├─────────────────────────────────────────────────────────────┤
-│ • detectIntent(message) → "GENERAL"                         │
-│ • getUserIdentifier(req) → "session_abc123"                 │
-│ • isFollowUpQuestion("which is...") → TRUE ✅               │
-│   (detected "which" keyword)                                │
-│ • getMemory("session_abc123") → previousContext:            │
-│   {                                                         │
-│     lastUserMessage: "What is supervised learning?",        │
-│     lastAssistantSummary: "Explained supervised learning..."│
-│   }                                                         │
-│                                                             │
-│ Console: [MEMORY] Retrieved context for session_abc123      │
+│ • detectIntent(message) → "GENERAL" │
+│ • getUserIdentifier(req) → "session_abc123" │
+│ • isFollowUpQuestion("which is...") → TRUE ✅ │
+│ (detected "which" keyword) │
+│ • getMemory("session_abc123") → previousContext: │
+│ { │
+│ lastUserMessage: "What is supervised learning?", │
+│ lastAssistantSummary: "Explained supervised learning..."│
+│ } │
+│ │
+│ Console: [MEMORY] Retrieved context for session_abc123 │
 └────────────────────────┬────────────────────────────────────┘
-                         │
-                         ▼
+│
+▼
 ┌─────────────────────────────────────────────────────────────┐
-│ Build Prompt (WITH previous context)                        │
+│ Build Prompt (WITH previous context) │
 ├─────────────────────────────────────────────────────────────┤
-│ buildGeneralPrompt(message, previousContext)                │
-│                                                             │
-│ Prompt includes:                                            │
-│ "Previous Context:                                          │
-│  User: What is supervised learning?                         │
-│  Assistant Summary: Explained supervised learning...        │
-│                                                             │
-│  Use the above context to answer intelligently if relevant. │
-│                                                             │
-│  Current Question:                                          │
-│  which is more accurate?"                                   │
-│                                                             │
-│ • AI now understands "which" refers to learning types       │
-│ • maxTokens: 130                                            │
+│ buildGeneralPrompt(message, previousContext) │
+│ │
+│ Prompt includes: │
+│ "Previous Context: │
+│ User: What is supervised learning? │
+│ Assistant Summary: Explained supervised learning... │
+│ │
+│ Use the above context to answer intelligently if relevant. │
+│ │
+│ Current Question: │
+│ which is more accurate?" │
+│ │
+│ • AI now understands "which" refers to learning types │
+│ • maxTokens: 130 │
 └────────────────────────┬────────────────────────────────────┘
-                         │
-                         ▼
+│
+▼
 ┌─────────────────────────────────────────────────────────────┐
-│ AI Response (Context-Aware)                                 │
+│ AI Response (Context-Aware) │
 ├─────────────────────────────────────────────────────────────┤
-│ "## Supervised vs Unsupervised Accuracy                     │
-│  Supervised learning is generally more accurate when        │
-│  labeled data is available...                               │
-│  • Supervised: High accuracy with good labels               │
-│  • Unsupervised: Lower accuracy, exploratory                │
-│  [SUMMARY: Compared accuracy of supervised vs unsupervised]"│
+│ "## Supervised vs Unsupervised Accuracy │
+│ Supervised learning is generally more accurate when │
+│ labeled data is available... │
+│ • Supervised: High accuracy with good labels │
+│ • Unsupervised: Lower accuracy, exploratory │
+│ [SUMMARY: Compared accuracy of supervised vs unsupervised]"│
 └────────────────────────┬────────────────────────────────────┘
-                         │
-                         ▼
+│
+▼
 ┌─────────────────────────────────────────────────────────────┐
-│ Controller - Update Memory                                  │
+│ Controller - Update Memory │
 ├─────────────────────────────────────────────────────────────┤
-│ • extractSummary(response)                                  │
-│   → summary: "Compared accuracy of supervised vs..."        │
-│ • storeMemory("session_abc123",                             │
-│              "which is more accurate?",                     │
-│              "Compared accuracy of...")                     │
-│   → Replaces previous memory                                │
-│                                                             │
-│ Console: [MEMORY] Stored summary for session_abc123         │
+│ • extractSummary(response) │
+│ → summary: "Compared accuracy of supervised vs..." │
+│ • storeMemory("session_abc123", │
+│ "which is more accurate?", │
+│ "Compared accuracy of...") │
+│ → Replaces previous memory │
+│ │
+│ Console: [MEMORY] Stored summary for session_abc123 │
 └─────────────────────────────────────────────────────────────┘
+
 ```
 
 ### Follow-Up Detection Keywords
 ```
+
 isFollowUpQuestion() checks for:
 • which, better, that, this, these, those
 • why, how about, what about
@@ -641,22 +654,25 @@ isFollowUpQuestion() checks for:
 • elaborate, clarify, difference
 • compare, between, example
 • instead, also, too, as well
+
 ```
 
 ### Memory Storage
 ```
+
 memoryStore (Map):
 ├─ user_12345 (authenticated user)
-│  ├─ lastUserMessage: "What is React?"
-│  ├─ lastAssistantSummary: "Explained React basics"
-│  └─ timestamp: 1709380000000
+│ ├─ lastUserMessage: "What is React?"
+│ ├─ lastAssistantSummary: "Explained React basics"
+│ └─ timestamp: 1709380000000
 │
 ├─ session_xyz789 (guest user)
-│  ├─ lastUserMessage: "Difference between var and let?"
-│  ├─ lastAssistantSummary: "Explained var vs let scope"
-│  └─ timestamp: 1709380120000
+│ ├─ lastUserMessage: "Difference between var and let?"
+│ ├─ lastAssistantSummary: "Explained var vs let scope"
+│ └─ timestamp: 1709380120000
 │
 └─ Auto-cleanup: Every 5 minutes, remove entries > 10 min old
+
 ```
 
 ### Key Features
@@ -749,3 +765,4 @@ memoryStore (Map):
 ---
 
 Built with ❤️ for Classtro | Hybrid Mode Release - March 2026
+```

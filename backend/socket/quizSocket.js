@@ -3,18 +3,23 @@ const QuizSubmission = require("../models/QuizSubmission");
 const Session = require("../models/Session");
 const User = require("../models/User");
 const Participant = require("../models/Participant");
-const { evaluateQuizSubmission } = require("../controllers/quizEvaluationController");
+const {
+  evaluateQuizSubmission,
+} = require("../controllers/quizEvaluationController");
 
 // Helper function to get user's display name
 const getUserDisplayName = async (userId, sessionId) => {
   try {
     // First try to get name from Participant (works for both guests and logged-in users)
     if (sessionId) {
-      const participant = await Participant.findOne({ sessionId, userId }).select('name');
+      const participant = await Participant.findOne({
+        sessionId,
+        userId,
+      }).select("name");
       if (participant?.name) return participant.name;
     }
     // Fallback to User model
-    const user = await User.findById(userId).select('name');
+    const user = await User.findById(userId).select("name");
     if (user?.name) return user.name;
     return "Unknown";
   } catch (err) {
@@ -30,13 +35,17 @@ const registerQuizSocket = (io, socket) => {
   socket.on("quiz:submit", async ({ quizId, answers }) => {
     try {
       const userId = socket.user?.id;
-      
+
       if (!userId) {
-        socket.emit("quiz:submission:error", { error: "User not authenticated" });
+        socket.emit("quiz:submission:error", {
+          error: "User not authenticated",
+        });
         return;
       }
 
-      console.log(`📝 Quiz submission received from user ${userId} for quiz ${quizId}`);
+      console.log(
+        `📝 Quiz submission received from user ${userId} for quiz ${quizId}`,
+      );
 
       // Fetch the quiz
       const quiz = await LiveQuiz.findById(quizId);
@@ -46,7 +55,9 @@ const registerQuizSocket = (io, socket) => {
       }
 
       if (quiz.status !== "LIVE") {
-        socket.emit("quiz:submission:error", { error: "Quiz is not accepting submissions" });
+        socket.emit("quiz:submission:error", {
+          error: "Quiz is not accepting submissions",
+        });
         return;
       }
 
@@ -57,17 +68,23 @@ const registerQuizSocket = (io, socket) => {
       });
 
       if (existingSubmission) {
-        socket.emit("quiz:submission:error", { error: "You have already submitted this quiz" });
+        socket.emit("quiz:submission:error", {
+          error: "You have already submitted this quiz",
+        });
         return;
       }
 
       // Check if submission is late
-      const isLate = quiz.durationSeconds && quiz.startedAt
-        ? (Date.now() - new Date(quiz.startedAt).getTime()) / 1000 > quiz.durationSeconds
-        : false;
+      const isLate =
+        quiz.durationSeconds && quiz.startedAt
+          ? (Date.now() - new Date(quiz.startedAt).getTime()) / 1000 >
+            quiz.durationSeconds
+          : false;
 
       if (isLate && !quiz.allowLateSubmission) {
-        socket.emit("quiz:submission:error", { error: "Quiz time has expired" });
+        socket.emit("quiz:submission:error", {
+          error: "Quiz time has expired",
+        });
         return;
       }
 
@@ -98,7 +115,10 @@ const registerQuizSocket = (io, socket) => {
       // Notify teacher/session about new submission - use session code for room
       const session = await Session.findById(quiz.sessionId);
       if (session) {
-        const participantName = await getUserDisplayName(userId, quiz.sessionId);
+        const participantName = await getUserDisplayName(
+          userId,
+          quiz.sessionId,
+        );
         io.to(`session:${session.code}`).emit("quiz:new:submission", {
           quizId,
           participantId: userId,
@@ -111,7 +131,9 @@ const registerQuizSocket = (io, socket) => {
         });
       }
 
-      console.log(`📊 Quiz submission evaluated - Score: ${evaluatedSubmission.score}/${evaluatedSubmission.maxScore}`);
+      console.log(
+        `📊 Quiz submission evaluated - Score: ${evaluatedSubmission.score}/${evaluatedSubmission.maxScore}`,
+      );
     } catch (err) {
       console.error("❌ Error in quiz:submit:", err);
       socket.emit("quiz:submission:error", { error: err.message });
@@ -122,7 +144,7 @@ const registerQuizSocket = (io, socket) => {
   socket.on("quiz:request", async ({ quizId }) => {
     try {
       const quiz = await LiveQuiz.findById(quizId);
-      
+
       if (!quiz) {
         socket.emit("quiz:error", { error: "Quiz not found" });
         return;
@@ -133,7 +155,7 @@ const registerQuizSocket = (io, socket) => {
         socket.emit("quiz:data", {
           quizId: quiz._id,
           title: quiz.title,
-          questions: quiz.questions.map(q => ({
+          questions: quiz.questions.map((q) => ({
             _id: q._id,
             type: q.type,
             questionText: q.questionText,
@@ -177,12 +199,16 @@ const registerQuizSocket = (io, socket) => {
 
       // Verify teacher owns the quiz
       if (quiz.launchedBy.toString() !== userId) {
-        socket.emit("quiz:hc:error", { error: "Only the quiz host can publish questions" });
+        socket.emit("quiz:hc:error", {
+          error: "Only the quiz host can publish questions",
+        });
         return;
       }
 
       if (quiz.mode !== "HOST_CONTROLLED") {
-        socket.emit("quiz:hc:error", { error: "Quiz is not in Live Guided mode" });
+        socket.emit("quiz:hc:error", {
+          error: "Quiz is not in Live Guided mode",
+        });
         return;
       }
 
@@ -204,7 +230,7 @@ const registerQuizSocket = (io, socket) => {
       await quiz.save();
 
       const currentQuestion = quiz.questions[nextIndex];
-      
+
       // Prepare question data (without correct answers)
       const questionData = {
         quizId: quiz._id,
@@ -214,7 +240,7 @@ const registerQuizSocket = (io, socket) => {
           _id: currentQuestion._id,
           type: currentQuestion.type,
           questionText: currentQuestion.questionText,
-          options: currentQuestion.options.map(opt => ({
+          options: currentQuestion.options.map((opt) => ({
             _id: opt._id,
             text: opt.text,
           })),
@@ -234,7 +260,9 @@ const registerQuizSocket = (io, socket) => {
       // Broadcast to all participants in the session
       io.to(`session:${session.code}`).emit("quiz:hc:question", questionData);
 
-      console.log(`📢 Question ${nextIndex + 1}/${quiz.questions.length} published for quiz ${quizId}`);
+      console.log(
+        `📢 Question ${nextIndex + 1}/${quiz.questions.length} published for quiz ${quizId}`,
+      );
     } catch (err) {
       console.error("❌ Error in quiz:hc:publish:", err);
       socket.emit("quiz:hc:error", { error: err.message });
@@ -246,154 +274,175 @@ const registerQuizSocket = (io, socket) => {
    * Event: quiz:hc:answer
    * Payload: { quizId, questionId, selectedOptions }
    */
-  socket.on("quiz:hc:answer", async ({ quizId, questionId, selectedOptions }) => {
-    try {
-      const userId = socket.user?.id;
+  socket.on(
+    "quiz:hc:answer",
+    async ({ quizId, questionId, selectedOptions }) => {
+      try {
+        const userId = socket.user?.id;
 
-      if (!userId) {
-        socket.emit("quiz:hc:error", { error: "Not authenticated" });
-        return;
-      }
+        if (!userId) {
+          socket.emit("quiz:hc:error", { error: "Not authenticated" });
+          return;
+        }
 
-      const quiz = await LiveQuiz.findById(quizId);
-      
-      // Get user's display name from database
-      const userName = await getUserDisplayName(userId, quiz?.sessionId);
-      if (!quiz) {
-        socket.emit("quiz:hc:error", { error: "Quiz not found" });
-        return;
-      }
+        const quiz = await LiveQuiz.findById(quizId);
 
-      if (quiz.mode !== "HOST_CONTROLLED" || quiz.status !== "LIVE") {
-        socket.emit("quiz:hc:error", { error: "Quiz is not accepting answers" });
-        return;
-      }
+        // Get user's display name from database
+        const userName = await getUserDisplayName(userId, quiz?.sessionId);
+        if (!quiz) {
+          socket.emit("quiz:hc:error", { error: "Quiz not found" });
+          return;
+        }
 
-      // Validate question is the current one
-      const currentQuestion = quiz.questions[quiz.currentQuestionIndex];
-      if (!currentQuestion || currentQuestion._id.toString() !== questionId) {
-        socket.emit("quiz:hc:error", { error: "This question is no longer accepting answers" });
-        return;
-      }
+        if (quiz.mode !== "HOST_CONTROLLED" || quiz.status !== "LIVE") {
+          socket.emit("quiz:hc:error", {
+            error: "Quiz is not accepting answers",
+          });
+          return;
+        }
 
-      // Calculate response time
-      const now = new Date();
-      const responseTimeMs = now.getTime() - new Date(quiz.currentQuestionStartedAt).getTime();
-      const timeoutMs = quiz.questionDurationSeconds * 1000;
+        // Validate question is the current one
+        const currentQuestion = quiz.questions[quiz.currentQuestionIndex];
+        if (!currentQuestion || currentQuestion._id.toString() !== questionId) {
+          socket.emit("quiz:hc:error", {
+            error: "This question is no longer accepting answers",
+          });
+          return;
+        }
 
-      // Check if answer is within time limit
-      if (responseTimeMs > timeoutMs) {
-        socket.emit("quiz:hc:error", { error: "Time expired for this question" });
-        return;
-      }
+        // Calculate response time
+        const now = new Date();
+        const responseTimeMs =
+          now.getTime() - new Date(quiz.currentQuestionStartedAt).getTime();
+        const timeoutMs = quiz.questionDurationSeconds * 1000;
 
-      // Find or create submission record
-      let submission = await QuizSubmission.findOne({
-        liveQuizId: quizId,
-        participantId: userId,
-      });
+        // Check if answer is within time limit
+        if (responseTimeMs > timeoutMs) {
+          socket.emit("quiz:hc:error", {
+            error: "Time expired for this question",
+          });
+          return;
+        }
 
-      if (!submission) {
-        submission = new QuizSubmission({
+        // Find or create submission record
+        let submission = await QuizSubmission.findOne({
           liveQuizId: quizId,
           participantId: userId,
-          sessionId: quiz.sessionId,
-          answers: [],
-          score: 0,
-          maxScore: 0,
         });
-      }
 
-      // Check if already answered this question
-      const existingAnswer = submission.answers.find(
-        a => a.questionId.toString() === questionId
-      );
-      if (existingAnswer) {
-        socket.emit("quiz:hc:error", { error: "You have already answered this question" });
-        return;
-      }
+        if (!submission) {
+          submission = new QuizSubmission({
+            liveQuizId: quizId,
+            participantId: userId,
+            sessionId: quiz.sessionId,
+            answers: [],
+            score: 0,
+            maxScore: 0,
+          });
+        }
 
-      // Evaluate the answer
-      const correctAnswers = currentQuestion.correctAnswers.map(id => id.toString());
-      const selectedStrings = selectedOptions.map(id => id.toString());
-      
-      // For MCQ: exact match (single option must be correct)
-      const isCorrect = correctAnswers.length === selectedStrings.length &&
-        correctAnswers.every(id => selectedStrings.includes(id));
+        // Check if already answered this question
+        const existingAnswer = submission.answers.find(
+          (a) => a.questionId.toString() === questionId,
+        );
+        if (existingAnswer) {
+          socket.emit("quiz:hc:error", {
+            error: "You have already answered this question",
+          });
+          return;
+        }
 
-      // Calculate score with speed bonus
-      // Base score if correct, speed bonus up to 50% extra for fastest answers
-      let scoreAwarded = 0;
-      if (isCorrect) {
-        const basePoints = currentQuestion.points || 1;
-        const speedFactor = Math.max(0, 1 - (responseTimeMs / timeoutMs)); // 1.0 at instant, 0 at timeout
-        const speedBonus = basePoints * 0.5 * speedFactor; // Up to 50% bonus
-        scoreAwarded = Math.round((basePoints + speedBonus) * 100) / 100;
-      }
+        // Evaluate the answer
+        const correctAnswers = currentQuestion.correctAnswers.map((id) =>
+          id.toString(),
+        );
+        const selectedStrings = selectedOptions.map((id) => id.toString());
 
-      // Add answer to submission
-      submission.answers.push({
-        questionId: currentQuestion._id,
-        selectedOptions,
-        answeredAt: now,
-        isCorrect,
-        scoreAwarded,
-        responseTimeMs,
-      });
+        // For MCQ: exact match (single option must be correct)
+        const isCorrect =
+          correctAnswers.length === selectedStrings.length &&
+          correctAnswers.every((id) => selectedStrings.includes(id));
 
-      // Update total score
-      submission.score = submission.answers.reduce((sum, a) => sum + (a.scoreAwarded || 0), 0);
-      submission.maxScore = quiz.questions
-        .slice(0, quiz.currentQuestionIndex + 1)
-        .reduce((sum, q) => sum + (q.points || 1), 0);
-      submission.percentage = submission.maxScore > 0 
-        ? Math.round((submission.score / submission.maxScore) * 100) 
-        : 0;
+        // Calculate score with speed bonus
+        // Base score if correct, speed bonus up to 50% extra for fastest answers
+        let scoreAwarded = 0;
+        if (isCorrect) {
+          const basePoints = currentQuestion.points || 1;
+          const speedFactor = Math.max(0, 1 - responseTimeMs / timeoutMs); // 1.0 at instant, 0 at timeout
+          const speedBonus = basePoints * 0.5 * speedFactor; // Up to 50% bonus
+          scoreAwarded = Math.round((basePoints + speedBonus) * 100) / 100;
+        }
 
-      await submission.save();
-
-      // Update leaderboard in quiz
-      const leaderboardEntry = quiz.leaderboard.find(
-        e => e.participantId.toString() === userId
-      );
-      if (leaderboardEntry) {
-        leaderboardEntry.totalScore = submission.score;
-      } else {
-        quiz.leaderboard.push({
-          participantId: userId,
-          participantName: userName,
-          totalScore: submission.score,
+        // Add answer to submission
+        submission.answers.push({
+          questionId: currentQuestion._id,
+          selectedOptions,
+          answeredAt: now,
+          isCorrect,
+          scoreAwarded,
+          responseTimeMs,
         });
-      }
-      await quiz.save();
 
-      // Acknowledge to student
-      socket.emit("quiz:hc:answer:ack", {
-        quizId,
-        questionId,
-        isCorrect,
-        scoreAwarded,
-        totalScore: submission.score,
-        responseTimeMs,
-      });
+        // Update total score
+        submission.score = submission.answers.reduce(
+          (sum, a) => sum + (a.scoreAwarded || 0),
+          0,
+        );
+        submission.maxScore = quiz.questions
+          .slice(0, quiz.currentQuestionIndex + 1)
+          .reduce((sum, q) => sum + (q.points || 1), 0);
+        submission.percentage =
+          submission.maxScore > 0
+            ? Math.round((submission.score / submission.maxScore) * 100)
+            : 0;
 
-      // Notify teacher
-      const session = await Session.findById(quiz.sessionId);
-      if (session) {
-        io.to(`session:${session.code}`).emit("quiz:hc:answer:received", {
+        await submission.save();
+
+        // Update leaderboard in quiz
+        const leaderboardEntry = quiz.leaderboard.find(
+          (e) => e.participantId.toString() === userId,
+        );
+        if (leaderboardEntry) {
+          leaderboardEntry.totalScore = submission.score;
+        } else {
+          quiz.leaderboard.push({
+            participantId: userId,
+            participantName: userName,
+            totalScore: submission.score,
+          });
+        }
+        await quiz.save();
+
+        // Acknowledge to student
+        socket.emit("quiz:hc:answer:ack", {
           quizId,
           questionId,
-          participantId: userId,
-          participantName: userName,
+          isCorrect,
+          scoreAwarded,
+          totalScore: submission.score,
+          responseTimeMs,
         });
-      }
 
-      console.log(`✅ Answer received from ${userName} - Correct: ${isCorrect}, Score: ${scoreAwarded}`);
-    } catch (err) {
-      console.error("❌ Error in quiz:hc:answer:", err);
-      socket.emit("quiz:hc:error", { error: err.message });
-    }
-  });
+        // Notify teacher
+        const session = await Session.findById(quiz.sessionId);
+        if (session) {
+          io.to(`session:${session.code}`).emit("quiz:hc:answer:received", {
+            quizId,
+            questionId,
+            participantId: userId,
+            participantName: userName,
+          });
+        }
+
+        console.log(
+          `✅ Answer received from ${userName} - Correct: ${isCorrect}, Score: ${scoreAwarded}`,
+        );
+      } catch (err) {
+        console.error("❌ Error in quiz:hc:answer:", err);
+        socket.emit("quiz:hc:error", { error: err.message });
+      }
+    },
+  );
 
   /**
    * Teacher closes current question and reveals leaderboard
@@ -415,7 +464,9 @@ const registerQuizSocket = (io, socket) => {
       }
 
       if (quiz.launchedBy.toString() !== userId) {
-        socket.emit("quiz:hc:error", { error: "Only the quiz host can close questions" });
+        socket.emit("quiz:hc:error", {
+          error: "Only the quiz host can close questions",
+        });
         return;
       }
 
@@ -431,15 +482,21 @@ const registerQuizSocket = (io, socket) => {
       }
 
       // Sort leaderboard by score descending
-      const sortedLeaderboard = [...quiz.leaderboard].sort((a, b) => b.totalScore - a.totalScore);
+      const sortedLeaderboard = [...quiz.leaderboard].sort(
+        (a, b) => b.totalScore - a.totalScore,
+      );
 
       // Get answer statistics for this question
       const submissions = await QuizSubmission.find({ liveQuizId: quizId });
       const questionAnswers = submissions
-        .map(s => s.answers.find(a => a.questionId.toString() === currentQuestion._id.toString()))
+        .map((s) =>
+          s.answers.find(
+            (a) => a.questionId.toString() === currentQuestion._id.toString(),
+          ),
+        )
         .filter(Boolean);
 
-      const correctCount = questionAnswers.filter(a => a.isCorrect).length;
+      const correctCount = questionAnswers.filter((a) => a.isCorrect).length;
       const totalAnswered = questionAnswers.length;
 
       // Build results data
@@ -468,7 +525,9 @@ const registerQuizSocket = (io, socket) => {
         io.to(`session:${session.code}`).emit("quiz:hc:results", resultsData);
       }
 
-      console.log(`📊 Question ${quiz.currentQuestionIndex + 1} closed - ${correctCount}/${totalAnswered} correct`);
+      console.log(
+        `📊 Question ${quiz.currentQuestionIndex + 1} closed - ${correctCount}/${totalAnswered} correct`,
+      );
     } catch (err) {
       console.error("❌ Error in quiz:hc:close:", err);
       socket.emit("quiz:hc:error", { error: err.message });
@@ -495,7 +554,9 @@ const registerQuizSocket = (io, socket) => {
       }
 
       if (quiz.launchedBy.toString() !== userId) {
-        socket.emit("quiz:hc:error", { error: "Only the quiz host can end the quiz" });
+        socket.emit("quiz:hc:error", {
+          error: "Only the quiz host can end the quiz",
+        });
         return;
       }
 
@@ -505,8 +566,9 @@ const registerQuizSocket = (io, socket) => {
       await quiz.save();
 
       // Calculate final scores for all submissions
-      const submissions = await QuizSubmission.find({ liveQuizId: quizId })
-        .populate("participantId", "name");
+      const submissions = await QuizSubmission.find({
+        liveQuizId: quizId,
+      }).populate("participantId", "name");
 
       // Mark all submissions as evaluated
       for (const submission of submissions) {
@@ -516,10 +578,15 @@ const registerQuizSocket = (io, socket) => {
       }
 
       // Sort leaderboard by score descending
-      const sortedLeaderboard = [...quiz.leaderboard].sort((a, b) => b.totalScore - a.totalScore);
+      const sortedLeaderboard = [...quiz.leaderboard].sort(
+        (a, b) => b.totalScore - a.totalScore,
+      );
 
       // Calculate total possible score
-      const maxPossibleScore = quiz.questions.reduce((sum, q) => sum + (q.points || 1) * 1.5, 0); // Including max speed bonus
+      const maxPossibleScore = quiz.questions.reduce(
+        (sum, q) => sum + (q.points || 1) * 1.5,
+        0,
+      ); // Including max speed bonus
 
       // Build final results
       const finalResults = {
@@ -530,9 +597,14 @@ const registerQuizSocket = (io, socket) => {
         maxPossibleScore: Math.round(maxPossibleScore * 100) / 100,
         stats: {
           totalParticipants: submissions.length,
-          averageScore: submissions.length > 0
-            ? Math.round(submissions.reduce((sum, s) => sum + s.score, 0) / submissions.length * 100) / 100
-            : 0,
+          averageScore:
+            submissions.length > 0
+              ? Math.round(
+                  (submissions.reduce((sum, s) => sum + s.score, 0) /
+                    submissions.length) *
+                    100,
+                ) / 100
+              : 0,
         },
       };
 
@@ -542,7 +614,9 @@ const registerQuizSocket = (io, socket) => {
         io.to(`session:${session.code}`).emit("quiz:hc:final", finalResults);
       }
 
-      console.log(`🏁 Quiz ${quizId} ended - ${submissions.length} participants`);
+      console.log(
+        `🏁 Quiz ${quizId} ended - ${submissions.length} participants`,
+      );
     } catch (err) {
       console.error("❌ Error in quiz:hc:end:", err);
       socket.emit("quiz:hc:error", { error: err.message });
@@ -592,12 +666,16 @@ const registerQuizSocket = (io, socket) => {
 
       const currentQuestion = quiz.questions[quiz.currentQuestionIndex];
       const hasAnswered = submission?.answers.some(
-        a => a.questionId.toString() === currentQuestion._id.toString()
+        (a) => a.questionId.toString() === currentQuestion._id.toString(),
       );
 
       // Calculate remaining time
-      const elapsedMs = Date.now() - new Date(quiz.currentQuestionStartedAt).getTime();
-      const remainingSeconds = Math.max(0, quiz.questionDurationSeconds - Math.floor(elapsedMs / 1000));
+      const elapsedMs =
+        Date.now() - new Date(quiz.currentQuestionStartedAt).getTime();
+      const remainingSeconds = Math.max(
+        0,
+        quiz.questionDurationSeconds - Math.floor(elapsedMs / 1000),
+      );
 
       socket.emit("quiz:hc:state", {
         quizId: quiz._id,
@@ -605,16 +683,18 @@ const registerQuizSocket = (io, socket) => {
         status: quiz.status,
         currentQuestionIndex: quiz.currentQuestionIndex,
         totalQuestions: quiz.questions.length,
-        question: hasAnswered ? null : {
-          _id: currentQuestion._id,
-          type: currentQuestion.type,
-          questionText: currentQuestion.questionText,
-          options: currentQuestion.options.map(opt => ({
-            _id: opt._id,
-            text: opt.text,
-          })),
-          points: currentQuestion.points,
-        },
+        question: hasAnswered
+          ? null
+          : {
+              _id: currentQuestion._id,
+              type: currentQuestion.type,
+              questionText: currentQuestion.questionText,
+              options: currentQuestion.options.map((opt) => ({
+                _id: opt._id,
+                text: opt.text,
+              })),
+              points: currentQuestion.points,
+            },
         hasAnswered,
         remainingSeconds,
         myScore: submission?.score || 0,

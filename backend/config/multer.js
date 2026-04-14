@@ -109,7 +109,12 @@ const broadcastFileFilter = (req, file, cb) => {
   if (allowedMimes.includes(file.mimetype)) {
     cb(null, true);
   } else {
-    cb(new Error("Invalid file type. Only PDF, PPT, PPTX, and images are allowed!"), false);
+    cb(
+      new Error(
+        "Invalid file type. Only PDF, PPT, PPTX, and images are allowed!",
+      ),
+      false,
+    );
   }
 };
 
@@ -151,7 +156,8 @@ const handleBroadcastUploadError = (error, req, res, next) => {
 
   if (error.message && error.message.includes("Invalid file type")) {
     return res.status(400).json({
-      error: "Invalid file type. Only PDF, PPT, PPTX, and images (JPG, PNG, GIF, WebP) are allowed.",
+      error:
+        "Invalid file type. Only PDF, PPT, PPTX, and images (JPG, PNG, GIF, WebP) are allowed.",
       code: "INVALID_FILE_TYPE",
     });
   }

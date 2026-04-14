@@ -5,7 +5,12 @@ const SessionActivity = require("../models/SessionActivity");
  * Track participant join activity
  * Call this from sessionController when user joins
  */
-const trackJoinActivity = async (sessionId, participantId, userId, metadata = {}) => {
+const trackJoinActivity = async (
+  sessionId,
+  participantId,
+  userId,
+  metadata = {},
+) => {
   try {
     await SessionActivity.create({
       sessionId,
@@ -17,7 +22,9 @@ const trackJoinActivity = async (sessionId, participantId, userId, metadata = {}
         deviceInfo: metadata.deviceInfo,
       },
     });
-    console.log(`📊 Activity tracked: User ${userId || 'guest'} joined session ${sessionId}`);
+    console.log(
+      `📊 Activity tracked: User ${userId || "guest"} joined session ${sessionId}`,
+    );
   } catch (error) {
     console.error("Error tracking join activity:", error);
     // Don't throw - activity tracking shouldn't break main flow
@@ -28,7 +35,12 @@ const trackJoinActivity = async (sessionId, participantId, userId, metadata = {}
  * Track participant leave activity
  * Call this from sessionController when user leaves
  */
-const trackLeaveActivity = async (sessionId, participantId, userId, reason = "manual") => {
+const trackLeaveActivity = async (
+  sessionId,
+  participantId,
+  userId,
+  reason = "manual",
+) => {
   try {
     await SessionActivity.create({
       sessionId,
@@ -39,7 +51,9 @@ const trackLeaveActivity = async (sessionId, participantId, userId, reason = "ma
         disconnectReason: reason,
       },
     });
-    console.log(`📊 Activity tracked: User ${userId || 'guest'} left session ${sessionId}`);
+    console.log(
+      `📊 Activity tracked: User ${userId || "guest"} left session ${sessionId}`,
+    );
   } catch (error) {
     console.error("Error tracking leave activity:", error);
   }
@@ -49,7 +63,12 @@ const trackLeaveActivity = async (sessionId, participantId, userId, reason = "ma
  * Track participant kick activity
  * Call this when participant is kicked by teacher
  */
-const trackKickActivity = async (sessionId, participantId, userId, kickedBy) => {
+const trackKickActivity = async (
+  sessionId,
+  participantId,
+  userId,
+  kickedBy,
+) => {
   try {
     await SessionActivity.create({
       sessionId,
@@ -61,7 +80,9 @@ const trackKickActivity = async (sessionId, participantId, userId, kickedBy) => 
         kickedBy,
       },
     });
-    console.log(`📊 Activity tracked: User ${userId || 'guest'} kicked from session ${sessionId}`);
+    console.log(
+      `📊 Activity tracked: User ${userId || "guest"} kicked from session ${sessionId}`,
+    );
   } catch (error) {
     console.error("Error tracking kick activity:", error);
   }
@@ -71,7 +92,12 @@ const trackKickActivity = async (sessionId, participantId, userId, kickedBy) => 
  * Track participant reconnect activity
  * Call this when user rejoins after disconnect
  */
-const trackReconnectActivity = async (sessionId, participantId, userId, metadata = {}) => {
+const trackReconnectActivity = async (
+  sessionId,
+  participantId,
+  userId,
+  metadata = {},
+) => {
   try {
     await SessionActivity.create({
       sessionId,
@@ -84,7 +110,9 @@ const trackReconnectActivity = async (sessionId, participantId, userId, metadata
         disconnectReason: "reconnect",
       },
     });
-    console.log(`📊 Activity tracked: User ${userId || 'guest'} reconnected to session ${sessionId}`);
+    console.log(
+      `📊 Activity tracked: User ${userId || "guest"} reconnected to session ${sessionId}`,
+    );
   } catch (error) {
     console.error("Error tracking reconnect activity:", error);
   }
@@ -103,16 +131,17 @@ const getSessionActivitySummary = async (sessionId) => {
 
     const summary = {
       totalActivities: activities.length,
-      joinCount: activities.filter(a => a.activityType === "join").length,
-      leaveCount: activities.filter(a => a.activityType === "leave").length,
-      kickCount: activities.filter(a => a.activityType === "kicked").length,
-      reconnectCount: activities.filter(a => a.activityType === "reconnect").length,
-      activities: activities.map(a => ({
+      joinCount: activities.filter((a) => a.activityType === "join").length,
+      leaveCount: activities.filter((a) => a.activityType === "leave").length,
+      kickCount: activities.filter((a) => a.activityType === "kicked").length,
+      reconnectCount: activities.filter((a) => a.activityType === "reconnect")
+        .length,
+      activities: activities.map((a) => ({
         type: a.activityType,
         timestamp: a.timestamp,
         participantName: a.participantId?.name || "Unknown",
         userName: a.userId?.name || "Guest",
-      }))
+      })),
     };
 
     return summary;

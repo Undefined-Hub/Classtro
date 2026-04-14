@@ -51,7 +51,7 @@ const SessionFeedbackSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 // Compound unique index to prevent duplicate feedback from same user for same session
@@ -60,5 +60,5 @@ SessionFeedbackSchema.index({ sessionId: 1, userId: 1 }, { unique: true });
 module.exports = mongoose.model(
   "SessionFeedback",
   SessionFeedbackSchema,
-  "sessionFeedback"
+  "sessionFeedback",
 );

@@ -14,7 +14,12 @@ const REACTIONS = [
  * @param {String} currentUserId - Current user's ID
  * @param {Boolean} compact - Display in compact mode
  */
-const ReactionPicker = ({ broadcast, onReact, currentUserId, compact = false }) => {
+const ReactionPicker = ({
+  broadcast,
+  onReact,
+  currentUserId,
+  compact = false,
+}) => {
   const [showTooltip, setShowTooltip] = useState(null);
   const [showAll, setShowAll] = useState(false);
 
@@ -58,7 +63,9 @@ const ReactionPicker = ({ broadcast, onReact, currentUserId, compact = false }) 
   };
 
   return (
-    <div className={`flex flex-wrap items-center ${onReact ? "gap-2" : "gap-1.5"}`}>
+    <div
+      className={`flex flex-wrap items-center ${onReact ? "gap-2" : "gap-1.5"}`}
+    >
       {REACTIONS.map(({ emoji, label }) => {
         const count = getCount(emoji);
         const isActive = hasUserReacted(emoji);
@@ -100,11 +107,16 @@ const ReactionPicker = ({ broadcast, onReact, currentUserId, compact = false }) 
               <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 dark:bg-gray-700 text-white text-xs rounded-lg shadow-lg whitespace-nowrap z-10 animate-fade-in">
                 <div className="font-semibold mb-1">{label}</div>
                 <div className="max-h-24 overflow-y-auto">
-                  {reactors.slice(0, showAll ? reactors.length : 5).map((name, idx) => (
-                    <div key={idx} className="text-gray-300 dark:text-gray-400">
-                      {name}
-                    </div>
-                  ))}
+                  {reactors
+                    .slice(0, showAll ? reactors.length : 5)
+                    .map((name, idx) => (
+                      <div
+                        key={idx}
+                        className="text-gray-300 dark:text-gray-400"
+                      >
+                        {name}
+                      </div>
+                    ))}
                   {reactors.length > 5 && !showAll && (
                     <button
                       onClick={(e) => {
