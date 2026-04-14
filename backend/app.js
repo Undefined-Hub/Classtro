@@ -89,7 +89,7 @@ app.use("/uploads", express.static("uploads"));
 app.use(router);
 
 app.get("/", (req, res) => {
-  res.send("Welcome to the Classtro API");
+  res.send("Welcome to the Classtro API! Now your frontend request will get response LOL XD!!!!");
 });
 
 app.get("/test-error", (req, res, next) => {
