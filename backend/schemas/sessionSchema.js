@@ -61,6 +61,11 @@ const leaveSessionSchema = z.object({
   participantId: z.string().regex(/^[0-9a-fA-F]{24}$/),
 });
 
+// For kicking a participant
+const kickParticipantSchema = z.object({
+  participantId: z.string().regex(/^[0-9a-fA-F]{24}$/, "Invalid participantId"),
+});
+
 module.exports = {
   sessionIdParamSchema,
   roomIdParamSchema,
@@ -71,4 +76,5 @@ module.exports = {
   participantIdParamSchema,
   joinSessionSchema,
   leaveSessionSchema,
+  kickParticipantSchema,
 };

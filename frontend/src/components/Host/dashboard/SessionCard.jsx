@@ -186,7 +186,7 @@ const SessionCard = ({
   return (
     <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer border border-gray-100 dark:border-gray-700 hover:border-gray-200 dark:hover:border-gray-600 group relative">
       {/* Content wrapper with overflow hidden to contain bar */}
-      <div className="overflow-hidden rounded-xl">
+      <div className="relative rounded-xl">
         {/* Active indicator bar */}
         <div
           className={`h-1 ${session.isActive ? "bg-gradient-to-r from-green-500 to-emerald-500" : "bg-gray-300 dark:bg-gray-600"}`}

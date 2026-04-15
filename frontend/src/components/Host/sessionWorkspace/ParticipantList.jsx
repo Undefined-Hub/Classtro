@@ -77,8 +77,9 @@ const ParticipantList = ({
                   </div>
                 </div>
                 <button
-                  onClick={() => onKickParticipant(participant.id)}
+                  onClick={() => onKickParticipant(participant._id)}
                   className="text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                  title="Kick this student from the session"
                 >
                   <svg
                     className="w-5 h-5"

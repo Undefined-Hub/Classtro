@@ -100,7 +100,8 @@ function App() {
           <Route path="/dashboard" element={<DashboardLayout />}>
             <Route path="rooms" element={<RoomsPage />} />
             <Route path="rooms/:roomId" element={<RoomDetailPage />} />
-            <Route path="sessions" element={<SessionsPage />} />
+            {/* <Route path="sessions" element={<SessionsPage />} /> */}
+            <Route path="quizzes" element={<SessionsPage />} />
           </Route>
 
           <Route path="/sessionWorkspace" element={<SessionWorkspace />} />

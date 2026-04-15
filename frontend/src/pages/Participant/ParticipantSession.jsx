@@ -72,6 +72,10 @@ const ParticipantSession = () => {
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [feedbackSubmitting, setFeedbackSubmitting] = useState(false);
 
+  // Kicked from session modal state
+  const [showKickedModal, setShowKickedModal] = useState(false);
+  const [kickCountdown, setKickCountdown] = useState(5);
+
   // * Fetch session data and participant count
   const fetchSessionData = async (sessionCode) => {
     try {
@@ -89,7 +93,7 @@ const ParticipantSession = () => {
   };
 
   // * Handle Leave Session Handler
-  const handleLeaveSession = async () => {
+  const handleLeaveSession = async (isFromKick = false) => {
     if (!sessionData) return;
     try {
       // * Update DB to remove participant from session
@@ -109,7 +113,11 @@ const ParticipantSession = () => {
       clearSession();
       navigate("/participant/home");
     } catch (err) {
-      alert("Failed to leave session. Please try again.");
+      // Only show alert if not from kick (kicked students are expected to have errors)
+      if (!isFromKick) {
+        alert("Failed to leave session. Please try again.");
+      }
+      console.error("Failed to leave session:", err);
     }
   };
 
@@ -493,6 +501,32 @@ const ParticipantSession = () => {
       console.error("❌ HC Error:", error);
     };
 
+    // * Kicked Handler
+    const onKicked = ({ message }) => {
+      console.warn("🚫 Student was kicked from session:", message);
+      // Show kicked modal and start countdown
+      setShowKickedModal(true);
+      setKickCountdown(5);
+      
+      // Countdown timer
+      const countdownInterval = setInterval(() => {
+        setKickCountdown((prev) => {
+          if (prev <= 1) {
+            clearInterval(countdownInterval);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+      
+      // Leave the session after 5 seconds
+      setTimeout(() => {
+        clearInterval(countdownInterval);
+        handleLeaveSession(true); // true = isFromKick, suppress error alert
+        navigate("/participant/home", { replace: true });
+      }, 5000); // 5 second delay
+    };
+
     // * ------------------- Socket Listeners -------------------
     try {
       console.log("[SOCKET] Registering listeners...");
@@ -506,6 +540,7 @@ const ParticipantSession = () => {
       socket.on("participants:update", onParticipantsUpdate);
       socket.on("session:ended", onSessionEnded);
       socket.on("session:force-ended", onSessionForceEnded);
+      socket.on("you:kicked", onKicked); // Listen for kick event
 
       socket.on("qna:question:created", onCreated);
       socket.on("qna:question:updated", onUpdated);
@@ -538,6 +573,7 @@ const ParticipantSession = () => {
         socket.off("participants:update", onParticipantsUpdate);
         socket.off("session:ended", onSessionEnded);
         socket.off("session:force-ended", onSessionForceEnded);
+        socket.off("you:kicked", onKicked); // Clean up kick listener
 
         socket.off("qna:question:created", onCreated);
         socket.off("qna:question:updated", onUpdated);
@@ -712,6 +748,80 @@ const ParticipantSession = () => {
         userId={user?.id}
         userName={user?.name}
       />
+
+      {/* Kicked from Session Modal */}
+      {showKickedModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-lg w-full">
+            {/* Header */}
+            <div className="flex items-center p-6 pb-4">
+              <div className="w-10 h-10 rounded-full flex items-center justify-center mr-3 bg-red-100 dark:bg-red-900/30">
+                <svg
+                  className="w-6 h-6 text-red-500"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.732 15.5C3.962 16.333 4.924 18 6.464 18z"
+                  />
+                </svg>
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                  Session Ended
+                </h3>
+              </div>
+            </div>
+
+            {/* Content */}
+            <div className="px-6 pb-6">
+              <div className="text-gray-600 dark:text-gray-400">
+                <p className="font-medium text-red-600 dark:text-red-400 text-center">
+                  You have been kicked from this session
+                </p>
+                <p className="text-sm mt-2">
+                  The instructor has removed you from this session. You will be redirected to the home page.
+                </p>
+
+                {/* Countdown Timer */}
+                <div className="mt-6 flex items-center justify-center">
+                  <div className="relative w-24 h-24 flex items-center justify-center">
+                    {/* Circle Background */}
+                    <div className="absolute inset-0 bg-gradient-to-r from-red-100 to-red-50 dark:from-red-900/30 dark:to-red-900/10 rounded-full"></div>
+                    
+                    {/* Countdown Number */}
+                    <div className="relative z-10 text-center">
+                      <div className="text-4xl font-bold text-red-600 dark:text-red-400">
+                        {kickCountdown}
+                      </div>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        seconds
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Button */}
+              <div className="flex items-center justify-center pt-6">
+                <button
+                  onClick={() => {
+                    handleLeaveSession(true);
+                    navigate("/participant/home", { replace: true });
+                  }}
+                  className="px-6 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors"
+                >
+                  Go to Home Now
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

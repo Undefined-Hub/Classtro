@@ -124,6 +124,7 @@ function setupSockets(server) {
     // --- JOIN SESSION ---
     socket.on("join-session", ({ code, participantId }) => {
       socket.join(`session:${code}`);
+      socket.data.participantId = participantId; // Store participantId for kick identification
       console.log(`👤 Participant ${participantId} joined session ${code}`);
       emitRoomUpdate(sessionNamespace, code);
     });
@@ -133,6 +134,34 @@ function setupSockets(server) {
       socket.leave(`session:${code}`);
       console.log(`👤 Participant ${participantId} left session ${code}`);
       setImmediate(() => emitRoomUpdate(sessionNamespace, code));
+    });
+
+    // --- KICK PARTICIPANT ---
+    socket.on("participant:kicked", ({ participantId, sessionCode }) => {
+      // Notify all clients in the session that a participant was kicked
+      console.log(
+        `🚫 Participant ${participantId} has been kicked from session ${sessionCode}`
+      );
+      sessionNamespace
+        .to(`session:${sessionCode}`)
+        .emit("participant:kicked", { participantId });
+
+      // Also notify the kicked participant directly if they're connected
+      // This helps their client disconnect gracefully
+      const socketsInRoom = Array.from(
+        sessionNamespace.adapter.rooms.get(`session:${sessionCode}`) || []
+      );
+      socketsInRoom.forEach((socketId) => {
+        const participantSocket = sessionNamespace.sockets.get(socketId);
+        if (participantSocket && participantSocket.data?.participantId === participantId) {
+          participantSocket.emit("you:kicked", {
+            message: "You have been kicked from this session",
+          });
+          participantSocket.leave(`session:${sessionCode}`);
+        }
+      });
+
+      setImmediate(() => emitRoomUpdate(sessionNamespace, sessionCode));
     });
 
     // --- TEACHER BROADCAST MESSAGE ---
