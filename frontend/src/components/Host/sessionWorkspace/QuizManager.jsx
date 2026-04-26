@@ -531,7 +531,7 @@ const QuizManager = ({ isParticipantListOpen = true }) => {
             <input
               type="range"
               min="10"
-              max="120"
+              max="60"
               step="5"
               value={questionDuration}
               onChange={(e) => setQuestionDuration(Number(e.target.value))}
@@ -539,7 +539,7 @@ const QuizManager = ({ isParticipantListOpen = true }) => {
             />
             <div className="flex justify-between text-xs text-slate-400 mt-1">
               <span>10s</span>
-              <span>120s</span>
+              <span>60s</span>
             </div>
           </div>
 
