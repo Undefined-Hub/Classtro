@@ -4,6 +4,8 @@ import URLPreviewCard from "../../shared/URLPreviewCard";
 import FilePreviewCard from "../../shared/FilePreviewCard";
 import MarkdownEditor from "../../shared/MarkdownEditor";
 import ReactionPicker from "../../shared/ReactionPicker";
+import safeToast from "../../../utils/toastUtils";
+
 
 const BroadcastModal = ({
   isOpen,
@@ -71,7 +73,7 @@ const BroadcastModal = ({
 
     // Validate file count
     if (selectedFiles.length + files.length > 3) {
-      alert("Maximum 3 files allowed per broadcast");
+      safeToast.error("Maximum 3 files allowed per broadcast");
       return;
     }
 
@@ -79,7 +81,7 @@ const BroadcastModal = ({
     const validFiles = files.filter((file) => {
       // Check file size (10MB limit)
       if (file.size > 10 * 1024 * 1024) {
-        alert(`${file.name} is too large. Maximum size is 10MB.`);
+        safeToast.error(`${file.name} is too large. Maximum size is 10MB.`);
         return false;
       }
 
@@ -96,7 +98,7 @@ const BroadcastModal = ({
       ];
 
       if (!allowedTypes.includes(file.type)) {
-        alert(
+        safeToast.error(
           `${file.name} has invalid type. Only PDF, PPT, PPTX, and images are allowed.`,
         );
         return false;

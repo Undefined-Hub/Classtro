@@ -4,6 +4,8 @@ import { Play, BarChart3, Loader, Clock } from "lucide-react";
 import GenerateAnalyticsModal from "./GenerateAnalyticsModal";
 import ConfirmationModal from "./ConfirmationModal";
 import api from "../../../utils/api";
+import safeToast from "../../../utils/toastUtils";
+
 
 const FEEDBACK_COLLECTION_TIMEOUT = 45; // seconds
 
@@ -147,7 +149,7 @@ const SessionCard = ({
         err.response?.data?.message ||
         err.message ||
         "Failed to delete session";
-      alert(`Error: ${errorMessage}`);
+      safeToast.error(`Error: ${errorMessage}`);
       setShowDeleteConfirmModal(false);
       setDeleteActionType(null);
     } finally {

@@ -234,6 +234,8 @@ export const ParticipantSessionProvider = ({ children }) => {
       quizResult,
       hcCurrentQuestion,
       hcQuestionIndex,
+      hcTimeRemaining,
+      hcQuestionDuration,
       hcAnswerSubmitted,
       hcLeaderboard,
       hcFinalResults,
