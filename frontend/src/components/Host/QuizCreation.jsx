@@ -328,6 +328,57 @@ function QuizCreation({ quizName, quizDescription, onBack, existingQuiz }) {
 
   const handleSaveQuiz = async () => {
     setIsSaving(true);
+    let finalQuestions = [...questions];
+
+    if (currentQuestion.trim() && options.every((opt) => opt.trim())) {
+      const optionObjects = options.map((text, index) => {
+        // Preserve existing _id if available, otherwise create temp optionId
+        if (optionIds[index]) {
+          return {
+            _id: optionIds[index],
+            text,
+          };
+        }
+        return {
+          optionId: `opt_${Date.now()}_${index}`,
+          text,
+        };
+      });
+
+      // Determine correct answers based on question type
+      let correctAnswerIndices = [];
+      if (questionType === "MULTI_SELECT") {
+        correctAnswerIndices = correctIndices;
+      } else {
+        correctAnswerIndices = [correctIndex];
+      }
+
+      const newQuestion = {
+        _id: `question_${Date.now()}_${Math.random()}`,
+        type: questionType,
+        questionText: currentQuestion,
+        options: optionObjects,
+        correctAnswers: correctAnswerIndices.map(
+          (idx) => optionObjects[idx]._id || optionObjects[idx].optionId,
+        ),
+        points,
+        negativePoints: negativePoints || undefined,
+      };
+      
+      finalQuestions = [...finalQuestions, newQuestion];
+    }
+    
+    // Clear out the edit form so it doesn't cause issues if the user goes back without leaving
+    setCurrentQuestion("");
+    setOptions(["", ""]);
+    setOptionIds([null, null]);
+    setQuestionType("MCQ");
+    setCorrectIndex(0);
+    setCorrectIndices([0]);
+    setPoints(1);
+    setNegativePoints(0);
+
+    const totalPointsCalc = finalQuestions.reduce((sum, q) => sum + q.points, 0);
 
     try {
       if (existingQuiz) {
@@ -335,8 +386,8 @@ function QuizCreation({ quizName, quizDescription, onBack, existingQuiz }) {
         const quizObject = {
           title: quizName,
           description: quizDescription,
-          questions,
-          totalPoints,
+          questions: finalQuestions,
+          totalPoints: totalPointsCalc,
           updatedAt: new Date().toISOString(),
         };
 
@@ -359,8 +410,8 @@ function QuizCreation({ quizName, quizDescription, onBack, existingQuiz }) {
               ...existingQuiz,
               title: quizName,
               description: quizDescription,
-              questions,
-              totalPoints,
+              questions: finalQuestions,
+              totalPoints: totalPointsCalc,
               updatedAt: new Date().toISOString(),
             };
           }
@@ -376,7 +427,7 @@ function QuizCreation({ quizName, quizDescription, onBack, existingQuiz }) {
 
       // Transform questions to match API format for new quizzes
       const timestamp = Date.now();
-      const transformedQuestions = questions.map((question) => ({
+      const transformedQuestions = finalQuestions.map((question) => ({
         type: question.type,
         questionText: question.questionText,
         options: question.options.map((option, index) => ({
@@ -413,8 +464,8 @@ function QuizCreation({ quizName, quizDescription, onBack, existingQuiz }) {
           description: quizDescription,
           createdBy: response.data.createdBy || "teacherId_placeholder",
           roomId: response.data.roomId || null,
-          questions,
-          totalPoints,
+          questions: finalQuestions,
+          totalPoints: totalPointsCalc,
           createdAt: response.data.createdAt || new Date().toISOString(),
           updatedAt: response.data.updatedAt || new Date().toISOString(),
         };
@@ -443,8 +494,8 @@ function QuizCreation({ quizName, quizDescription, onBack, existingQuiz }) {
           ? existingQuiz.createdBy
           : "teacherId_placeholder",
         roomId: existingQuiz ? existingQuiz.roomId : null,
-        questions,
-        totalPoints,
+        questions: finalQuestions,
+        totalPoints: totalPointsCalc,
         createdAt: existingQuiz
           ? existingQuiz.createdAt
           : new Date().toISOString(),
