@@ -370,10 +370,10 @@ const registerQuizSocket = (io, socket) => {
         // Base score if correct, speed bonus up to 50% extra for fastest answers
         let scoreAwarded = 0;
         if (isCorrect) {
-          const basePoints = currentQuestion.points || 1;
+          const basePoints = (currentQuestion.points || 1) * 100;
           const speedFactor = Math.max(0, 1 - responseTimeMs / timeoutMs); // 1.0 at instant, 0 at timeout
           const speedBonus = basePoints * 0.5 * speedFactor; // Up to 50% bonus
-          scoreAwarded = Math.round((basePoints + speedBonus) * 100) / 100;
+          scoreAwarded = Math.round(basePoints + speedBonus);
         }
 
         // Add answer to submission
@@ -393,10 +393,10 @@ const registerQuizSocket = (io, socket) => {
         );
         submission.maxScore = quiz.questions
           .slice(0, quiz.currentQuestionIndex + 1)
-          .reduce((sum, q) => sum + (q.points || 1), 0);
+          .reduce((sum, q) => sum + ((q.points || 1) * 100), 0);
         submission.percentage =
           submission.maxScore > 0
-            ? Math.round((submission.score / submission.maxScore) * 100)
+            ? Math.min(100, Math.round((submission.score / submission.maxScore) * 100))
             : 0;
 
         await submission.save();

@@ -985,7 +985,7 @@ const QuizManager = ({ isParticipantListOpen = true }) => {
                           : "text-red-600 dark:text-red-400"
                     }`}
                   >
-                    {Math.round(submission.percentage)}%
+                    {Math.min(100, Math.round(submission.percentage))}%
                   </div>
                 </div>
               </div>
@@ -1420,7 +1420,7 @@ const QuizManager = ({ isParticipantListOpen = true }) => {
                               : "text-red-600 dark:text-red-400"
                         }`}
                       >
-                        {submission.percentage ?? 0}%
+                        {Math.min(100, Math.round(submission.percentage ?? 0))}%
                       </div>
                     </div>
                   </div>
