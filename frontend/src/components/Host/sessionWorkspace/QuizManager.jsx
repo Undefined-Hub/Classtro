@@ -108,7 +108,7 @@ const QuizManager = ({ isParticipantListOpen = true }) => {
     setLoadingTemplates(true);
     try {
       const res = await api.get("/api/quiz-templates");
-      setTemplates(res.data);
+      setTemplates(res.data.filter(template => !template.isDraft));
     } catch (err) {
       console.error("Failed to fetch quiz templates:", err);
     } finally {
@@ -679,7 +679,12 @@ const QuizManager = ({ isParticipantListOpen = true }) => {
           ) : (
             <>
               {importStep === 1 ? (
-                <div className="space-y-3">
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg text-amber-700 dark:text-amber-300 text-sm">
+                    <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                    <p>Draft quizzes are not shown here. Please save them first to import.</p>
+                  </div>
+
                   <div className="relative">
                     <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                     <input

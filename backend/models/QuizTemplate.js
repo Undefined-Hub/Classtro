@@ -27,6 +27,7 @@ const QuizTemplateSchema = new mongoose.Schema(
   {
     title: { type: String, required: true },
     description: String,
+    isDraft: { type: Boolean, default: true },
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",

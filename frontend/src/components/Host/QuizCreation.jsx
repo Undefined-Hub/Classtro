@@ -104,6 +104,7 @@ function QuizCreation({ quizName, quizDescription, onBack, existingQuiz }) {
   const [negativePoints, setNegativePoints] = useState(draftData?.negativePoints ?? 0);
   const [showNegativePoints, setShowNegativePoints] = useState(draftData?.showNegativePoints || false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isDraft, setIsDraft] = useState(draftData?.isDraft ?? true);
   const [showAIGenerator, setShowAIGenerator] = useState(false);
   const [isAIGenerating, setIsAIGenerating] = useState(false);
   const [aiSkeletonCount, setAiSkeletonCount] = useState(3);
@@ -123,12 +124,13 @@ function QuizCreation({ quizName, quizDescription, onBack, existingQuiz }) {
         points,
         negativePoints,
         showNegativePoints,
+        isDraft,
       };
       localStorage.setItem(draftKey, JSON.stringify(stateToSave));
     }
   }, [
     draftKey, questions, currentQuestion, options, optionIds, questionType, 
-    correctIndex, correctIndices, points, negativePoints, showNegativePoints
+    correctIndex, correctIndices, points, negativePoints, showNegativePoints, isDraft
   ]);
 
   const sensors = useSensors(
@@ -388,6 +390,7 @@ function QuizCreation({ quizName, quizDescription, onBack, existingQuiz }) {
           description: quizDescription,
           questions: finalQuestions,
           totalPoints: totalPointsCalc,
+          isDraft: false,
           updatedAt: new Date().toISOString(),
         };
 
@@ -412,6 +415,7 @@ function QuizCreation({ quizName, quizDescription, onBack, existingQuiz }) {
               description: quizDescription,
               questions: finalQuestions,
               totalPoints: totalPointsCalc,
+              isDraft: false,
               updatedAt: new Date().toISOString(),
             };
           }
@@ -445,10 +449,11 @@ function QuizCreation({ quizName, quizDescription, onBack, existingQuiz }) {
         negativePoints: question.negativePoints || 0,
       }));
 
-      const quizPayload = {
+        const quizPayload = {
         title: quizName,
         description: quizDescription,
         roomId: null,
+        isDraft: false,
         questions: transformedQuestions,
       };
 
@@ -466,6 +471,7 @@ function QuizCreation({ quizName, quizDescription, onBack, existingQuiz }) {
           roomId: response.data.roomId || null,
           questions: finalQuestions,
           totalPoints: totalPointsCalc,
+          isDraft: false,
           createdAt: response.data.createdAt || new Date().toISOString(),
           updatedAt: response.data.updatedAt || new Date().toISOString(),
         };
@@ -496,6 +502,7 @@ function QuizCreation({ quizName, quizDescription, onBack, existingQuiz }) {
         roomId: existingQuiz ? existingQuiz.roomId : null,
         questions: finalQuestions,
         totalPoints: totalPointsCalc,
+        isDraft: false,
         createdAt: existingQuiz
           ? existingQuiz.createdAt
           : new Date().toISOString(),

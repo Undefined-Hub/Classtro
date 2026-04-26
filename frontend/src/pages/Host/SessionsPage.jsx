@@ -81,6 +81,7 @@ function SessionsPage() {
         const response = await api.post("/api/quiz-templates", {
           title: quizName,
           description: quizDescription,
+          isDraft: true,
           questions: []
         });
         const newQuiz = response.data;
@@ -284,6 +285,11 @@ function SessionsPage() {
                               <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
                                 Quiz
                               </span>
+                              {quiz.isDraft && (
+                                <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
+                                  Draft
+                                </span>
+                              )}
                             </div>
                           </div>
                           <button
