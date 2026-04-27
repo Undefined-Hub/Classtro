@@ -204,66 +204,87 @@ const ParticipantQnA = ({
                 .map((q) => (
                   <div
                     key={q.id}
-                    className="flex justify-between space-x-3 py-3 sm:py-4 first:pt-0 last:pb-0 relative"
+                    className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden my-1.5 relative"
                   >
-                    <div className="flex-1 min-w-0 flex flex-col gap-1">
-                      {q.authorId && user?.id && q.authorId === user.id && (
-                        <span className="self-start text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 px-2 rounded-xl text-xs border-2 border-blue-200 dark:border-blue-700 font-bold text-center">
-                          your question
-                        </span>
-                      )}
+                    {/* Corner mark for your question */}
+                    {q.authorId && user?.id && q.authorId === user.id && (
+                      <div className="absolute top-0 right-0 w-0 h-0 border-t-[20px] border-l-[20px] border-t-blue-500 border-l-transparent rounded-tr-xl" />
+                    )}
 
-                      <div className="flex-1 min-w-0 flex flex-col">
-                        <div className="flex-1 min-w-0 flex items-center">
-                          <p className="text-gray-900 dark:text-gray-100 text-sm sm:text-base leading-relaxed text-left break-words w-full">
-                            {q.text}
-                          </p>
+                    <div className="flex items-stretch">
+                      {/* Left accent bar — green if answered, blue if yours, empty otherwise */}
+                      <div
+                        className={`w-1 flex-shrink-0 ${
+                          q.answered
+                            ? "bg-green-500 dark:bg-green-400"
+                            : q.authorId && user?.id && q.authorId === user.id
+                              ? "bg-blue-500 dark:bg-blue-400"
+                              : ""
+                        }`}
+                      />
+
+                      <div className="flex-1 min-w-0 flex flex-col gap-2 px-4 py-3.5">
+                        {/* Full width question text */}
+                        <p className="text-sm text-gray-900 dark:text-gray-100 leading-relaxed break-words w-full">
+                          {q.text}
+                        </p>
+
+                        {/* Bottom row: answered badge + upvote */}
+                        <div className="flex items-center justify-between mt-0.5">
+                          <div>
+                            {q.answered && (
+                              <span className="inline-flex items-center gap-1 text-xs text-green-800 dark:text-green-300 bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-700 rounded-full px-2.5 py-0.5">
+                                <svg
+                                  className="w-2.5 h-3"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2.5}
+                                    d="M5 13l4 4L19 7"
+                                  />
+                                </svg>
+                                Answered
+                              </span>
+                            )}
+                          </div>
+
+                          <button
+                            onClick={() => {
+                              if (q.answered) return;
+                              toggleLocalUpvote(q.id);
+                              onUpvote(q.id);
+                            }}
+                            disabled={q.answered}
+                            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs font-medium transition-colors ${
+                              q.answered
+                                ? "opacity-40 cursor-not-allowed bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-400"
+                                : upvotedSet.has(q.id)
+                                  ? "bg-blue-50 dark:bg-blue-900/20 border-blue-300 dark:border-blue-700 text-blue-600 dark:text-blue-400"
+                                  : "bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400"
+                            }`}
+                          >
+                            <svg
+                              className="w-3 h-3"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M5 15l7-7 7 7"
+                              />
+                            </svg>
+                            {q.upvotes || 0}
+                          </button>
                         </div>
                       </div>
-
-                      {/* Show author's name when question is not anonymous
-    {!q.isAnonymous && (q.studentName || q.authorName) && (
-      <div className="text-xs text-gray-600 dark:text-gray-400 mb-1 truncate">
-        {q.studentName || q.authorName}
-      </div>
-    )} */}
                     </div>
-
-                    <div className="flex flex-col items-center flex-shrink-0 min-w-[2rem] mt-2 gap-2">
-                      <button
-                        onClick={() => {
-                          // optimistic UI toggle
-                          toggleLocalUpvote(q.id);
-                          onUpvote(q.id);
-                        }}
-                        className={`transition-colors p-1.5 -m-1.5 rounded-lg border ${
-                          upvotedSet.has(q.id)
-                            ? "text-blue-500 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800"
-                            : "text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-gray-100 dark:hover:bg-gray-700 bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-700"
-                        }`}
-                      >
-                        <svg
-                          className="w-3.5 h-3.5 sm:w-4 sm:h-4"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M5 15l7-7 7 7"
-                          />
-                        </svg>
-                      </button>
-                      <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
-                        {q.upvotes || 0}
-                      </span>
-                    </div>
-
-                    {/* {q.answered && (
-    <div className="absolute right-2 sm:right-4 top-1/2 transform -translate-y-1/2 h-8 sm:h-10 w-1 sm:w-1.5 rounded-full bg-green-500 dark:bg-green-400" aria-hidden="true" />
-  )} */}
                   </div>
                 ))}
             </div>

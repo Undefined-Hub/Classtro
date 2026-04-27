@@ -51,6 +51,10 @@ const createLiveQuiz = async (req, res) => {
       questionDurationSeconds = 30,
     } = req.body;
 
+    if (mode === "HOST_CONTROLLED" && questionDurationSeconds > 60) {
+      return res.status(400).json({ error: "Time per question cannot exceed 60 seconds." });
+    }
+
     let quizQuestions = questions;
     let quizTitle = title;
 

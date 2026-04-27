@@ -42,8 +42,12 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
-    // Only handle 401 errors that aren't already refreshing
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    // Only handle 401 errors that aren't already refreshing and not for login requests
+    if (
+      error.response?.status === 401 &&
+      !originalRequest._retry &&
+      !originalRequest.url.includes("/api/auth/login")
+    ) {
       if (isRefreshing) {
         // Queue the request while refreshing
         return new Promise((resolve, reject) => {
@@ -90,8 +94,11 @@ api.interceptors.response.use(
         // Process queued requests with error
         processQueue(refreshError, null);
 
-        // Redirect to login
-        window.location.href = "/login";
+        // Redirect to login if not already on the login, register, or home page
+        const path = window.location.pathname;
+        if (!path.includes("/login") && !path.includes("/register") && path !== "/") {
+          window.location.href = "/login";
+        }
 
         return Promise.reject(refreshError);
       }

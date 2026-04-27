@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useParticipantSession } from "../../context/ParticipantSessionContext";
+import safeToast from "../../utils/toastUtils";
 import {
+
   CheckCircle,
   Circle,
   Square,
@@ -100,9 +102,9 @@ const ParticipantLiveQuiz = () => {
   }, [isHostControlled, hcCurrentQuestion?._id]);
 
   // Handle HC answer submission
-  const handleHCSubmitAnswer = useCallback(() => {
+  const handleHCSubmitAnswer = useCallback((autoSubmitEmpty = false) => {
     if (
-      !hcSelectedOption ||
+      (!hcSelectedOption && !autoSubmitEmpty) ||
       hcAnswerSubmitted ||
       !activeQuiz ||
       !hcCurrentQuestion
@@ -116,7 +118,7 @@ const ParticipantLiveQuiz = () => {
       socket.emit("quiz:hc:answer", {
         quizId: activeQuiz._id,
         questionId: hcCurrentQuestion._id,
-        selectedOptions: [hcSelectedOption],
+        selectedOptions: hcSelectedOption ? [hcSelectedOption] : [],
       });
 
       // Optimistically mark as submitted
@@ -132,20 +134,18 @@ const ParticipantLiveQuiz = () => {
     setHcAnswerSubmitted,
   ]);
 
-  // Auto-submit when time runs out (if answer selected)
+  // Auto-submit when time runs out (even if no answer selected)
   useEffect(() => {
     if (
       isHostControlled &&
       hcTimeRemaining === 0 &&
-      hcSelectedOption &&
       !hcAnswerSubmitted
     ) {
-      handleHCSubmitAnswer();
+      handleHCSubmitAnswer(true);
     }
   }, [
     isHostControlled,
     hcTimeRemaining,
-    hcSelectedOption,
     hcAnswerSubmitted,
     handleHCSubmitAnswer,
   ]);
@@ -262,7 +262,7 @@ const ParticipantLiveQuiz = () => {
 
         socket.once("quiz:submission:error", ({ error }) => {
           console.error("Quiz submission error:", error);
-          alert(error || "Failed to submit quiz");
+          safeToast.error(error || "Failed to submit quiz");
           setSubmitting(false);
         });
 
@@ -494,7 +494,7 @@ const ParticipantLiveQuiz = () => {
             </p>
             <div className="flex items-center gap-2 mt-3">
               <span className="text-sm px-3 py-1 bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 rounded-full font-medium">
-                {hcCurrentQuestion.points} points
+                {(hcCurrentQuestion.points || 1) * 100} points
               </span>
               {hcAnswerSubmitted && (
                 <span className="text-sm px-3 py-1 bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 rounded-full font-medium flex items-center gap-1">
@@ -636,7 +636,7 @@ const ParticipantLiveQuiz = () => {
 
   // Render result screen
   if (quizSubmitted && quizResult) {
-    const percentage = Math.round(quizResult.percentage || 0);
+    const percentage = Math.min(100, Math.round(quizResult.percentage || 0));
     const isPassing = percentage >= 60;
 
     return (
@@ -791,8 +791,7 @@ const ParticipantLiveQuiz = () => {
                       : "Select one"}
                   </span>
                   <span className="text-xs text-slate-500 dark:text-slate-400">
-                    {currentQuestion.points} point
-                    {currentQuestion.points !== 1 ? "s" : ""}
+                    {(currentQuestion.points || 1) * 100} points
                   </span>
                 </div>
               </div>

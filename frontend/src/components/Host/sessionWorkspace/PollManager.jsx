@@ -4,6 +4,8 @@ import LivePoll from "./LivePoll";
 import PastPolls from "./PastPolls";
 import { useHostSession } from "../../../context/HostSessionContext";
 import { ChartNoAxesColumn, Rocket, SquarePen } from "lucide-react";
+import safeToast from "../../../utils/toastUtils";
+
 
 // * Poll Templates
 const POLL_TEMPLATES = [
@@ -129,7 +131,7 @@ const PollManager = ({ isParticipantListOpen = true }) => {
       setShowPollForm(false);
     } catch (error) {
       console.error("Failed to create poll:", error);
-      alert("Failed to create poll. Please try again.");
+      safeToast.error("Failed to create poll. Please try again.");
     }
   };
 
@@ -159,7 +161,7 @@ const PollManager = ({ isParticipantListOpen = true }) => {
 
     // * Validate Question and Options
     if (pollFormData.question.trim() === "" || validOptions.length < 2) {
-      alert("Please provide a question and at least 2 options");
+      safeToast.error("Please provide a question and at least 2 options");
       return;
     }
 
@@ -382,7 +384,7 @@ const PollManager = ({ isParticipantListOpen = true }) => {
               <button
                 onClick={() => {
                   if (activePoll) {
-                    alert(
+                    safeToast.error(
                       "A poll is already active. Please end the current poll before creating a new one.",
                     );
                     return;
@@ -531,12 +533,13 @@ const PollManager = ({ isParticipantListOpen = true }) => {
                     </h4>
                   </div>
                   <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
-                    Click to launch or edit
-                  </p>
+  Click a template to populate the form
+</p>
                   <div className="space-y-2">
                     {POLL_TEMPLATES.map((template) => (
                       <div
                         key={template.id}
+                        onClick={() => handleEditTemplate(template)}
                         className={`p-3 rounded-lg border-2 transition-all cursor-pointer ${
                           selectedTemplate === template.id
                             ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
@@ -546,7 +549,7 @@ const PollManager = ({ isParticipantListOpen = true }) => {
                         <p className="text-sm font-medium text-gray-800 dark:text-gray-200 mb-2">
                           {template.question}
                         </p>
-                        <div className="flex flex-wrap gap-1 mb-2">
+                        <div className="flex flex-wrap gap-1">
                           {template.options.slice(0, 2).map((opt, idx) => (
                             <span
                               key={idx}
@@ -562,24 +565,6 @@ const PollManager = ({ isParticipantListOpen = true }) => {
                               +{template.options.length - 2}
                             </span>
                           )}
-                        </div>
-                        <div className="flex gap-2 justify-end">
-                          <button
-                            type="button"
-                            onClick={() => handleQuickLaunch(template)}
-                            className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white rounded-lg text-xs font-medium hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800"
-                          >
-                            <Rocket className="w-3.5 h-3.5" />
-                            Launch
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleEditTemplate(template)}
-                            className="px-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
-                            title="Edit template"
-                          >
-                            <SquarePen className="w-4 h-4" />
-                          </button>
                         </div>
                       </div>
                     ))}
