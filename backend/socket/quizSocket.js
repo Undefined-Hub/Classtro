@@ -315,9 +315,12 @@ const registerQuizSocket = (io, socket) => {
         const responseTimeMs =
           now.getTime() - new Date(quiz.currentQuestionStartedAt).getTime();
         const timeoutMs = quiz.questionDurationSeconds * 1000;
+        
+        // Allow a 5-second grace period for network latency and auto-submits
+        const GRACE_PERIOD_MS = 5000; 
 
         // Check if answer is within time limit
-        if (responseTimeMs > timeoutMs) {
+        if (responseTimeMs > timeoutMs + GRACE_PERIOD_MS) {
           socket.emit("quiz:hc:error", {
             error: "Time expired for this question",
           });
@@ -367,10 +370,10 @@ const registerQuizSocket = (io, socket) => {
         // Base score if correct, speed bonus up to 50% extra for fastest answers
         let scoreAwarded = 0;
         if (isCorrect) {
-          const basePoints = currentQuestion.points || 1;
+          const basePoints = (currentQuestion.points || 1) * 100;
           const speedFactor = Math.max(0, 1 - responseTimeMs / timeoutMs); // 1.0 at instant, 0 at timeout
           const speedBonus = basePoints * 0.5 * speedFactor; // Up to 50% bonus
-          scoreAwarded = Math.round((basePoints + speedBonus) * 100) / 100;
+          scoreAwarded = Math.round(basePoints + speedBonus);
         }
 
         // Add answer to submission
@@ -390,10 +393,10 @@ const registerQuizSocket = (io, socket) => {
         );
         submission.maxScore = quiz.questions
           .slice(0, quiz.currentQuestionIndex + 1)
-          .reduce((sum, q) => sum + (q.points || 1), 0);
+          .reduce((sum, q) => sum + ((q.points || 1) * 100), 0);
         submission.percentage =
           submission.maxScore > 0
-            ? Math.round((submission.score / submission.maxScore) * 100)
+            ? Math.min(100, Math.round((submission.score / submission.maxScore) * 100))
             : 0;
 
         await submission.save();

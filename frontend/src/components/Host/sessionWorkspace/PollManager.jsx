@@ -4,6 +4,8 @@ import LivePoll from "./LivePoll";
 import PastPolls from "./PastPolls";
 import { useHostSession } from "../../../context/HostSessionContext";
 import { ChartNoAxesColumn, Rocket, SquarePen } from "lucide-react";
+import safeToast from "../../../utils/toastUtils";
+
 
 // * Poll Templates
 const POLL_TEMPLATES = [
@@ -129,7 +131,7 @@ const PollManager = ({ isParticipantListOpen = true }) => {
       setShowPollForm(false);
     } catch (error) {
       console.error("Failed to create poll:", error);
-      alert("Failed to create poll. Please try again.");
+      safeToast.error("Failed to create poll. Please try again.");
     }
   };
 
@@ -159,7 +161,7 @@ const PollManager = ({ isParticipantListOpen = true }) => {
 
     // * Validate Question and Options
     if (pollFormData.question.trim() === "" || validOptions.length < 2) {
-      alert("Please provide a question and at least 2 options");
+      safeToast.error("Please provide a question and at least 2 options");
       return;
     }
 
@@ -382,7 +384,7 @@ const PollManager = ({ isParticipantListOpen = true }) => {
               <button
                 onClick={() => {
                   if (activePoll) {
-                    alert(
+                    safeToast.error(
                       "A poll is already active. Please end the current poll before creating a new one.",
                     );
                     return;
