@@ -46,10 +46,19 @@ const JoinSessionTab = () => {
       setJoinCode("");
     } catch (error) {
       console.error("❌ Failed to join session:", error);
-      setError(
-        error.message ||
-          "Failed to join session. Please check the code and try again.",
-      );
+
+      // Handle specific error cases
+      if (error.response?.status === 403) {
+        setError(
+          "You have been kicked from this session and cannot rejoin."
+        );
+      } else {
+        setError(
+          error.response?.data?.error ||
+            error.message ||
+            "Failed to join session. Please check the code and try again."
+        );
+      }
     } finally {
       setLoading(false);
     }

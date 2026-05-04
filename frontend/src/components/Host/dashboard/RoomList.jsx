@@ -126,14 +126,14 @@ const RoomList = ({
                       >
                         {room?.name}
                       </h3>
-                      <div className="flex items-center mt-2 space-x-2">
+                      {/* <div className="flex items-center mt-2 space-x-2">
                         <div
                           className={`w-2.5 h-2.5 rounded-full ${room.activeSessions > 0 ? "bg-green-500" : "bg-gray-300 dark:bg-gray-600"}`}
                         ></div>
                         <span className="text-sm text-gray-500 dark:text-gray-400">
                           {room.activeSessions > 0 ? "Active" : "Inactive"}
                         </span>
-                      </div>
+                      </div> */}
                     </div>
 
                     {/* 3-dot menu */}
@@ -249,7 +249,7 @@ const RoomList = ({
                   {/* Stats section */}
                   <div className="space-y-3">
                     {/* Max Students */}
-                    <div className="flex items-center justify-between py-2 px-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                    {/* <div className="flex items-center justify-between py-2 px-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
                       <div className="flex items-center space-x-2">
                         <svg
                           className="w-4 h-4 text-gray-500 dark:text-gray-400"
@@ -271,7 +271,7 @@ const RoomList = ({
                       <span className="font-semibold text-gray-900 dark:text-white">
                         {room?.defaultMaxStudents}
                       </span>
-                    </div>
+                    </div> */}
 
                     {/* Sessions badges */}
                     <div className="flex items-center justify-between">

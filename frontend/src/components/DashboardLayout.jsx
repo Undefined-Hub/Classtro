@@ -148,7 +148,7 @@ function DashboardLayout() {
               My Rooms
             </NavLink>
             <NavLink
-              to="/dashboard/sessions"
+              to="/dashboard/quizzes"
               className={({ isActive }) =>
                 `py-4 px-2 text-sm font-medium border-b-2 ${
                   isActive

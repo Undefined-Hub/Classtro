@@ -1,10 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  ClipboardCheck,
-  Calendar,
-  Target,
-  Award,
   Plus,
   Trash2,
 } from "lucide-react";
@@ -225,7 +221,7 @@ function SessionsPage() {
                 {/* Create Quiz Card */}
                 <div
                   onClick={() => setIsModalOpen(true)}
-                  className="bg-gray-50 dark:bg-gray-800/50 border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg p-6 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors min-h-[280px]"
+                  className="bg-gray-50 dark:bg-gray-800/50 border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg p-6 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors"
                 >
                   <div className="w-16 h-16 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center mb-4">
                     <Plus className="w-8 h-8 text-gray-600 dark:text-gray-400" />
@@ -245,7 +241,7 @@ function SessionsPage() {
                   {/* Create Quiz Card */}
                   <div
                     onClick={() => setIsModalOpen(true)}
-                    className="bg-gray-50 dark:bg-gray-800/50 border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg p-6 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors min-h-[280px]"
+                    className="bg-gray-50 dark:bg-gray-800/50 border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg p-6 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors"
                   >
                     <div className="w-16 h-16 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center mb-4">
                       <Plus className="w-8 h-8 text-gray-600 dark:text-gray-400" />
@@ -263,114 +259,82 @@ function SessionsPage() {
                     <div
                       key={quiz._id}
                       onClick={() => handleEditQuiz(quiz)}
-                      className="group relative bg-white dark:bg-slate-900 rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 border border-slate-200 dark:border-slate-700 cursor-pointer overflow-hidden hover:-translate-y-1"
+                      className="bg-white dark:bg-gray-800 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer border border-gray-100 dark:border-gray-700 hover:border-gray-200 dark:hover:border-gray-600 group"
                     >
-                      {/* Gradient overlay on hover */}
-                      <div className="absolute inset-0 bg-gradient-to-br from-blue-50/50 to-purple-50/50 dark:from-blue-900/10 dark:to-purple-900/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-
-                      {/* Header with icon */}
-                      <div className="relative p-6 pb-4">
+                      {/* Header with title and delete button */}
+                      <div className="p-6 pb-4">
                         <div className="flex items-start justify-between mb-3">
-                          <div className="flex items-center gap-3">
-                            <div className="p-2 bg-blue-100 dark:bg-blue-900/40 rounded-lg group-hover:bg-blue-200 dark:group-hover:bg-blue-800/60 transition-colors">
-                              <ClipboardCheck
-                                className="text-blue-600 dark:text-blue-400"
-                                size={20}
-                              />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <h3 className="text-lg font-bold text-slate-900 dark:text-white truncate group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-                                {quiz.title}
-                              </h3>
-                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
-                                Quiz
-                              </span>
-                              {quiz.isDraft && (
+                          <div className="flex-1 min-w-0 pr-3">
+                            <h3 className="text-lg font-bold text-gray-900 dark:text-white truncate" title={quiz.title}>
+                              {quiz.title}
+                            </h3>
+                            {/* <span className="inline-flex items-center px-2.5 mt-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
+                              Quiz
+                            </span> */}
+                             {quiz.isDraft && (
                                 <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
                                   Draft
                                 </span>
                               )}
-                            </div>
                           </div>
+
+                          {/* Delete button */}
                           <button
                             onClick={(e) => {
-                              console.log(
-                                "Delete button clicked for quiz:",
-                                quiz._id,
-                              );
                               e.preventDefault();
                               e.stopPropagation();
                               handleDeleteQuiz(quiz);
                             }}
-                            className="flex-shrink-0 p-2 text-slate-400 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all pointer-events-auto z-10 relative "
+                            className="p-2 rounded-full hover:bg-red-50 dark:hover:bg-red-900/20 transition-all duration-200 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 hover:scale-105 relative z-10"
                             title="Delete this quiz"
                             type="button"
                           >
-                            <Trash2 size={16} />
+                            <Trash2 size={18} className="text-red-500 dark:text-red-400 hover:text-red-600" />
                           </button>
                         </div>
 
                         {/* Description */}
-                        <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed line-clamp-2 mb-4">
+                        <p className="text-gray-600 dark:text-gray-400 text-sm mb-4 line-clamp-2 leading-relaxed">
                           {quiz.description || "No description provided"}
                         </p>
-                      </div>
 
-                      {/* Stats section */}
-                      <div className="relative px-6 pb-4">
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="flex items-center gap-2 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg group-hover:bg-slate-100 dark:group-hover:bg-slate-800 transition-colors">
-                            <Target
-                              className="text-slate-500 dark:text-slate-400 flex-shrink-0"
-                              size={16}
-                            />
-                            <div className="min-w-0">
-                              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
-                                Questions
-                              </p>
-                              <p className="text-sm font-bold text-slate-900 dark:text-white">
-                                {quiz.questionsCount || 0}
-                              </p>
-                            </div>
-                          </div>
+                        {/* Stats section - simplified like sessions */}
+                        <div className="flex items-center space-x-3">
+                          <span className="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
+                            <svg className="w-3 h-3 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            {quiz.questionsCount || 0} Questions
+                          </span>
 
-                          <div className="flex items-center gap-2 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg group-hover:bg-slate-100 dark:group-hover:bg-slate-800 transition-colors">
-                            <Award
-                              className="text-slate-500 dark:text-slate-400 flex-shrink-0"
-                              size={16}
-                            />
-                            <div className="min-w-0">
-                              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
-                                Points
-                              </p>
-                              <p className="text-sm font-bold text-slate-900 dark:text-white">
-                                {quiz.totalPoints}
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Footer with date */}
-                      <div className="relative px-6 pb-6">
-                        <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
-                          <Calendar size={14} />
-                          <span>
-                            Created{" "}
-                            {new Date(quiz.createdAt).toLocaleDateString(
-                              "en-US",
-                              {
-                                month: "short",
-                                day: "numeric",
-                                year: "numeric",
-                              },
-                            )}
+                          <span className="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400">
+                            <svg className="w-3 h-3 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            {quiz.totalPoints || 0} Points
                           </span>
                         </div>
                       </div>
 
-                      {/* Subtle border animation */}
-                      <div className="absolute inset-0 rounded-xl border-2 border-transparent group-hover:border-blue-200 dark:group-hover:border-blue-800 transition-colors duration-300"></div>
+                      {/* Footer with date */}
+                      <div className="px-6 py-4 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700/50 dark:to-gray-800/50 flex items-center space-x-2">
+                        <svg
+                          className="w-4 h-4 text-gray-400"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                          />
+                        </svg>
+                        <span className="text-xs text-gray-500 dark:text-gray-400">
+                          Created {new Date(quiz.createdAt).toLocaleDateString()}
+                        </span>
+                      </div>
                     </div>
                   ))}
                 </div>

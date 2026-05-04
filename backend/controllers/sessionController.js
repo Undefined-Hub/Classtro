@@ -389,6 +389,13 @@ const joinSession = async (req, res, next) => {
       });
 
       if (participant) {
+        // Check if participant was kicked
+        if (participant.kicked) {
+          return res.status(403).json({
+            error: "You have been kicked from this session and cannot rejoin",
+          });
+        }
+
         if (participant.leftAt) {
           // Rejoin flow
           participant.leftAt = undefined;
@@ -585,6 +592,66 @@ const getParticipantById = async (req, res, next) => {
     next(err);
   }
 };
+
+/**
+ * Kick a participant from a session
+ * POST /api/sessions/code/:code/kick
+ * Teacher only
+ */
+const kickParticipant = async (req, res, next) => {
+  try {
+    const params = validateInput(sessionCodeParamSchema, req.params);
+    const data = validateInput(
+      require("../schemas/sessionSchema").kickParticipantSchema,
+      req.body,
+    );
+
+    // Find session and verify ownership
+    const session = await Session.findOne({
+      code: params.code,
+      teacherId: req.user.id,
+    });
+
+    if (!session) {
+      return res
+        .status(404)
+        .json({ error: "Session not found or not owned by you" });
+    }
+
+    // Find and update participant
+    const participant = await Participant.findOneAndUpdate(
+      {
+        _id: data.participantId,
+        sessionId: session._id,
+      },
+      {
+        $set: {
+          kicked: true,
+          isActive: false,
+          leftAt: new Date(),
+        },
+      },
+      { new: true },
+    );
+
+    if (!participant) {
+      return res.status(404).json({ error: "Participant not found" });
+    }
+
+    // Decrement participant count
+    await Session.findByIdAndUpdate(session._id, {
+      $inc: { participantCount: -1 },
+    });
+
+    res.json({
+      message: "Participant kicked successfully",
+      participant: participant,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
 // roomId teacherId
 // GET /api/sessions/monitor
 const monitorSessions = async (req, res, next) => {
@@ -623,5 +690,6 @@ module.exports = {
   leaveSession,
   getSessionParticipants,
   getParticipantById,
+  kickParticipant,
   monitorSessions,
 };

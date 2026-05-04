@@ -13,6 +13,7 @@ import ParticipantList from "../../components/Host/sessionWorkspace/ParticipantL
 import QuickActions from "../../components/Host/sessionWorkspace/QuickActions";
 import QRJoinView from "../../components/Host/sessionWorkspace/QRJoinView";
 import BroadcastModal from "../../components/Host/sessionWorkspace/BroadcastModal";
+import ConfirmationModal from "../../components/Host/dashboard/ConfirmationModal";
 import { useHostSession } from "../../context/HostSessionContext.jsx";
 import { useAuth } from "../../context/UserContext.jsx";
 import axios from "axios";
@@ -127,6 +128,10 @@ const SessionWorkspace = () => {
   const [isBroadcastModalOpen, setIsBroadcastModalOpen] = useState(false);
   const [broadcastHistory, setBroadcastHistory] = useState([]);
   const [loadingBroadcasts, setLoadingBroadcasts] = useState(false);
+
+  // * Kick Participant Confirmation State
+  const [showConfirmKick, setShowConfirmKick] = useState(false);
+  const [participantToKick, setParticipantToKick] = useState(null);
 
   useEffect(() => {
     // Detect actual mobile/tablet devices, not just small windows
@@ -620,13 +625,63 @@ const SessionWorkspace = () => {
     }
   };
 
-  // Handle kicking a participant (UI only, backend action not implemented here)
+  // Handle kicking a participant - show confirmation
   const handleKickParticipant = (participantId) => {
-    setParticipantsList(
-      participantsList.map((p) =>
-        p._id === participantId ? { ...p, kicked: true } : p,
-      ),
-    );
+    const participant = participantsList.find((p) => p._id === participantId);
+    setParticipantToKick(participant);
+    setShowConfirmKick(true);
+  };
+
+  // Confirm and execute kick
+  const confirmKickParticipant = async () => {
+    if (!participantToKick) return;
+
+    try {
+      if (!sessionData?.code) {
+        console.error("❌ No session code available");
+        return;
+      }
+
+      // Call backend API to kick participant
+      const response = await api.post(
+        `/api/sessions/code/${sessionData.code}/kick`,
+        { participantId: participantToKick._id }
+      );
+
+      if (response.status === 200) {
+        // Update UI-  remove kicked participant
+        setParticipantsList(
+          participantsList.map((p) =>
+            p._id === participantToKick._id
+              ? { ...p, kicked: true, isActive: false }
+              : p
+          )
+        );
+
+        // Optional: Emit socket event to disconnect the participant in real-time
+        if (socketRef.current && socketRef.current.connected) {
+          socketRef.current.emit("participant:kicked", {
+            participantId: participantToKick._id,
+            sessionCode: sessionData.code,
+          });
+        }
+
+        console.log(
+          "✅ Participant kicked successfully from session",
+          participantToKick._id
+        );
+
+        // Close modal
+        setShowConfirmKick(false);
+        setParticipantToKick(null);
+      }
+    } catch (error) {
+      console.error("❌ Error kicking participant:", error);
+      alert(
+        error.response?.data?.error ||
+          "Failed to kick participant. Please try again."
+      );
+    }
   };
 
   const handleEndSession = async () => {
@@ -944,6 +999,24 @@ const SessionWorkspace = () => {
         broadcastHistory={broadcastHistory}
         loading={loadingBroadcasts}
         currentUserId={user?.id}
+      />
+
+      {/* Kick Participant Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showConfirmKick}
+        onClose={() => {
+          setShowConfirmKick(false);
+          setParticipantToKick(null);
+        }}
+        onConfirm={confirmKickParticipant}
+        title="Kick Student?"
+        message={
+          participantToKick
+            ? `Are you sure you want to kick ${participantToKick.name} from this session? They will be immediately disconnected and cannot rejoin this session.`
+            : "Are you sure you want to kick this student from the session?"
+        }
+        confirmText="Kick Student"
+        confirmType="danger"
       />
     </div>
   );

@@ -74,7 +74,19 @@ const ParticipantJoin = () => {
       navigate("/participant/session");
     } catch (error) {
       console.error("❌ Failed to join session:", error);
-      setError(error.message || "Failed to join session. Please try again.");
+
+      // Handle specific error cases
+      if (error.response?.status === 403) {
+        setError(
+          "You are unable to join this session as you were kicked from it."
+        );
+      } else {
+        setError(
+          error.response?.data?.error ||
+            error.message ||
+            "Failed to join session. Please try again."
+        );
+      }
     } finally {
       setJoining(false);
     }

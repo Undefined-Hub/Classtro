@@ -187,13 +187,14 @@ const SessionCard = ({
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer border border-gray-100 dark:border-gray-700 hover:border-gray-200 dark:hover:border-gray-600 group relative">
-      {/* Card content */}
-      {/* Active indicator bar */}
-      <div
-        className={`h-1 w-full ${session.isActive ? "bg-gradient-to-r from-green-500 to-emerald-500" : "bg-gray-300 dark:bg-gray-600"}`}
-      ></div>
+      {/* Content wrapper with overflow hidden to contain bar */}
+      <div className="relative rounded-xl">
+        {/* Active indicator bar */}
+        <div
+          className={`h-1 ${session.isActive ? "bg-gradient-to-r from-green-500 to-emerald-500" : "bg-gray-300 dark:bg-gray-600"}`}
+        ></div>
 
-      <div className="p-4">
+        <div className="p-4">
         {/* Header with title and status */}
         <div className="flex justify-between items-start mb-3">
           <div className="flex-1 min-w-0 pr-3">
@@ -385,9 +386,11 @@ const SessionCard = ({
             </span>
           </div>
         </div>
+        </div>
+      </div>
 
-        {/* Action button */}
-        <div className="w-full">
+      {/* Action button - outside overflow-hidden so tooltip is visible */}
+      <div className="p-4 pt-0">
           {session.isActive ? (
             <button
               onClick={() => onSessionClick(session)}
@@ -435,7 +438,6 @@ const SessionCard = ({
             </>
           )}
         </div>
-      </div>
 
       {/* Generate Analytics Modal */}
       <GenerateAnalyticsModal

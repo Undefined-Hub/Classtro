@@ -13,6 +13,7 @@ const {
   leaveSession,
   getSessionParticipants,
   getParticipantById,
+  kickParticipant,
   monitorSessions,
 } = require("../controllers/sessionController");
 const {
@@ -43,6 +44,7 @@ router.delete("/id/:sessionId", authenticateJWT, deleteSession); // Delete a ses
 // ---------------- STUDENT ROUTES ----------------
 router.post("/code/:code/join", authenticateJWT, joinSession); // Student joins a session✅
 router.post("/code/:code/leave", authenticateJWT, leaveSession); // Student leaves a session
+router.post("/code/:code/kick", authenticateJWT, kickParticipant); // Teacher kicks a student from session
 router.get("/code/:code/participants", authenticateJWT, getSessionParticipants); // Get participants of a session (teacher only)
 router.get("/participants/:participantId", authenticateJWT, getParticipantById); // Get individual participant record
 
