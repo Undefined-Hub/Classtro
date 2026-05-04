@@ -1,3 +1,4 @@
+import safeToast from "../../utils/toastUtils";
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/UserContext.jsx";
@@ -115,7 +116,7 @@ const ParticipantSession = () => {
     } catch (err) {
       // Only show alert if not from kick (kicked students are expected to have errors)
       if (!isFromKick) {
-        alert("Failed to leave session. Please try again.");
+        safeToast.error("Failed to leave session. Please try again.");
       }
       console.error("Failed to leave session:", err);
     }
@@ -300,7 +301,7 @@ const ParticipantSession = () => {
         payload,
       );
       // Show critical alert to user
-      alert(
+      safeToast.error(
         "This session has been deleted by the instructor. You will be redirected.",
       );
       // Clear session data
@@ -639,7 +640,7 @@ const ParticipantSession = () => {
       });
     } catch (err) {
       console.error("Failed to post question", err);
-      alert("Failed to post question");
+      safeToast.error("Failed to post question");
     }
   };
 

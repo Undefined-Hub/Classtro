@@ -11,6 +11,8 @@ import QuizCreation from "../../components/Host/QuizCreation";
 
 /* Api import */
 import api from "../../utils/api";
+import safeToast from "../../utils/toastUtils";
+
 
 function SessionsPage() {
   const navigate = useNavigate();
@@ -66,13 +68,31 @@ function SessionsPage() {
     });
   };
 
-  const handleCreateQuiz = () => {
+  const handleCreateQuiz = async () => {
     if (quizName.trim()) {
-      setEditingQuiz(null); // Ensure it's a new quiz
-      setIsQuizCreated(true);
       setIsModalOpen(false);
+      try {
+        setIsLoading(true);
+        // Create draft directly in DB
+        const response = await api.post("/api/quiz-templates", {
+          title: quizName,
+          description: quizDescription,
+          isDraft: true,
+          questions: []
+        });
+        const newQuiz = response.data;
+        setEditingQuiz(newQuiz);
+        setQuizName(newQuiz.title);
+        setQuizDescription(newQuiz.description || "");
+        setIsQuizCreated(true); // Open edit page
+      } catch (err) {
+        console.error("Error creating draft quiz", err);
+        safeToast.error("Failed to create quiz draft. Please try again.");
+      } finally {
+        setIsLoading(false);
+      }
     } else {
-      alert("Please enter a quiz name.");
+      safeToast.error("Please enter a quiz name.");
     }
   };
 
@@ -89,7 +109,7 @@ function SessionsPage() {
       setIsQuizCreated(true);
     } catch (err) {
       console.error("Error loading quiz details:", err);
-      alert("Failed to load quiz details. Please try again.");
+      safeToast.error("Failed to load quiz details. Please try again.");
     }
   };
 
@@ -102,6 +122,7 @@ function SessionsPage() {
     if (!quizToDelete) return;
 
     try {
+      localStorage.removeItem(`quiz_draft_${quizToDelete._id}`);
       console.log("Attempting to delete quiz:", quizToDelete._id);
       const response = await api.delete(
         `/api/quiz-templates/${quizToDelete._id}`,
@@ -114,12 +135,12 @@ function SessionsPage() {
       setQuizToDelete(null);
 
       // Show success message
-      alert("Quiz deleted successfully!");
+      safeToast.success("Quiz deleted successfully!");
     } catch (err) {
       console.error("Error deleting quiz:", err);
       const errorMessage =
         err.response?.data?.error || err.message || "Failed to delete quiz";
-      alert(`Error: ${errorMessage}`);
+      safeToast.error(`Error: ${errorMessage}`);
     }
   };
 
@@ -250,6 +271,11 @@ function SessionsPage() {
                             {/* <span className="inline-flex items-center px-2.5 mt-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
                               Quiz
                             </span> */}
+                             {quiz.isDraft && (
+                                <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
+                                  Draft
+                                </span>
+                              )}
                           </div>
 
                           {/* Delete button */}

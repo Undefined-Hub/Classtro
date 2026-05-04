@@ -1,7 +1,9 @@
 import React, { useEffect, useState, useCallback, useRef } from "react";
 import api from "../../../utils/api";
 import { useHostSession } from "../../../context/HostSessionContext";
+import safeToast from "../../../utils/toastUtils";
 import {
+
   ClipboardCheck,
   Users,
   Play,
@@ -65,6 +67,7 @@ const QuizManager = ({ isParticipantListOpen = true }) => {
   const [isPublishing, setIsPublishing] = useState(false);
   const [isClosingQuestion, setIsClosingQuestion] = useState(false);
   const [showLeaderboard, setShowLeaderboard] = useState(false);
+  const [hcTimeRemaining, setHcTimeRemaining] = useState(0);
 
   const getModeLabel = (mode) =>
     mode === "HOST_CONTROLLED" ? "Live Guided" : "Self-Paced";
@@ -105,7 +108,7 @@ const QuizManager = ({ isParticipantListOpen = true }) => {
     setLoadingTemplates(true);
     try {
       const res = await api.get("/api/quiz-templates");
-      setTemplates(res.data);
+      setTemplates(res.data.filter(template => !template.isDraft));
     } catch (err) {
       console.error("Failed to fetch quiz templates:", err);
     } finally {
@@ -219,6 +222,12 @@ const QuizManager = ({ isParticipantListOpen = true }) => {
       if (currentQuiz && currentQuiz._id === data.quizId) {
         setCurrentQuestion(data.question);
         setCurrentQuestionIndex(data.questionIndex);
+        setQuestionDuration(data.durationSeconds || questionDuration);
+        
+        const elapsed = Date.now() - new Date(data.startedAt).getTime();
+        const remaining = Math.max(0, data.durationSeconds - Math.floor(elapsed / 1000));
+        setHcTimeRemaining(remaining);
+
         setIsPublishing(false);
         setShowLeaderboard(false);
         setQuestionResults(null);
@@ -261,7 +270,7 @@ const QuizManager = ({ isParticipantListOpen = true }) => {
     // HOST_CONTROLLED: error handler
     const onHCError = ({ error }) => {
       console.error("HOST_CONTROLLED error:", error);
-      alert(error);
+      safeToast.error(error);
       setIsPublishing(false);
       setIsClosingQuestion(false);
     };
@@ -303,7 +312,7 @@ const QuizManager = ({ isParticipantListOpen = true }) => {
       templateValidation &&
       !templateValidation.compatible
     ) {
-      alert("This template is not compatible with Live Guided mode.");
+      safeToast.error("This template is not compatible with Live Guided mode.");
       return;
     }
 
@@ -341,7 +350,7 @@ const QuizManager = ({ isParticipantListOpen = true }) => {
       console.log("✅ Quiz launched successfully in", selectedMode, "mode");
     } catch (err) {
       console.error("Failed to launch quiz:", err);
-      alert(
+      safeToast.error(
         err.response?.data?.error || "Failed to launch quiz. Please try again.",
       );
     } finally {
@@ -370,7 +379,7 @@ const QuizManager = ({ isParticipantListOpen = true }) => {
       console.log("✅ Quiz closed successfully");
     } catch (err) {
       console.error("Failed to close quiz:", err);
-      alert("Failed to close quiz. Please try again.");
+      safeToast.error("Failed to close quiz. Please try again.");
     } finally {
       setClosing(false);
     }
@@ -442,6 +451,23 @@ const QuizManager = ({ isParticipantListOpen = true }) => {
     console.log("📤 Ending HOST_CONTROLLED quiz...");
   }, [activeQuiz, socketRef]);
 
+  // Host Timer
+  useEffect(() => {
+    if (activeQuiz?.mode !== "HOST_CONTROLLED" || !currentQuestion || showLeaderboard || questionResults) {
+      return; 
+    }
+    const timerId = setInterval(() => {
+      setHcTimeRemaining((prev) => {
+        if (prev <= 1) {
+          clearInterval(timerId);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(timerId);
+  }, [activeQuiz?.mode, currentQuestion, showLeaderboard, questionResults]);
+
   // Render mode selector for import modal
   const renderModeSelector = () => (
     <div className="mt-4 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl space-y-4">
@@ -505,7 +531,7 @@ const QuizManager = ({ isParticipantListOpen = true }) => {
             <input
               type="range"
               min="10"
-              max="120"
+              max="60"
               step="5"
               value={questionDuration}
               onChange={(e) => setQuestionDuration(Number(e.target.value))}
@@ -513,7 +539,7 @@ const QuizManager = ({ isParticipantListOpen = true }) => {
             />
             <div className="flex justify-between text-xs text-slate-400 mt-1">
               <span>10s</span>
-              <span>120s</span>
+              <span>60s</span>
             </div>
           </div>
 
@@ -653,7 +679,12 @@ const QuizManager = ({ isParticipantListOpen = true }) => {
           ) : (
             <>
               {importStep === 1 ? (
-                <div className="space-y-3">
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg text-amber-700 dark:text-amber-300 text-sm">
+                    <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                    <p>Draft quizzes are not shown here. Please save them first to import.</p>
+                  </div>
+
                   <div className="relative">
                     <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                     <input
@@ -954,7 +985,7 @@ const QuizManager = ({ isParticipantListOpen = true }) => {
                           : "text-red-600 dark:text-red-400"
                     }`}
                   >
-                    {Math.round(submission.percentage)}%
+                    {Math.min(100, Math.round(submission.percentage))}%
                   </div>
                 </div>
               </div>
@@ -992,8 +1023,8 @@ const QuizManager = ({ isParticipantListOpen = true }) => {
               </p>
             </div>
             <div className="text-right">
-              <div className="text-2xl font-bold">{questionDuration}s</div>
-              <div className="text-blue-200 text-sm">per question</div>
+              <div className={`text-2xl font-bold ${hcTimeRemaining <= 10 ? 'text-red-300 animate-pulse' : ''}`}>{hcTimeRemaining}s</div>
+              <div className="text-blue-200 text-sm">remaining</div>
             </div>
           </div>
 
@@ -1389,7 +1420,7 @@ const QuizManager = ({ isParticipantListOpen = true }) => {
                               : "text-red-600 dark:text-red-400"
                         }`}
                       >
-                        {submission.percentage ?? 0}%
+                        {Math.min(100, Math.round(submission.percentage ?? 0))}%
                       </div>
                     </div>
                   </div>

@@ -4,7 +4,7 @@ const mongoose = require("mongoose");
 // * Create a new quiz template
 const createQuizTemplate = async (req, res) => {
   try {
-    const { title, description, questions, roomId } = req.body;
+    const { title, description, questions, roomId, isDraft } = req.body;
 
     // Process questions to map temporary optionIds to MongoDB ObjectIds
     const processedQuestions = questions.map((question) => {
@@ -67,6 +67,7 @@ const createQuizTemplate = async (req, res) => {
     const template = await QuizTemplate.create({
       title,
       description,
+      isDraft: isDraft !== undefined ? isDraft : true,
       questions: processedQuestions,
       roomId,
       totalPoints,
@@ -150,6 +151,9 @@ const updateQuizTemplate = async (req, res) => {
 
     // Process questions to handle both new and existing options
     let updateData = { ...req.body };
+    if (updateData.isDraft === undefined) {
+       updateData.isDraft = req.body.isDraft !== undefined ? req.body.isDraft : template.isDraft;
+    }
 
     if (req.body.questions) {
       const processedQuestions = req.body.questions.map((question) => {

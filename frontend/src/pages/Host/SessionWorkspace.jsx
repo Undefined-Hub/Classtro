@@ -19,6 +19,8 @@ import { useAuth } from "../../context/UserContext.jsx";
 import axios from "axios";
 // * API import
 import api from "../../utils/api.js";
+import safeToast from "../../utils/toastUtils";
+
 
 const BACKEND_BASE_URL =
   import.meta.env.VITE_BACKEND_BASE_URL || "http://localhost:5000";
@@ -260,6 +262,11 @@ const SessionWorkspace = () => {
     // Log teacher socket ID and connection status
     socket.on("connect", () => {
       console.log("🔌 Socket connected with ID:", socket.id);
+      // Teacher joins session for presence (also triggers on reconnects)
+      socket.emit("join-session", {
+        code: sessionData.code,
+        participantId: "teacher1",
+      });
     });
     socket.on("connect_error", (err) => {
       console.error("❌ Socket connect_error:", err.message);
@@ -272,11 +279,6 @@ const SessionWorkspace = () => {
     });
     socket.on("reconnect_error", (error) => {
       console.error("❌ Socket reconnect failed:", error);
-    });
-    // Teacher joins session for presence
-    socket.emit("join-session", {
-      code: sessionData.code,
-      participantId: "teacher1",
     });
     // Q&A socket listeners
     const onCreated = (payload) => {
@@ -619,7 +621,7 @@ const SessionWorkspace = () => {
       // Socket event will update all clients' state
     } catch (err) {
       console.error("Failed to mark question as answered:", err);
-      alert("Failed to mark question as answered");
+      safeToast.error("Failed to mark question as answered");
     }
   };
 
@@ -711,7 +713,7 @@ const SessionWorkspace = () => {
       navigate("/dashboard");
     } catch (err) {
       console.error("❌ Session end failed:", err);
-      alert("Failed to close session. Please try again.");
+      safeToast.error("Failed to close session. Please try again.");
     }
   };
 

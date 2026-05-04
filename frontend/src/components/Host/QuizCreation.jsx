@@ -1,4 +1,4 @@
-import { useState, useCallback, memo, useMemo } from "react";
+import { useState, useCallback, memo, useMemo, useEffect } from "react";
 import {
   ArrowLeft,
   Save,
@@ -36,6 +36,8 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import api from "../../utils/api";
 import AIQuizGenerator from "./AIQuizGenerator";
+import safeToast from "../../utils/toastUtils";
+
 
 const QuestionSkeleton = memo(() => (
   <div className="bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 p-3 rounded-xl shadow-sm">
@@ -73,28 +75,63 @@ const QuestionSkeleton = memo(() => (
 ));
 
 function QuizCreation({ quizName, quizDescription, onBack, existingQuiz }) {
+  const draftKey = existingQuiz?._id ? `quiz_draft_${existingQuiz._id}` : null;
+  const draftData = useMemo(() => {
+    if (!draftKey) return null;
+    try {
+      const saved = localStorage.getItem(draftKey);
+      return saved ? JSON.parse(saved) : null;
+    } catch(e) {
+      return null;
+    }
+  }, [draftKey]);
+
   const [questions, setQuestions] = useState(
-    existingQuiz
+    draftData?.questions || (existingQuiz
       ? existingQuiz.questions.map((q, idx) => ({
           ...q,
           _id: q._id || `existing_${Date.now()}_${idx}_${Math.random()}`,
         }))
-      : [],
+      : [])
   );
-  const [currentQuestion, setCurrentQuestion] = useState("");
-  const [options, setOptions] = useState(["", ""]);
-  const [optionIds, setOptionIds] = useState([null, null]); // Store _ids alongside options
-  const [questionType, setQuestionType] = useState("MCQ");
-  const [correctIndex, setCorrectIndex] = useState(0);
-  const [correctIndices, setCorrectIndices] = useState([0]); // For MULTI_SELECT
-  const [points, setPoints] = useState(1);
-  const [negativePoints, setNegativePoints] = useState(0);
-  const [showNegativePoints, setShowNegativePoints] = useState(false);
+  const [currentQuestion, setCurrentQuestion] = useState(draftData?.currentQuestion || "");
+  const [options, setOptions] = useState(draftData?.options || ["", ""]);
+  const [optionIds, setOptionIds] = useState(draftData?.optionIds || [null, null]); // Store _ids alongside options
+  const [questionType, setQuestionType] = useState(draftData?.questionType || "MCQ");
+  const [correctIndex, setCorrectIndex] = useState(draftData?.correctIndex ?? 0);
+  const [correctIndices, setCorrectIndices] = useState(draftData?.correctIndices || [0]); // For MULTI_SELECT
+  const [points, setPoints] = useState(draftData?.points ?? 1);
+  const [negativePoints, setNegativePoints] = useState(draftData?.negativePoints ?? 0);
+  const [showNegativePoints, setShowNegativePoints] = useState(draftData?.showNegativePoints || false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isDraft, setIsDraft] = useState(draftData?.isDraft ?? true);
   const [showAIGenerator, setShowAIGenerator] = useState(false);
   const [isAIGenerating, setIsAIGenerating] = useState(false);
   const [aiSkeletonCount, setAiSkeletonCount] = useState(3);
   const [layoutMode, setLayoutMode] = useState("vertical"); // "horizontal" or "vertical"
+
+  // Autosave to draft
+  useEffect(() => {
+    if (draftKey) {
+      const stateToSave = {
+        questions,
+        currentQuestion,
+        options,
+        optionIds,
+        questionType,
+        correctIndex,
+        correctIndices,
+        points,
+        negativePoints,
+        showNegativePoints,
+        isDraft,
+      };
+      localStorage.setItem(draftKey, JSON.stringify(stateToSave));
+    }
+  }, [
+    draftKey, questions, currentQuestion, options, optionIds, questionType, 
+    correctIndex, correctIndices, points, negativePoints, showNegativePoints, isDraft
+  ]);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -160,7 +197,7 @@ function QuizCreation({ quizName, quizDescription, onBack, existingQuiz }) {
       setPoints(1);
       setNegativePoints(0);
     } else {
-      alert("Please fill in the question and all options.");
+      safeToast.error("Please fill in the question and all options.");
     }
   };
 
@@ -293,6 +330,57 @@ function QuizCreation({ quizName, quizDescription, onBack, existingQuiz }) {
 
   const handleSaveQuiz = async () => {
     setIsSaving(true);
+    let finalQuestions = [...questions];
+
+    if (currentQuestion.trim() && options.every((opt) => opt.trim())) {
+      const optionObjects = options.map((text, index) => {
+        // Preserve existing _id if available, otherwise create temp optionId
+        if (optionIds[index]) {
+          return {
+            _id: optionIds[index],
+            text,
+          };
+        }
+        return {
+          optionId: `opt_${Date.now()}_${index}`,
+          text,
+        };
+      });
+
+      // Determine correct answers based on question type
+      let correctAnswerIndices = [];
+      if (questionType === "MULTI_SELECT") {
+        correctAnswerIndices = correctIndices;
+      } else {
+        correctAnswerIndices = [correctIndex];
+      }
+
+      const newQuestion = {
+        _id: `question_${Date.now()}_${Math.random()}`,
+        type: questionType,
+        questionText: currentQuestion,
+        options: optionObjects,
+        correctAnswers: correctAnswerIndices.map(
+          (idx) => optionObjects[idx]._id || optionObjects[idx].optionId,
+        ),
+        points,
+        negativePoints: negativePoints || undefined,
+      };
+      
+      finalQuestions = [...finalQuestions, newQuestion];
+    }
+    
+    // Clear out the edit form so it doesn't cause issues if the user goes back without leaving
+    setCurrentQuestion("");
+    setOptions(["", ""]);
+    setOptionIds([null, null]);
+    setQuestionType("MCQ");
+    setCorrectIndex(0);
+    setCorrectIndices([0]);
+    setPoints(1);
+    setNegativePoints(0);
+
+    const totalPointsCalc = finalQuestions.reduce((sum, q) => sum + q.points, 0);
 
     try {
       if (existingQuiz) {
@@ -300,8 +388,9 @@ function QuizCreation({ quizName, quizDescription, onBack, existingQuiz }) {
         const quizObject = {
           title: quizName,
           description: quizDescription,
-          questions,
-          totalPoints,
+          questions: finalQuestions,
+          totalPoints: totalPointsCalc,
+          isDraft: false,
           updatedAt: new Date().toISOString(),
         };
 
@@ -311,6 +400,7 @@ function QuizCreation({ quizName, quizDescription, onBack, existingQuiz }) {
         );
 
         if (res.status === 200 || res.status === 204) {
+          if (draftKey) localStorage.removeItem(draftKey);
           // Update localStorage as backup
           const existingQuizzes = JSON.parse(
             localStorage.getItem("quizzes") || "[]",
@@ -323,14 +413,15 @@ function QuizCreation({ quizName, quizDescription, onBack, existingQuiz }) {
               ...existingQuiz,
               title: quizName,
               description: quizDescription,
-              questions,
-              totalPoints,
+              questions: finalQuestions,
+              totalPoints: totalPointsCalc,
+              isDraft: false,
               updatedAt: new Date().toISOString(),
             };
           }
           localStorage.setItem("quizzes", JSON.stringify(existingQuizzes));
 
-          alert("Quiz updated successfully!");
+          safeToast.success("Quiz updated successfully!");
           onBack();
           return;
         } else {
@@ -340,7 +431,7 @@ function QuizCreation({ quizName, quizDescription, onBack, existingQuiz }) {
 
       // Transform questions to match API format for new quizzes
       const timestamp = Date.now();
-      const transformedQuestions = questions.map((question) => ({
+      const transformedQuestions = finalQuestions.map((question) => ({
         type: question.type,
         questionText: question.questionText,
         options: question.options.map((option, index) => ({
@@ -358,10 +449,11 @@ function QuizCreation({ quizName, quizDescription, onBack, existingQuiz }) {
         negativePoints: question.negativePoints || 0,
       }));
 
-      const quizPayload = {
+        const quizPayload = {
         title: quizName,
         description: quizDescription,
         roomId: null,
+        isDraft: false,
         questions: transformedQuestions,
       };
 
@@ -369,6 +461,7 @@ function QuizCreation({ quizName, quizDescription, onBack, existingQuiz }) {
       const response = await api.post("/api/quiz-templates", quizPayload);
 
       if (response.status === 201) {
+        if (draftKey) localStorage.removeItem(draftKey);
         // Save to localStorage as backup
         const quizObject = {
           _id: response.data._id || `quiz_${Date.now()}`,
@@ -376,8 +469,9 @@ function QuizCreation({ quizName, quizDescription, onBack, existingQuiz }) {
           description: quizDescription,
           createdBy: response.data.createdBy || "teacherId_placeholder",
           roomId: response.data.roomId || null,
-          questions,
-          totalPoints,
+          questions: finalQuestions,
+          totalPoints: totalPointsCalc,
+          isDraft: false,
           createdAt: response.data.createdAt || new Date().toISOString(),
           updatedAt: response.data.updatedAt || new Date().toISOString(),
         };
@@ -388,7 +482,7 @@ function QuizCreation({ quizName, quizDescription, onBack, existingQuiz }) {
         existingQuizzes.push(quizObject);
         localStorage.setItem("quizzes", JSON.stringify(existingQuizzes));
 
-        alert("Quiz saved successfully!");
+        safeToast.success("Quiz saved successfully!");
         onBack();
       } else {
         throw new Error("Failed to save quiz");
@@ -406,8 +500,9 @@ function QuizCreation({ quizName, quizDescription, onBack, existingQuiz }) {
           ? existingQuiz.createdBy
           : "teacherId_placeholder",
         roomId: existingQuiz ? existingQuiz.roomId : null,
-        questions,
-        totalPoints,
+        questions: finalQuestions,
+        totalPoints: totalPointsCalc,
+        isDraft: false,
         createdAt: existingQuiz
           ? existingQuiz.createdAt
           : new Date().toISOString(),
@@ -429,7 +524,7 @@ function QuizCreation({ quizName, quizDescription, onBack, existingQuiz }) {
       }
       localStorage.setItem("quizzes", JSON.stringify(existingQuizzes));
 
-      alert(
+      safeToast.success(
         `API call failed, but quiz saved locally. ${existingQuiz ? "Quiz updated successfully!" : "Quiz saved successfully!"}`,
       );
       onBack();
@@ -439,7 +534,8 @@ function QuizCreation({ quizName, quizDescription, onBack, existingQuiz }) {
   };
 
   const handleDiscard = () => {
-    if (window.confirm("Are you sure you want to discard this quiz?")) {
+    if (window.confirm("Are you sure you want to discard your changes?")) {
+      if (draftKey) localStorage.removeItem(draftKey);
       onBack();
     }
   };
